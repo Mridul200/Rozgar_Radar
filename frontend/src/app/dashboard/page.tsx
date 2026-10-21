@@ -114,7 +114,7 @@ export default function DashboardPage() {
     { title: "Explore Jobs", href: "/jobs", Icon: Compass, notifs: totalLiveJobs > 0 ? totalLiveJobs : undefined },
     { title: "Daily Automation", href: "/automation", Icon: Zap, notifs: automation?.is_active ? "ON" : undefined },
     { title: "Resume Builder", href: "/resume-builder", Icon: FileText, notifs: resumes.length > 0 ? resumes.length : undefined },
-    { title: "ATS Readiness", href: "/ats-checker", Icon: CheckCircle2, notifs: undefined },
+    { title: "ATS Scorer", href: "/ats-checker", Icon: CheckCircle2, notifs: undefined },
     { title: "Job Tracker", href: "/saved-jobs", Icon: BookmarkCheck, notifs: savedJobs.length > 0 ? savedJobs.length : undefined },
   ];
 
@@ -236,7 +236,7 @@ export default function DashboardPage() {
 
             <div className="glass-card rounded-2xl p-5 border border-slate-800">
               <div className="flex items-center justify-between text-slate-400 mb-2">
-                <span className="text-xs font-semibold uppercase tracking-wider">ATS Readiness</span>
+                <span className="text-xs font-semibold uppercase tracking-wider">ATS Scorer</span>
                 <FileText className="w-4 h-4 text-emerald-400" />
               </div>
               <div className="flex items-baseline gap-2">

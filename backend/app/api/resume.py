@@ -30,7 +30,24 @@ from app.services.ai_assistant import (
     tailor_resume_ai,
 )
 
+from datetime import datetime, timedelta
+from collections import defaultdict
+
 router = APIRouter(prefix="/resumes", tags=["Resume Builder & ATS Checker"])
+
+_AI_RATE_LIMITS: Dict[str, List[datetime]] = defaultdict(list)
+AI_MAX_REQUESTS_PER_HOUR = 40
+
+def check_ai_rate_limit(identifier: str):
+    now = datetime.utcnow()
+    window_start = now - timedelta(hours=1)
+    _AI_RATE_LIMITS[identifier] = [t for t in _AI_RATE_LIMITS[identifier] if t > window_start]
+    if len(_AI_RATE_LIMITS[identifier]) >= AI_MAX_REQUESTS_PER_HOUR:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Hourly AI generation limit ({AI_MAX_REQUESTS_PER_HOUR} requests/hr) reached. Please wait a few minutes before generating more AI drafts."
+        )
+    _AI_RATE_LIMITS[identifier].append(now)
 
 def _format_resume(r: Resume) -> ResumeResponse:
     content = {}
@@ -109,6 +126,9 @@ def suggest_resume_ai(
     - General text enhancement
     - Role-based tailoring
     """
+    user_id = user.id if user else "anonymous"
+    check_ai_rate_limit(user_id)
+
     task = req.task
     ctx = req.context or {}
 
@@ -396,7 +416,12 @@ def analyze_ats(
 
     # If resume_id is provided, fetch resume content
     if req.resume_id:
-        resume = db.query(Resume).filter(Resume.id == req.resume_id).first()
+        resume_q = db.query(Resume).filter(Resume.id == req.resume_id)
+        if user:
+            resume_q = resume_q.filter(Resume.user_id == user.id)
+        resume = resume_q.first()
+        if not resume and user:
+            raise HTTPException(status_code=404, detail="Selected resume not found or access denied")
         if resume:
             resume_title = resume.title
             try:

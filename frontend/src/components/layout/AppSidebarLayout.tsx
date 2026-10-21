@@ -61,7 +61,7 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
     { title: "Explore Jobs", href: "/jobs", Icon: Compass },
     { title: "Daily Automation", href: "/automation", Icon: Zap },
     { title: "Resume Builder", href: "/resume-builder", Icon: FileText },
-    { title: "ATS Readiness", href: "/ats-checker", Icon: CheckCircle2 },
+    { title: "ATS Scorer", href: "/ats-checker", Icon: CheckCircle2 },
     { title: "Tracker", href: "/saved-jobs", Icon: BookmarkCheck },
   ];
 
