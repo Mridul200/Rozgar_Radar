@@ -1,9 +1,9 @@
-import os
+﻿import os
 from typing import List
 from pydantic_settings import BaseSettings
 from pydantic import Field
 
-# Resolve project root (two levels up from this file: backend/app/config.py → project root)
+# Resolve project root (two levels up from this file: backend/app/config.py â†’ project root)
 _PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 _DATABASE_DIR = os.path.join(_PROJECT_ROOT, "database")
 _DEFAULT_DB_PATH = os.path.join(_DATABASE_DIR, "jobs.db").replace("\\", "/")
@@ -49,12 +49,11 @@ class Settings(BaseSettings):
         description="Location ingestion filter mode: 'all' or 'india_focused' (excludes international_only)"
     )
 
-    # SMTP / Email Configuration
-    SMTP_HOST: str = Field(default="smtp.gmail.com", description="SMTP server host")
-    SMTP_PORT: int = Field(default=587, description="SMTP server port")
-    SMTP_USER: str = Field(default="", description="SMTP username/email")
-    SMTP_PASSWORD: str = Field(default="", description="SMTP password or app password")
-    SMTP_SENDER: str = Field(default="", description="From email address")
+    # Brevo (Sendinblue) Email API Configuration
+    # Sign up free at https://app.brevo.com -> SMTP & API -> API Keys
+    BREVO_API_KEY: str = Field(default="", description="Brevo Transactional Email API key")
+    BREVO_SENDER_EMAIL: str = Field(default="", description="Verified sender email address in Brevo")
+    BREVO_SENDER_NAME: str = Field(default="HirePulse", description="Sender display name")
 
     model_config = {
         "env_file": _ENV_FILE_PATH,

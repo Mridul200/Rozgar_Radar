@@ -500,7 +500,7 @@ def send_test_email(
     if not is_smtp_configured():
         raise HTTPException(
             status_code=500,
-            detail="SMTP server is not configured. Please set SMTP_HOST, SMTP_USER, and SMTP_PASSWORD in .env"
+            detail="Email service is not configured. Please set BREVO_API_KEY and BREVO_SENDER_EMAIL in environment variables."
         )
     
     cfg = get_smtp_config()

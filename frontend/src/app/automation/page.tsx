@@ -185,7 +185,7 @@ export default function AutomationPage() {
       const freshLogs = await fetchAutomationLogs(token);
       setLogs(freshLogs);
     } catch (err: any) {
-      setErrorMsg(err.message || "Failed to send test email. Please verify SMTP setup.");
+      setErrorMsg(err.message || "Failed to send test email. Please verify Brevo API setup.");
     } finally {
       setSendingTest(false);
       setEmailModalOpen(false);
@@ -241,7 +241,7 @@ export default function AutomationPage() {
             <button
               onClick={() => openConfirmModal("test")}
               disabled={sendingTest || triggering}
-              title="Sends a test email to verify SMTP connection"
+              title="Sends a test email to verify Brevo email delivery"
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-200 bg-slate-800/90 hover:bg-slate-700 border border-slate-700/80 transition-all shadow-sm disabled:opacity-50"
             >
               {sendingTest ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 text-emerald-400" />}
@@ -350,7 +350,7 @@ export default function AutomationPage() {
             <div>
               <div className="font-semibold text-white">Email Dispatch Service</div>
               <div className="text-slate-400">
-                {config?.email_provider_configured ? "SMTP Provider Connected" : "Local Digest / Preview Mode"}
+                {config?.email_provider_configured ? "Brevo Email API Connected" : "Local Digest / Preview Mode"}
               </div>
             </div>
           </div>

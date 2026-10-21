@@ -1,8 +1,6 @@
 import os
 import sys
 import logging
-import smtplib
-from email.message import EmailMessage
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 
@@ -31,73 +29,112 @@ except ImportError:
 logger = logging.getLogger("email_service")
 
 
-def get_smtp_config() -> Optional[dict]:
-    """Retrieve and validate SMTP configuration from environment or settings."""
-    host = os.getenv("SMTP_HOST") or (settings.SMTP_HOST if settings else "smtp.gmail.com")
-    host = (host or "smtp.gmail.com").strip()
+# ---------------------------------------------------------------------------
+# Brevo (Sendinblue) configuration helpers
+# ---------------------------------------------------------------------------
 
-    port_val = os.getenv("SMTP_PORT") or (settings.SMTP_PORT if settings else 587)
-    try:
-        port = int(str(port_val).strip())
-    except ValueError:
-        port = 587
+def get_brevo_config() -> Optional[dict]:
+    """Retrieve and validate Brevo API configuration from environment or settings."""
+    api_key = os.getenv("BREVO_API_KEY") or (getattr(settings, "BREVO_API_KEY", None) if settings else None)
+    api_key = (api_key or "").strip()
 
-    user = os.getenv("SMTP_USER") or (settings.SMTP_USER if settings else "")
-    user = (user or "").strip()
+    sender_email = os.getenv("BREVO_SENDER_EMAIL") or (getattr(settings, "BREVO_SENDER_EMAIL", None) if settings else None)
+    sender_email = (sender_email or "").strip()
 
-    raw_password = os.getenv("SMTP_PASSWORD") or (settings.SMTP_PASSWORD if settings else "")
-    password = (raw_password or "").replace(" ", "").strip()
+    sender_name = os.getenv("BREVO_SENDER_NAME") or (getattr(settings, "BREVO_SENDER_NAME", None) if settings else "HirePulse")
+    sender_name = (sender_name or "HirePulse").strip()
 
-    sender = os.getenv("SMTP_SENDER") or (settings.SMTP_SENDER if settings else user)
-    sender = (sender or "").strip() or user
-
-    if not host or not user or not password:
+    if not api_key or not sender_email or "your_brevo_api_key" in api_key.lower():
         return None
 
     return {
-        "host": host,
-        "port": port,
-        "user": user,
-        "password": password,
-        "sender": sender,
+        "api_key": api_key,
+        "sender_email": sender_email,
+        "sender_name": sender_name,
     }
 
 
 def is_smtp_configured() -> bool:
-    """Check if SMTP credentials are set."""
-    return get_smtp_config() is not None
+    """Check if Brevo email credentials are set (kept as is_smtp_configured for API compatibility)."""
+    return get_brevo_config() is not None
 
+
+# Keep this alias so automation.py import doesn't break
+def get_smtp_config() -> Optional[dict]:
+    """Alias for get_brevo_config() — retained for backward compatibility."""
+    cfg = get_brevo_config()
+    if cfg is None:
+        return None
+    # Return a dict with shape that automation.py uses for display purposes
+    return {
+        "host": "api.brevo.com (HTTP)",
+        "port": 443,
+        "user": cfg["sender_email"],
+        "password": "***",
+        "sender": cfg["sender_email"],
+    }
+
+
+# ---------------------------------------------------------------------------
+# Core email sender using Brevo Transactional Email API (HTTPS, no SMTP)
+# ---------------------------------------------------------------------------
 
 def send_email(to_address: str, subject: str, html_body: str, plain_body: Optional[str] = None) -> bool:
-    """Send an email via configured SMTP with TLS."""
-    cfg = get_smtp_config()
-    if not cfg:
-        raise RuntimeError("SMTP configuration is incomplete. Please set SMTP_HOST, SMTP_USER, and SMTP_PASSWORD in .env")
+    """Send an email via the Brevo Transactional Email REST API.
 
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = f"Rozgar Radar <{cfg['sender']}>"
-    msg["To"] = to_address
+    Uses HTTPS (port 443) — works on Render free tier without any SMTP restrictions.
+    """
+    cfg = get_brevo_config()
+    if not cfg:
+        raise RuntimeError(
+            "Brevo configuration is incomplete. "
+            "Please set BREVO_API_KEY and BREVO_SENDER_EMAIL in your environment variables."
+        )
 
     if not plain_body:
-        plain_body = "Rozgar Radar Job Notification. Please view this email in an HTML-compatible client."
-
-    msg.set_content(plain_body)
-    msg.add_alternative(html_body, subtype="html")
+        plain_body = "HirePulse Job Notification. Please view this email in an HTML-compatible client."
 
     try:
-        with smtplib.SMTP(cfg["host"], cfg["port"], timeout=15) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            server.login(cfg["user"], cfg["password"])
-            server.send_message(msg)
-        logger.info(f"Email successfully delivered to {to_address} (Subject: {subject})")
-        return True
-    except Exception as exc:
-        logger.error(f"Failed to send email to {to_address}: {exc}")
-        raise
+        import httpx
+    except ImportError:
+        raise RuntimeError("httpx is required. Add 'httpx>=0.27.0' to requirements.txt.")
 
+    payload = {
+        "sender": {
+            "name": cfg["sender_name"],
+            "email": cfg["sender_email"],
+        },
+        "to": [{"email": to_address}],
+        "subject": subject,
+        "htmlContent": html_body,
+        "textContent": plain_body,
+    }
+
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": cfg["api_key"],
+    }
+
+    response = httpx.post(
+        "https://api.brevo.com/v3/smtp/email",
+        json=payload,
+        headers=headers,
+        timeout=20,
+    )
+
+    if response.status_code in (200, 201):
+        logger.info(f"Email successfully delivered to {to_address} via Brevo (Subject: {subject})")
+        return True
+    else:
+        error_detail = response.text
+        logger.error(f"Brevo API error {response.status_code}: {error_detail}")
+        raise RuntimeError(f"Brevo API error {response.status_code}: {error_detail}")
+
+
+# ---------------------------------------------------------------------------
+# Email HTML Templates (unchanged)
+# ---------------------------------------------------------------------------
 
 def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str: str) -> str:
     """Renders a responsive, modern HTML email template for daily job digest."""
@@ -105,14 +142,14 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
     for j in jobs:
         score = j.get("match_score", 0)
         score_color = "#16a34a" if score >= 80 else "#2563eb" if score >= 65 else "#d97706"
-        
+
         reasons_html = ""
         for r in j.get("match_reasons", [])[:3]:
             reasons_html += f'<span style="display: inline-block; background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 500; border-radius: 4px; padding: 2px 8px; margin-right: 4px; margin-bottom: 4px;">✓ {r}</span>'
 
         location_badge = j.get("location_raw") or j.get("city") or "India / Remote"
         work_mode = j.get("work_mode", "").replace("_", " ").title()
-        
+
         job_cards_html += f"""
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
@@ -130,7 +167,7 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
             </div>
             <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #f1f5f9;">
                 <a href="{j.get('application_url', '#')}" target="_blank" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 6px;">
-                    View & Apply &rarr;
+                    View &amp; Apply &rarr;
                 </a>
             </div>
         </div>
@@ -143,7 +180,7 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Rozgar Radar Daily Digest</title>
+        <title>HirePulse Daily Digest</title>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px;">
         <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
@@ -151,7 +188,7 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
             <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 28px 24px; text-align: left; border-bottom: 3px solid #2563eb;">
                 <div style="display: flex; align-items: center; margin-bottom: 6px;">
                     <span style="font-size: 24px; margin-right: 8px;">🎯</span>
-                    <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">Rozgar Radar</h1>
+                    <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">HirePulse</h1>
                 </div>
                 <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">AI-Powered Job Automation &bull; Daily Matches for {date_str}</p>
             </div>
@@ -171,8 +208,8 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
 
             <!-- Footer -->
             <div style="padding: 20px 24px; background: #ffffff; border-top: 1px solid #e2e8f0; text-align: center; color: #64748b; font-size: 12px;">
-                <p style="margin: 0 0 6px 0;">You received this email because you enabled Daily Job Automation in Rozgar Radar.</p>
-                <p style="margin: 0;">To update your preferences or pause notifications, visit your Rozgar Radar Automation dashboard.</p>
+                <p style="margin: 0 0 6px 0;">You received this email because you enabled Daily Job Automation in HirePulse.</p>
+                <p style="margin: 0;">To update your preferences or pause notifications, visit your HirePulse Automation dashboard.</p>
             </div>
         </div>
     </body>
@@ -191,7 +228,7 @@ def render_alert_template(user_name: str, job: Dict[str, Any]) -> str:
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden;">
             <div style="background: #2563eb; color: #ffffff; padding: 20px; text-align: center;">
                 <h2 style="margin: 0; font-size: 18px;">🎯 New Job Match Alert!</h2>
-                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Rozgar Radar Instant Notification</p>
+                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">HirePulse Instant Notification</p>
             </div>
             <div style="padding: 24px;">
                 <p style="font-size: 14px; color: #334155; margin-top: 0;">Hi {user_name}, a new high-priority job opening just matched your profile with a <strong>{score}% match score</strong>:</p>
