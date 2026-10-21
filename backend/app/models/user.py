@@ -41,6 +41,7 @@ class UserProfile(Base):
     work_modes = Column(Text, nullable=True)           # JSON list: ["remote", "hybrid", "on_site"]
     min_salary = Column(Numeric(12, 2), nullable=True)
     resume_text = Column(Text, nullable=True)
+    notification_email = Column(String(255), nullable=True)
     email_alerts_enabled = Column(Boolean, default=True, nullable=False)
     onboarding_completed = Column(Boolean, default=False, nullable=False)
 

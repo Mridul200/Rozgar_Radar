@@ -198,10 +198,13 @@ def get_automation_config(user: User = Depends(get_current_user), db: Session = 
         db.commit()
         db.refresh(config)
 
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+
     return AutomationConfigResponse(
         id=config.id,
         user_id=config.user_id,
         is_active=config.is_active,
+        notification_email=profile.notification_email if profile else None,
         preferred_titles=_deserialize_list(config.preferred_titles),
         preferred_locations=_deserialize_list(config.preferred_locations),
         preferred_skills=_deserialize_list(config.preferred_skills),
@@ -229,6 +232,10 @@ def update_automation_config(
     if not config:
         config = AutomationConfig(user_id=user.id)
         db.add(config)
+
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    if profile and req.notification_email is not None:
+        profile.notification_email = req.notification_email.strip().lower() if req.notification_email.strip() else None
 
     config.is_active = req.is_active
     if req.preferred_titles is not None:
@@ -266,6 +273,7 @@ def update_automation_config(
         id=config.id,
         user_id=config.user_id,
         is_active=config.is_active,
+        notification_email=profile.notification_email if profile else None,
         preferred_titles=_deserialize_list(config.preferred_titles),
         preferred_locations=_deserialize_list(config.preferred_locations),
         preferred_skills=_deserialize_list(config.preferred_skills),
@@ -342,6 +350,7 @@ def preview_matching_jobs(user: User = Depends(get_current_user), db: Session = 
 @router.post("/trigger")
 def trigger_automation_digest(
     is_test: bool = Query(False, description="Whether this is a test simulation"),
+    target_email: Optional[str] = Query(None, description="Target recipient email address. Defaults to configured notification email or account email."),
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -349,6 +358,12 @@ def trigger_automation_digest(
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
     if not config:
         raise HTTPException(status_code=400, detail="Automation configuration not found")
+
+    # Determine recipient
+    recipient = (target_email or (profile.notification_email if profile and profile.notification_email else user.email)).strip().lower()
+    if target_email and profile:
+        profile.notification_email = recipient
+        db.commit()
 
     # Collect previous sent job IDs to exclude duplicate sends
     prev_logs = db.query(AutomationLog).filter(AutomationLog.user_id == user.id).all()
@@ -413,7 +428,7 @@ def trigger_automation_digest(
             )
             
             send_email(
-                to_address=user.email,
+                to_address=recipient,
                 subject=subject,
                 html_body=body_html,
                 plain_body=f"Rozgar Radar found {len(top_jobs)} job matches for you today."
@@ -452,7 +467,7 @@ def trigger_automation_digest(
         "status": status_str,
         "is_test": is_test,
         "email_sent": email_sent,
-        "recipient_email": user.email,
+        "recipient_email": recipient,
         "jobs_found": len(matched_jobs),
         "jobs_delivered": len(top_jobs),
         "delivered_jobs": [
@@ -467,16 +482,21 @@ def trigger_automation_digest(
             }
             for j in top_jobs
         ],
-        "message": f"Successfully processed digest with {len(top_jobs)} matching jobs for {user.email}."
+        "message": f"Successfully processed digest with {len(top_jobs)} matching jobs for {recipient}."
     }
 
 @router.post("/test-email")
 def send_test_email(
     target_email: Optional[str] = Query(None, description="Optional recipient email. Defaults to logged-in user."),
-    user: User = Depends(get_current_user)
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
     """Sends a verification test email to verify SMTP delivery."""
-    recipient = (target_email or user.email).strip()
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    recipient = (target_email or (profile.notification_email if profile and profile.notification_email else user.email)).strip().lower()
+    if target_email and profile:
+        profile.notification_email = recipient
+        db.commit()
     if not is_smtp_configured():
         raise HTTPException(
             status_code=500,

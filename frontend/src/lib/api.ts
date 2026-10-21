@@ -278,8 +278,12 @@ export async function fetchAutomationPreview(token?: string | null): Promise<{ t
   return res.json();
 }
 
-export async function triggerAutomationDigest(isTest: boolean = false, token?: string | null): Promise<any> {
-  const res = await fetch(`${API_BASE}/automation/trigger?is_test=${isTest}`, {
+export async function triggerAutomationDigest(isTest: boolean = false, token?: string | null, targetEmail?: string): Promise<any> {
+  let url = `${API_BASE}/automation/trigger?is_test=${isTest}`;
+  if (targetEmail) {
+    url += `&target_email=${encodeURIComponent(targetEmail.trim())}`;
+  }
+  const res = await fetch(url, {
     method: "POST",
     headers: { ...getAuthHeader(token) },
   });

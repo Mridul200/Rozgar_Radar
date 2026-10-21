@@ -38,6 +38,7 @@ class UserProfileRequest(BaseModel):
     work_modes: Optional[List[str]] = None
     min_salary: Optional[float] = None
     resume_text: Optional[str] = None
+    notification_email: Optional[str] = None
     email_alerts_enabled: Optional[bool] = True
     onboarding_completed: Optional[bool] = None
 
@@ -57,6 +58,7 @@ class UserProfileResponse(BaseModel):
     work_modes: List[str] = []
     min_salary: Optional[float] = None
     resume_text: Optional[str] = None
+    notification_email: Optional[str] = None
     email_alerts_enabled: bool = True
     onboarding_completed: bool = False
     updated_at: datetime
@@ -95,6 +97,7 @@ class SavedJobResponse(BaseModel):
 
 class AutomationConfigRequest(BaseModel):
     is_active: bool = True
+    notification_email: Optional[str] = None
     preferred_titles: Optional[List[str]] = None
     preferred_locations: Optional[List[str]] = None
     preferred_skills: Optional[List[str]] = None
@@ -110,6 +113,7 @@ class AutomationConfigResponse(BaseModel):
     id: str
     user_id: str
     is_active: bool
+    notification_email: Optional[str] = None
     preferred_titles: List[str] = []
     preferred_locations: List[str] = []
     preferred_skills: List[str] = []

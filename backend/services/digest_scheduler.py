@@ -141,8 +141,9 @@ def run_all_due_daily_digests(force: bool = False, db: Session = None) -> dict:
             )
 
             try:
+                target_email = (profile.notification_email if profile and profile.notification_email else user.email).strip().lower()
                 send_email(
-                    to_address=user.email,
+                    to_address=target_email,
                     subject=subject,
                     html_body=body_html,
                     plain_body=f"Rozgar Radar found {len(top_jobs)} matching jobs for you today."

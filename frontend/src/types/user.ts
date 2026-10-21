@@ -28,6 +28,7 @@ export interface UserProfile {
   work_modes: string[];
   min_salary?: number;
   resume_text?: string;
+  notification_email?: string;
   email_alerts_enabled: boolean;
   onboarding_completed: boolean;
   updated_at?: string;
@@ -59,6 +60,7 @@ export interface AutomationConfig {
   id?: string;
   user_id?: string;
   is_active: boolean;
+  notification_email?: string;
   preferred_titles: string[];
   preferred_locations: string[];
   preferred_skills: string[];

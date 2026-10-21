@@ -127,6 +127,15 @@ async def periodic_12h_sync():
 async def lifespan(app: FastAPI):
     # Initialize database tables
     Base.metadata.create_all(bind=engine)
+    # Ensure migration for notification_email column
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE user_profiles ADD COLUMN notification_email VARCHAR(255)"))
+            conn.commit()
+    except Exception:
+        pass
+
     # Seed source registry and initial jobs if database is empty
     db = SessionLocal()
     try:
