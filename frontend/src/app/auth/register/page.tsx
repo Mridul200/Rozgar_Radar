@@ -1,16 +1,19 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { registerUser } from "@/lib/api";
 import { AuthenticationCard } from "@/components/ui/authentication-card";
 import { useTheme } from "@/lib/theme-context";
-import { Sun, Moon, ArrowLeft } from "lucide-react";
+import { Sun, Moon, ArrowLeft, Loader2 } from "lucide-react";
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTarget = searchParams.get("redirect");
+
   const { login } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [fullName, setFullName] = useState("");
@@ -40,12 +43,21 @@ export default function RegisterPage() {
         password,
       });
       login(res.access_token, res.user);
-      router.push("/onboarding");
+      if (redirectTarget) {
+        router.push(redirectTarget);
+      } else {
+        router.push("/onboarding");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.");
       setLoading(false);
     }
   };
+
+  const loginHref =
+    redirectTarget
+      ? `/auth/login?redirect=${encodeURIComponent(redirectTarget)}`
+      : "/auth/login";
 
   return (
     <div className="min-h-screen w-full flex flex-col justify-between bg-background text-foreground p-4 sm:p-6 transition-colors duration-200">
@@ -79,7 +91,11 @@ export default function RegisterPage() {
         <AuthenticationCard
           mode="register"
           title="Create your account"
-          description="Start discovering verified tech jobs with Rozgar Radar."
+          description={
+            redirectTarget
+              ? "Create your account to unlock Resume Builder & ATS Scorer."
+              : "Start discovering verified tech jobs and building ATS-ready resumes."
+          }
           fullName={fullName}
           setFullName={setFullName}
           email={email}
@@ -92,7 +108,7 @@ export default function RegisterPage() {
           footerLink={
             <span>
               Already have an account?{" "}
-              <Link href="/auth/login" className="text-primary font-medium hover:underline">
+              <Link href={loginHref} className="text-primary font-medium hover:underline">
                 Sign in
               </Link>
             </span>
@@ -105,5 +121,19 @@ export default function RegisterPage() {
         © 2026 Rozgar Radar. All rights reserved.
       </footer>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

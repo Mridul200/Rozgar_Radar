@@ -33,7 +33,7 @@ export function Navbar() {
     { label: "Explore Jobs", href: "/jobs", icon: Compass },
     { label: "Daily Automation", href: "/automation", icon: Zap },
     { label: "Resume Builder", href: "/resume-builder", icon: FileText },
-    { label: "ATS Readiness", href: "/ats-checker", icon: CheckCircle2 },
+    { label: "ATS Scorer", href: "/ats-checker", icon: CheckCircle2 },
     { label: "Tracker", href: "/saved-jobs", icon: BookmarkCheck },
   ];
 
@@ -160,6 +160,24 @@ export function Navbar() {
                     >
                       <Zap className="w-4 h-4 text-primary" />
                       Daily Alert Settings
+                    </Link>
+
+                    <Link
+                      href="/resume-builder"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent hover:text-primary transition-colors"
+                    >
+                      <FileText className="w-4 h-4 text-muted-foreground" />
+                      Resume Builder
+                    </Link>
+
+                    <Link
+                      href="/ats-checker"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent hover:text-primary transition-colors"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+                      ATS Scorer
                     </Link>
 
                     <div className="border-t border-border my-1" />

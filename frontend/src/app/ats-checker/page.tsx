@@ -54,7 +54,7 @@ import {
 function ATSCheckerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, token } = useAuth();
+  const { user, token, isLoading: authLoading } = useAuth();
 
   // Active Tab: "checker" or "history"
   const [activeTab, setActiveTab] = useState<"checker" | "history">("checker");
@@ -87,8 +87,13 @@ function ATSCheckerContent() {
   // Upload parsing state
   const [isParsingUpload, setIsParsingUpload] = useState(false);
 
-  // 1. Initial Data Loading
+  // 1. Auth Guard & Initial Data Loading
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login?redirect=/ats-checker");
+      return;
+    }
+
     if (token) {
       fetchUserResumes(token)
         .then((list) => {
@@ -109,7 +114,7 @@ function ATSCheckerContent() {
     fetchJobs({ page_size: 15, sort_by: "verified" })
       .then((data) => setLiveJobs(data.items || []))
       .catch(console.error);
-  }, [token, searchParams]);
+  }, [token, user, authLoading, router, searchParams]);
 
   const loadHistory = async () => {
     if (!token) return;
@@ -218,6 +223,17 @@ function ATSCheckerContent() {
     if (score >= 60) return { label: "Moderate", color: "text-amber-500", bg: "bg-amber-500" };
     return { label: "Needs Work", color: "text-rose-500", bg: "bg-rose-500" };
   };
+
+  if (authLoading || !user) {
+    return (
+      <AppSidebarLayout>
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-xs text-muted-foreground">Opening ATS Scorer...</p>
+        </div>
+      </AppSidebarLayout>
+    );
+  }
 
   return (
     <AppSidebarLayout>

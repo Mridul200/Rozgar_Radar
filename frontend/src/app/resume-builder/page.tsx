@@ -239,14 +239,16 @@ function ResumeBuilderContent() {
 
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // 1. Fetch User Resumes on Mount
+  // 1. Auth Guard & Fetch User Resumes on Mount
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/auth/login?redirect=/resume-builder");
+      return;
+    }
     if (token) {
       loadResumes();
-    } else if (!authLoading) {
-      setIsLoading(false);
     }
-  }, [token, authLoading]);
+  }, [user, token, authLoading, router]);
 
   // Handle URL param ?id=xxx to open specific resume
   useEffect(() => {
@@ -662,6 +664,17 @@ function ResumeBuilderContent() {
     currentSkills[category] = (currentSkills[category] || []).filter((s) => s !== skillToRemove);
     updateField("skills", currentSkills);
   };
+
+  if (authLoading || !user) {
+    return (
+      <AppSidebarLayout>
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <p className="text-xs text-muted-foreground">Opening Resume Builder...</p>
+        </div>
+      </AppSidebarLayout>
+    );
+  }
 
   return (
     <AppSidebarLayout>
