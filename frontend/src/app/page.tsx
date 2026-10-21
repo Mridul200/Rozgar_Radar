@@ -277,7 +277,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="font-bold text-base text-white">Universal Web Embed</h3>
                 <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-                  Easily embed the HirePulse job widget or responsive iframe into WordPress, Webflow, or custom React apps.
+                  Easily embed the Rozgar Radar job widget or responsive iframe into WordPress, Webflow, or custom React apps.
                 </p>
               </div>
               <button

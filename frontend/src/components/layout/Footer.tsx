@@ -8,14 +8,16 @@ export function Footer() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
         {/* Brand */}
         <div className="space-y-3 md:col-span-1">
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/20">
-              <Sparkles className="w-4 h-4" />
-            </div>
-            <span className="font-bold text-base tracking-tight text-white">HirePulse</span>
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/logo.jpg"
+              alt="Rozgar Radar Logo"
+              className="w-8 h-8 rounded-lg object-contain bg-white border border-slate-700/60 p-0.5"
+            />
+            <span className="font-bold text-base tracking-tight text-white">Rozgar Radar</span>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed">
-            India's AI Job Hunting Agent. Discover verified opportunities, automate daily eligibility email digests, build ATS resumes, and accelerate your tech career.
+            Rozgar Radar – Find Jobs. Build Your Future. Discover verified opportunities, automate daily eligibility email digests, build ATS resumes, and accelerate your tech career.
           </p>
           <div className="flex items-center gap-2 text-[11px] text-cyan-400">
             <ShieldCheck className="w-3.5 h-3.5" />

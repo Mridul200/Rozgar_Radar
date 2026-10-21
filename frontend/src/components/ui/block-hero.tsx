@@ -31,7 +31,7 @@ import {
 //  ------------------------------ | CONSTANTS | ------------------------------  //
 
 const branding = {
-  brandName: "HirePulse",
+  brandName: "Rozgar Radar",
   title: "Direct ATS Feeds to In-Demand Careers",
 };
 
@@ -184,12 +184,12 @@ export default function Hero({ totalJobs }: HeroProps) {
       <div className="relative z-10 flex items-center justify-center pt-2">
         <Badge
           variant="outline"
-          className="inline-flex items-center gap-2 rounded-full border-indigo-500/30 bg-indigo-500/10 px-4 py-2 text-xs font-medium text-indigo-300"
+          className="inline-flex items-center gap-2 rounded-full border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-300"
         >
-          <IconSparkles className="size-3.5 text-indigo-400" />
-          <span className="font-semibold">HirePulse</span>
-          <span className="text-indigo-400/60">&bull;</span>
-          <span>AI Career Copilot &amp; Multi-Source Aggregator</span>
+          <img src="/logo.jpg" alt="Rozgar Radar Logo" className="w-4 h-4 rounded-full object-cover" />
+          <span className="font-semibold text-white">Rozgar Radar</span>
+          <span className="text-emerald-400/60">&bull;</span>
+          <span>Find Jobs. Build Your Future.</span>
         </Badge>
       </div>
     </section>

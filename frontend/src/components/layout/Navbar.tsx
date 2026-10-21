@@ -43,20 +43,22 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform duration-200">
-              <Sparkles className="w-5 h-5" />
-            </div>
+          <Link href="/" className="flex items-center gap-3 group">
+            <img
+              src="/logo.jpg"
+              alt="Rozgar Radar Logo"
+              className="w-10 h-10 rounded-xl object-contain bg-white shadow-md shadow-emerald-500/10 border border-slate-700/60 p-0.5 group-hover:scale-105 transition-transform duration-200"
+            />
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-bold text-lg tracking-tight text-white group-hover:text-cyan-400 transition-colors">
-                  HirePulse
+                <span className="font-extrabold text-lg tracking-tight text-white group-hover:text-emerald-400 transition-colors">
+                  Rozgar Radar
                 </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   AI Agent
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 -mt-1 block font-medium">India-First Career Copilot</span>
+              <span className="text-[10px] text-slate-400 -mt-0.5 block font-medium">Find Jobs. Build Your Future.</span>
             </div>
           </Link>
 

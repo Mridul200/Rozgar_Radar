@@ -53,7 +53,7 @@ class Settings(BaseSettings):
     # Sign up free at https://app.brevo.com -> SMTP & API -> API Keys
     BREVO_API_KEY: str = Field(default="", description="Brevo Transactional Email API key")
     BREVO_SENDER_EMAIL: str = Field(default="", description="Verified sender email address in Brevo")
-    BREVO_SENDER_NAME: str = Field(default="HirePulse", description="Sender display name")
+    BREVO_SENDER_NAME: str = Field(default="Rozgar Radar", description="Sender display name")
 
     model_config = {
         "env_file": _ENV_FILE_PATH,

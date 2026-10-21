@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HirePulse — India's Premier AI Job Hunting Agent",
+  title: "Rozgar Radar — Find Jobs. Build Your Future.",
+  icons: {
+    icon: "/logo.jpg",
+  },
   description: "Discover verified jobs, receive daily automated email job alerts, build ATS-optimized resumes, and evaluate ATS readiness with India's premier AI career copilot.",
 };
 

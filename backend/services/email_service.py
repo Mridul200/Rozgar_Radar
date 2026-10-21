@@ -41,8 +41,8 @@ def get_brevo_config() -> Optional[dict]:
     sender_email = os.getenv("BREVO_SENDER_EMAIL") or (getattr(settings, "BREVO_SENDER_EMAIL", None) if settings else None)
     sender_email = (sender_email or "").strip()
 
-    sender_name = os.getenv("BREVO_SENDER_NAME") or (getattr(settings, "BREVO_SENDER_NAME", None) if settings else "HirePulse")
-    sender_name = (sender_name or "HirePulse").strip()
+    sender_name = os.getenv("BREVO_SENDER_NAME") or (getattr(settings, "BREVO_SENDER_NAME", None) if settings else "Rozgar Radar")
+    sender_name = (sender_name or "Rozgar Radar").strip()
 
     if not api_key or not sender_email or "your_brevo_api_key" in api_key.lower():
         return None
@@ -92,7 +92,7 @@ def send_email(to_address: str, subject: str, html_body: str, plain_body: Option
         )
 
     if not plain_body:
-        plain_body = "HirePulse Job Notification. Please view this email in an HTML-compatible client."
+        plain_body = "Rozgar Radar Job Notification. Please view this email in an HTML-compatible client."
 
     try:
         import httpx
@@ -180,7 +180,7 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>HirePulse Daily Digest</title>
+        <title>Rozgar Radar Daily Digest</title>
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px;">
         <div style="max-width: 620px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0;">
@@ -188,7 +188,7 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
             <div style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 28px 24px; text-align: left; border-bottom: 3px solid #2563eb;">
                 <div style="display: flex; align-items: center; margin-bottom: 6px;">
                     <span style="font-size: 24px; margin-right: 8px;">🎯</span>
-                    <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">HirePulse</h1>
+                    <h1 style="color: #ffffff; margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">Rozgar Radar</h1>
                 </div>
                 <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 13px;">AI-Powered Job Automation &bull; Daily Matches for {date_str}</p>
             </div>
@@ -209,7 +209,7 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
             <!-- Footer -->
             <div style="padding: 20px 24px; background: #ffffff; border-top: 1px solid #e2e8f0; text-align: center; color: #64748b; font-size: 12px;">
                 <p style="margin: 0 0 6px 0;">You received this email because you enabled Daily Job Automation in HirePulse.</p>
-                <p style="margin: 0;">To update your preferences or pause notifications, visit your HirePulse Automation dashboard.</p>
+                <p style="margin: 0;">To update your preferences or pause notifications, visit your Rozgar Radar Automation dashboard.</p>
             </div>
         </div>
     </body>
@@ -228,7 +228,7 @@ def render_alert_template(user_name: str, job: Dict[str, Any]) -> str:
         <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden;">
             <div style="background: #2563eb; color: #ffffff; padding: 20px; text-align: center;">
                 <h2 style="margin: 0; font-size: 18px;">🎯 New Job Match Alert!</h2>
-                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">HirePulse Instant Notification</p>
+                <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Rozgar Radar Instant Notification</p>
             </div>
             <div style="padding: 24px;">
                 <p style="font-size: 14px; color: #334155; margin-top: 0;">Hi {user_name}, a new high-priority job opening just matched your profile with a <strong>{score}% match score</strong>:</p>
