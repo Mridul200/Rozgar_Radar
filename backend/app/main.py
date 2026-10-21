@@ -17,6 +17,9 @@ from fastapi.staticfiles import StaticFiles
 from app.config import settings
 from app.database import engine, Base, SessionLocal
 from app.api import api_router
+import json
+from datetime import datetime
+from app.models.job import JobListing
 from services.job_ingestion.source_registry import seed_source_registry
 from services.job_ingestion.scheduler import run_all_sources
 from services.digest_scheduler import periodic_daily_digest_worker
@@ -25,8 +28,90 @@ import logging
 
 logger = logging.getLogger("hirepulse_main")
 
+def seed_jobs_from_backup(db):
+    """If database has 0 jobs (e.g. freshly deployed on Render), seeds jobs from database/jobs.json."""
+    try:
+        count = db.query(JobListing).count()
+        if count > 0:
+            logger.info(f"Database already has {count} jobs. Skipping backup seed.")
+            return
+
+        json_path = os.path.join(root_dir, "database", "jobs.json")
+        if not os.path.exists(json_path):
+            json_path = os.path.join(root_dir, "jobs.json")
+        if not os.path.exists(json_path):
+            logger.warning(f"No jobs.json backup found at {json_path}")
+            return
+
+        logger.info(f"Seeding jobs from backup file: {json_path}...")
+        with open(json_path, "r", encoding="utf-8") as f:
+            records = json.load(f)
+
+        jobs_to_add = []
+        for r in records:
+            pub_date = None
+            if r.get("publication_date"):
+                try:
+                    pub_date = datetime.fromisoformat(r["publication_date"])
+                except Exception:
+                    pub_date = None
+
+            deadline = None
+            if r.get("application_deadline"):
+                try:
+                    deadline = datetime.fromisoformat(r["application_deadline"])
+                except Exception:
+                    deadline = None
+
+            job = JobListing(
+                id=r.get("id"),
+                source_id=r.get("source_id") or "agg_arbeitnow",
+                provider_job_id=r.get("provider_job_id"),
+                title=r.get("title", ""),
+                normalized_title=r.get("normalized_title") or r.get("title", "").lower().strip(),
+                company_name=r.get("company_name", "Unknown"),
+                company_domain=r.get("company_domain"),
+                location_raw=r.get("location_raw"),
+                city=r.get("city"),
+                country=r.get("country"),
+                location_category=r.get("location_category") or "apac_worldwide",
+                is_india_eligible=bool(r.get("is_india_eligible", True)),
+                location_eligibility_reason=r.get("location_eligibility_reason"),
+                work_mode=r.get("work_mode") or "remote",
+                employment_type=r.get("employment_type") or "full_time",
+                department=r.get("department"),
+                salary_min=r.get("salary_min"),
+                salary_max=r.get("salary_max"),
+                salary_currency=r.get("salary_currency"),
+                salary_pay_period=r.get("salary_pay_period"),
+                application_url=r.get("application_url", ""),
+                canonical_url=r.get("canonical_url") or r.get("application_url", ""),
+                publication_date=pub_date,
+                application_deadline=deadline,
+                freshness_status=r.get("freshness_status") or "active",
+                is_duplicate=bool(r.get("is_duplicate", False)),
+            )
+            jobs_to_add.append(job)
+
+        db.bulk_save_objects(jobs_to_add)
+        db.commit()
+        logger.info(f"Successfully seeded {len(jobs_to_add)} jobs from backup into database.")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error seeding jobs from backup: {e}")
+
 async def periodic_12h_sync():
-    """Runs data synchronization across all approved sources every 12 hours."""
+    """Runs data synchronization across all approved sources every 12 hours with an initial post-boot sync."""
+    try:
+        # Initial sync 15 seconds after boot to fetch latest jobs immediately
+        await asyncio.sleep(15)
+        logger.info("Executing initial post-boot sync for all approved sources...")
+        await run_all_sources(trigger_type="scheduled")
+    except asyncio.CancelledError:
+        return
+    except Exception as exc:
+        logger.error(f"Error during initial sync: {exc}")
+
     TWELVE_HOURS = 12 * 3600
     while True:
         try:
@@ -42,10 +127,11 @@ async def periodic_12h_sync():
 async def lifespan(app: FastAPI):
     # Initialize database tables
     Base.metadata.create_all(bind=engine)
-    # Seed source registry if needed
+    # Seed source registry and initial jobs if database is empty
     db = SessionLocal()
     try:
         seed_source_registry(db)
+        seed_jobs_from_backup(db)
     finally:
         db.close()
 
@@ -55,6 +141,7 @@ async def lifespan(app: FastAPI):
     yield
     sync_task.cancel()
     digest_task.cancel()
+
 
 app = FastAPI(
     title="HirePulse — Multi-Source Job Aggregator API",
