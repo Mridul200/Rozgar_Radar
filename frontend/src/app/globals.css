@@ -1,14 +1,52 @@
 @import "tailwindcss";
 
+@theme {
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-teal-500: #14b8a6;
+  --color-violet-500: #8b5cf6;
+}
+
 :root {
   --background: #060a12;
-  --foreground: #f1f5f9;
-  --card: #0f1724;
+  --foreground: #f8fafc;
+  --card: #0c121e;
+  --card-foreground: #f8fafc;
   --card-border: #1a2540;
+  --popover: #0c121e;
+  --popover-foreground: #f8fafc;
   --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --accent: #38bdf8;
-  --muted: #64748b;
+  --primary-foreground: #ffffff;
+  --secondary: #162032;
+  --secondary-foreground: #94a3b8;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #6366f1;
+  --color-violet-500: #8b5cf6;
+  --color-teal-500: #14b8a6;
 }
 
 * {
@@ -22,7 +60,7 @@ body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
   background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.07), transparent),
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.08), transparent),
     radial-gradient(ellipse 60% 40% at 80% 80%, rgba(56, 189, 248, 0.04), transparent);
 }
 
@@ -63,11 +101,14 @@ body {
 .prose.prose-invert h2,
 .prose.prose-invert h3 { font-weight: 700; color: #f1f5f9; margin-top: 1.25rem; }
 
-/* Button ripple animation */
-@keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-  70% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+/* Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
 }
 
 /* Skeleton loading shimmer */

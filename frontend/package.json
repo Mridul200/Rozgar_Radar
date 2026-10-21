@@ -9,12 +9,17 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@radix-ui/react-slot": "^1.5.0",
     "@supabase/supabase-js": "^2.118.0",
+    "@tabler/icons-react": "^3.49.0",
     "@types/three": "^0.186.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "lucide-react": "^1.59.0",
     "next": "16.4.2",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "tailwind-merge": "^3.7.0",
     "three": "^0.186.1"
   },
   "devDependencies": {

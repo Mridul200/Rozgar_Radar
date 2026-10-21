@@ -132,7 +132,7 @@ export default function EmbedPage() {
                   <div className="text-xs text-slate-400 flex items-center gap-3 mt-1">
                     <span className="text-slate-300 font-medium">{job.company_name}</span>
                     <span>•</span>
-                    <span>📍 {job.location_display}</span>
+                    <span>{job.location_display}</span>
                   </div>
                 </div>
 

@@ -175,7 +175,7 @@ curl -X GET "${backendUrl}/api/v1/jobs?keyword=engineer&work_mode=remote&page=1&
           </pre>
 
           <div className="mt-4 p-3 rounded-lg bg-slate-800/40 border border-slate-800 text-xs text-slate-400 leading-relaxed">
-            💡 <strong>Cross-Origin Enabled:</strong> The backend API has full CORS support enabled (<code className="text-indigo-300">Access-Control-Allow-Origin: *</code>), meaning requests will never be blocked by browser origin policies.
+            <strong className="text-slate-300">Cross-Origin Enabled:</strong> The backend API has full CORS support enabled (<code className="text-indigo-300">Access-Control-Allow-Origin: *</code>), meaning requests will never be blocked by browser origin policies.
           </div>
         </div>
 

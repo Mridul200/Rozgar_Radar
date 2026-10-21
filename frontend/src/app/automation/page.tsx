@@ -822,7 +822,7 @@ export default function AutomationPage() {
                     <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                   </div>
                   <p className="text-[11px] text-slate-400 mt-2">
-                    💡 This email will also be saved for all upcoming automated daily digests.
+                    This email will also be saved for all upcoming automated daily digests.
                   </p>
                 </div>
               </div>
@@ -853,7 +853,7 @@ export default function AutomationPage() {
                   ) : (
                     <Send className="w-4 h-4" />
                   )}
-                  {modalAction === "digest" ? "Send Digest Now 🚀" : "Send Test Email 🚀"}
+                  {modalAction === "digest" ? "Send Digest Now" : "Send Test Email"}
                 </button>
               </div>
             </div>
