@@ -1,4 +1,5 @@
 "use client";
+import { AppSidebarLayout } from "@/components/layout/AppSidebarLayout";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -117,131 +118,10 @@ export default function DashboardPage() {
     { title: "Job Tracker", href: "/saved-jobs", Icon: BookmarkCheck, notifs: savedJobs.length > 0 ? savedJobs.length : undefined },
   ];
 
-  return (
-    <div className={`flex min-h-screen w-full ${isDark ? "dark" : ""}`}>
-      <div className="flex w-full bg-slate-950 text-slate-100">
-        {/* COLLAPSIBLE SIDEBAR */}
-        <aside
-          className={`sticky top-0 h-screen shrink-0 border-r border-slate-800/80 bg-slate-900/95 backdrop-blur-xl transition-all duration-300 ease-in-out ${
-            sidebarOpen ? "w-64" : "w-16"
-          } p-3 flex flex-col justify-between z-30 shadow-2xl`}
-        >
-          <div>
-            {/* Title / Brand Header */}
-            <div className="mb-6 border-b border-slate-800 pb-4">
-              <Link
-                href="/"
-                className="flex cursor-pointer items-center justify-between rounded-xl p-2 transition-colors hover:bg-slate-800/60"
-              >
-                <div className="flex items-center gap-3">
-                  <img
-                    src="/logo.jpg"
-                    alt="Rozgar Radar"
-                    className="size-9 shrink-0 rounded-lg object-contain bg-white border border-slate-700/60 p-0.5 shadow-sm"
-                  />
-                  {sidebarOpen && (
-                    <div className="transition-opacity duration-200 opacity-100 min-w-0">
-                      <span className="block text-sm font-bold text-white tracking-tight truncate">
-                        Rozgar Radar
-                      </span>
-                      <span className="block text-[11px] text-cyan-400 font-medium truncate">
-                        Candidate Portal
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </Link>
-            </div>
+    return (
+    <AppSidebarLayout>
+      <div className="max-w-7xl mx-auto space-y-8">
 
-            {/* Navigation Options */}
-            <div className="space-y-1 mb-6">
-              {sidebarLinks.map((item) => {
-                const isSelected = pathname === item.href;
-                const IconComp = item.Icon;
-                return (
-                  <Link
-                    key={item.title}
-                    href={item.href}
-                    className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-200 ${
-                      isSelected
-                        ? "bg-cyan-500/15 text-cyan-300 shadow-sm border-l-2 border-cyan-400"
-                        : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
-                    }`}
-                  >
-                    <div className="grid h-full w-12 place-content-center shrink-0">
-                      <IconComp className="h-4 w-4" />
-                    </div>
-
-                    {sidebarOpen && (
-                      <span className="text-xs font-semibold truncate pr-8">
-                        {item.title}
-                      </span>
-                    )}
-
-                    {item.notifs && sidebarOpen && (
-                      <span className="absolute right-3 flex h-5 px-1.5 items-center justify-center rounded-full bg-cyan-500 text-[10px] text-white font-bold">
-                        {item.notifs}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-
-            {/* Account Settings / Quick Profile */}
-            {sidebarOpen && (
-              <div className="border-t border-slate-800 pt-4 space-y-1">
-                <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  Preferences
-                </div>
-                <Link
-                  href="/profile"
-                  className={`flex h-10 w-full items-center rounded-xl px-2 text-xs font-medium transition-colors ${
-                    pathname === "/profile"
-                      ? "bg-cyan-500/15 text-cyan-300"
-                      : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
-                  }`}
-                >
-                  <Settings className="h-4 w-4 mr-3 text-slate-400" />
-                  <span>Account Profile</span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={logout}
-                  className="flex h-10 w-full items-center rounded-xl px-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
-                >
-                  <LogOut className="h-4 w-4 mr-3" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Toggle Close / Expand Button */}
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-full border-t border-slate-800 transition-colors hover:bg-slate-800/60 rounded-xl mt-4"
-          >
-            <div className="flex items-center p-2.5">
-              <div className="grid size-8 place-content-center shrink-0 text-slate-400">
-                <ChevronsRight
-                  className={`h-4 w-4 transition-transform duration-300 ${
-                    sidebarOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </div>
-              {sidebarOpen && (
-                <span className="text-xs font-semibold text-slate-400 transition-opacity duration-200">
-                  Collapse Sidebar
-                </span>
-              )}
-            </div>
-          </button>
-        </aside>
-
-        {/* MAIN DASHBOARD CONTENT PANE */}
-        <div className="flex-1 min-w-0 p-6 lg:p-8 overflow-auto">
           {/* Header Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-800">
             <div>
@@ -448,7 +328,6 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Selected Job Modal */}
       {selectedJob && (
@@ -457,6 +336,6 @@ export default function DashboardPage() {
           onClose={() => setSelectedJob(null)}
         />
       )}
-    </div>
+    </AppSidebarLayout>
   );
 }

@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { fetchUserResumes, saveResume, deleteResume } from "@/lib/api";
 import { ResumeData, ResumeRecord } from "@/types/user";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { AppSidebarLayout } from "@/components/layout/AppSidebarLayout";
 import {
   FileText,
   Save,
@@ -234,10 +233,8 @@ export default function ResumeBuilderPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <AppSidebarLayout>
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Top Control Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
@@ -646,9 +643,7 @@ export default function ResumeBuilderPage() {
             </div>
           </div>
         </div>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AppSidebarLayout>
   );
 }

@@ -5,8 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { analyzeATS, fetchUserResumes, fetchJobs } from "@/lib/api";
 import { ATSAnalysisResult, ResumeRecord } from "@/types/user";
 import { JobListing } from "@/types/job";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { AppSidebarLayout } from "@/components/layout/AppSidebarLayout";
 import {
   CheckCircle2,
   AlertCircle,
@@ -100,10 +99,8 @@ export default function ATSCheckerPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+    <AppSidebarLayout>
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="mb-8">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 mb-2">
@@ -397,9 +394,7 @@ export default function ATSCheckerPage() {
             )}
           </div>
         )}
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AppSidebarLayout>
   );
 }

@@ -450,3 +450,4 @@ const ExampleContent = ({ isDark, setIsDark }: ExampleContentProps) => {
 };
 
 export default Example;
+

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
+import { AppSidebarLayout } from "@/components/layout/AppSidebarLayout";
 import { Footer } from "@/components/layout/Footer";
 import { SearchBar } from "@/components/SearchBar";
 import { JobFilters } from "@/components/JobFilters";
@@ -9,6 +10,7 @@ import { JobCard } from "@/components/JobCard";
 import { JobModal } from "@/components/JobModal";
 import { fetchJobs, fetchFilterOptions } from "@/lib/api";
 import { JobListing, JobFilterOptions } from "@/types/job";
+import { useAuth } from "@/lib/auth-context";
 import {
   Loader2,
   AlertCircle,
@@ -19,6 +21,7 @@ import {
 } from "lucide-react";
 
 export default function JobsPage() {
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<JobListing[]>([]);
   const [totalJobs, setTotalJobs] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -104,11 +107,8 @@ export default function JobsPage() {
     setCurrentPage(1);
   };
 
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  const pageBody = (
+    <div className="max-w-7xl w-full mx-auto space-y-6">
         {/* Page Header */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -227,13 +227,26 @@ export default function JobsPage() {
           </div>
         )}
 
-        {/* Job Detail Modal */}
-        {selectedJob && (
-          <JobModal job={selectedJob} onClose={() => setSelectedJob(null)} />
-        )}
-      </main>
-
-      <Footer />
     </div>
+  );
+
+  return (
+    <>
+      {user ? (
+        <AppSidebarLayout>{pageBody}</AppSidebarLayout>
+      ) : (
+        <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+          <Navbar />
+          <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {pageBody}
+          </main>
+          <Footer />
+        </div>
+      )}
+
+      {selectedJob && (
+        <JobModal job={selectedJob} onClose={() => setSelectedJob(null)} />
+      )}
+    </>
   );
 }

@@ -12,8 +12,7 @@ import {
   sendAutomationTestEmail
 } from "@/lib/api";
 import { AutomationConfig, AutomationLogItem } from "@/types/user";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { AppSidebarLayout } from "@/components/layout/AppSidebarLayout";
 import {
   Clock,
   Mail,
@@ -269,10 +268,8 @@ export default function AutomationPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <Navbar />
-
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+    <AppSidebarLayout>
+      <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
           <div>
@@ -859,9 +856,7 @@ export default function AutomationPage() {
             </div>
           </div>
         )}
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AppSidebarLayout>
   );
 }

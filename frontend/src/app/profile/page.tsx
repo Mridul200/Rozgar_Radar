@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { fetchUserProfile, updateUserProfile } from "@/lib/api";
 import { UserProfile } from "@/types/user";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { AppSidebarLayout } from "@/components/layout/AppSidebarLayout";
 import {
   User as UserIcon,
   MapPin,
@@ -134,10 +133,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-      <Navbar />
-
-      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+    <AppSidebarLayout>
+      <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
@@ -530,9 +527,7 @@ export default function ProfilePage() {
             </button>
           </div>
         </form>
-      </main>
-
-      <Footer />
-    </div>
+      </div>
+    </AppSidebarLayout>
   );
 }
