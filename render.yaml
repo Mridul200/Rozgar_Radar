@@ -1,0 +1,73 @@
+# ==============================================================================
+# render.yaml — Render Blueprint for HirePulse
+#
+# This file lets you deploy both the Backend (FastAPI) and Frontend (Next.js)
+# with a single click from the Render Dashboard.
+#
+# Usage:
+#   1. Push this repo to GitHub
+#   2. Go to https://render.com/deploy
+#   3. Connect your GitHub repo → Render auto-detects this file
+#   4. Fill in environment variables → Click "Apply"
+# ==============================================================================
+
+services:
+  # ──────────────────────────────────────────────
+  # 1. BACKEND — FastAPI (Python)
+  # ──────────────────────────────────────────────
+  - type: web
+    name: hirepulse-backend
+    runtime: python
+    region: oregon                     # Change to your preferred region
+    plan: free                         # free | starter | standard
+    buildCommand: |
+      pip install --upgrade pip && pip install -r backend/requirements.txt
+    startCommand: |
+      cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      # ── SMTP (Gmail) ──
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false                    # You'll fill this in the dashboard
+      - key: SMTP_PASSWORD
+        sync: false                    # You'll fill this in the dashboard
+
+      # ── Database ──
+      # For production, use Render PostgreSQL or Supabase
+      - key: DATABASE_URL
+        sync: false                    # e.g. postgresql://user:pass@host:5432/dbname
+
+      # ── Supabase (if used) ──
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+      # ── General ──
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+
+  # ──────────────────────────────────────────────
+  # 2. FRONTEND — Next.js (Node)
+  # ──────────────────────────────────────────────
+  - type: web
+    name: hirepulse-frontend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start -- --port $PORT
+    envVars:
+      # Point to the deployed backend URL (Render gives you a URL after backend deploys)
+      - key: NEXT_PUBLIC_API_URL
+        sync: false                    # e.g. https://hirepulse-backend.onrender.com
+      - key: NODE_VERSION
+        value: "20.11.1"

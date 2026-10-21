@@ -1,0 +1,17 @@
+{
+  "_fixture_note": "SAMPLE FIXTURE DATA FOR UNIT TESTING ONLY. NOT LIVE LISTINGS.",
+  "jobs": [
+    {
+      "id": "ashby-test-201",
+      "title": "Lead Security Engineer",
+      "department": "Security",
+      "team": "Infrastructure",
+      "location": "Remote - India",
+      "isRemote": true,
+      "employmentType": "FullTime",
+      "jobUrl": "https://jobs.ashbyhq.com/testcompany/ashby-test-201?utm_campaign=board",
+      "publishedAt": "2026-03-10T08:30:00Z",
+      "descriptionPlain": "Lead our cloud infrastructure security operations."
+    }
+  ]
+}

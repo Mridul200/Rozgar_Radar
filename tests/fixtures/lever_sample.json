@@ -1,0 +1,18 @@
+[
+  {
+    "_fixture_note": "SAMPLE FIXTURE DATA FOR UNIT TESTING ONLY. NOT LIVE LISTINGS.",
+    "id": "lever-test-101",
+    "text": "Data Platform Engineer",
+    "hostedUrl": "https://jobs.lever.co/testcompany/lever-test-101?lever-origin=applied",
+    "applyUrl": "https://jobs.lever.co/testcompany/lever-test-101/apply",
+    "createdAt": 1773561600000,
+    "categories": {
+      "commitment": "Full time",
+      "department": "Data Science",
+      "location": "Hyderabad, India",
+      "team": "Analytics"
+    },
+    "description": "<div>Build data pipelines at scale.</div>",
+    "descriptionPlain": "Build data pipelines at scale. Salary: $140,000 - $180,000 per year."
+  }
+]

@@ -1,0 +1,42 @@
+{
+  "_fixture_note": "SAMPLE FIXTURE DATA FOR UNIT TESTING ONLY. NOT LIVE LISTINGS.",
+  "jobs": [
+    {
+      "id": 9901,
+      "internal_job_id": 8801,
+      "title": "Senior Backend Architect (Remote)",
+      "updated_at": "2026-03-15T10:00:00Z",
+      "absolute_url": "https://boards.greenhouse.io/testcompany/jobs/9901?utm_source=test&gh_jid=9901",
+      "location": {
+        "name": "Bengaluru, India"
+      },
+      "departments": [
+        {
+          "id": 12,
+          "name": "Core Engineering"
+        }
+      ],
+      "content": "<p>We are seeking an experienced <strong>Backend Architect</strong>.</p><p>Compensation: ₹3,500,000 - ₹5,000,000 per year.</p>"
+    },
+    {
+      "id": 9902,
+      "internal_job_id": 8802,
+      "title": "Product Designer (On-site)",
+      "updated_at": "2026-03-16T12:00:00Z",
+      "absolute_url": "https://boards.greenhouse.io/testcompany/jobs/9902",
+      "location": {
+        "name": "Mumbai, India"
+      },
+      "departments": [
+        {
+          "id": 14,
+          "name": "Design"
+        }
+      ],
+      "content": "<p>Join our design team in our Mumbai office.</p>"
+    }
+  ],
+  "meta": {
+    "total": 2
+  }
+}
