@@ -57,7 +57,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200 selection:bg-cyan-500/30 selection:text-cyan-200">
       <Navbar />
 
       <main className="flex-1">

@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { loginUser } from "@/lib/api";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { AuthenticationCard } from "@/components/ui/authentication-card";
+import { useTheme } from "@/lib/theme-context";
+import { Sun, Moon, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [keepLoggedIn, setKeepLoggedIn] = useState(true);
@@ -39,10 +40,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Navbar />
+    <div className="min-h-screen w-full flex flex-col justify-between bg-background text-foreground p-4 sm:p-6 transition-colors duration-200">
+      {/* Minimal Top Bar */}
+      <header className="w-full max-w-5xl mx-auto flex items-center justify-between py-2">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors group"
+        >
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
+          <img
+            src="/logo.jpg"
+            alt="Rozgar Radar Logo"
+            className="w-7 h-7 rounded-lg object-contain bg-white p-0.5 border border-border"
+          />
+          <span className="font-semibold text-sm tracking-tight text-foreground">Rozgar Radar</span>
+        </Link>
 
-      <main className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        {/* Dark/Light Mode Toggle */}
+        <button
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+        >
+          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+      </header>
+
+      {/* Centered Auth Card */}
+      <main className="flex-1 flex items-center justify-center py-6">
         <AuthenticationCard
           mode="login"
           title="Sign in to your account"
@@ -67,7 +92,10 @@ export default function LoginPage() {
         />
       </main>
 
-      <Footer />
+      {/* Minimal Bottom Copyright */}
+      <footer className="w-full text-center py-2 text-xs text-muted-foreground">
+        © 2026 Rozgar Radar. All rights reserved.
+      </footer>
     </div>
   );
 }

@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Moon, Send, Sun, Phone, Mail, MapPin } from "lucide-react"
+import { useTheme } from "@/lib/theme-context"
 
 // Self-contained social icons
 function FacebookIcon({ className }: { className?: string }) {
@@ -48,17 +49,10 @@ function LinkedinIcon({ className }: { className?: string }) {
 }
 
 function Footerdemo() {
-  const [isDarkMode, setIsDarkMode] = React.useState(true)
+  const { theme, setTheme } = useTheme()
+  const isDarkMode = theme === "dark"
   const [subscribed, setSubscribed] = React.useState(false)
   const [emailInput, setEmailInput] = React.useState("")
-
-  React.useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add("dark")
-    } else {
-      document.documentElement.classList.remove("dark")
-    }
-  }, [isDarkMode])
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault()
@@ -70,7 +64,7 @@ function Footerdemo() {
   }
 
   return (
-    <footer className="relative border-t border-slate-800 bg-slate-950 text-slate-100 transition-colors duration-300">
+    <footer className="relative border-t border-border bg-card text-foreground transition-colors duration-200">
       <div className="container mx-auto px-4 py-12 md:px-6 lg:px-8 max-w-7xl">
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           <div className="relative">
@@ -78,11 +72,11 @@ function Footerdemo() {
               <img
                 src="/logo.jpg"
                 alt="Rozgar Radar Logo"
-                className="w-8 h-8 rounded-lg object-contain bg-white border border-slate-700/60 p-0.5"
+                className="w-8 h-8 rounded-lg object-contain bg-white border border-border p-0.5"
               />
-              <span className="font-bold text-xl tracking-tight text-white">Rozgar Radar</span>
+              <span className="font-bold text-xl tracking-tight text-foreground">Rozgar Radar</span>
             </div>
-            <p className="mb-6 text-sm text-slate-400">
+            <p className="mb-6 text-sm text-muted-foreground">
               Join our automated newsletter for daily verified job alerts and career updates directly delivered to your inbox.
             </p>
             <form onSubmit={handleSubscribe} className="relative">
@@ -91,13 +85,13 @@ function Footerdemo() {
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 placeholder="Enter your email"
-                className="pr-12 bg-slate-900 border-slate-800 text-white placeholder:text-slate-500 backdrop-blur-sm"
+                className="pr-12 bg-background border-border text-foreground placeholder:text-muted-foreground"
                 required
               />
               <Button
                 type="submit"
                 size="icon"
-                className="absolute right-1 top-1 h-8 w-8 rounded-full bg-cyan-500 text-black hover:bg-cyan-400 transition-transform hover:scale-105"
+                className="absolute right-1 top-1 h-8 w-8 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-transform hover:scale-105"
               >
                 <Send className="h-4 w-4" />
                 <span className="sr-only">Subscribe</span>
@@ -106,49 +100,49 @@ function Footerdemo() {
             {subscribed && (
               <p className="text-xs text-emerald-400 mt-2">✓ Thank you for subscribing to Rozgar Radar!</p>
             )}
-            <div className="absolute -right-4 top-0 h-24 w-24 rounded-full bg-cyan-500/10 blur-2xl" />
+            <div className="absolute -right-4 top-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
           </div>
 
           <div>
-            <h3 className="mb-4 text-base font-semibold text-white tracking-wide uppercase text-xs">Quick Links</h3>
+            <h3 className="mb-4 text-base font-semibold text-foreground tracking-wide uppercase text-xs">Quick Links</h3>
             <nav className="space-y-2.5 text-sm">
-              <Link href="/" className="block text-slate-400 transition-colors hover:text-cyan-400">
+              <Link href="/" className="block text-muted-foreground transition-colors hover:text-primary">
                 Home
               </Link>
-              <Link href="/jobs" className="block text-slate-400 transition-colors hover:text-cyan-400">
+              <Link href="/jobs" className="block text-muted-foreground transition-colors hover:text-primary">
                 Explore Jobs
               </Link>
-              <Link href="/automation" className="block text-slate-400 transition-colors hover:text-cyan-400">
+              <Link href="/automation" className="block text-muted-foreground transition-colors hover:text-primary">
                 Daily Email Automation
               </Link>
-              <Link href="/resume-builder" className="block text-slate-400 transition-colors hover:text-cyan-400">
+              <Link href="/resume-builder" className="block text-muted-foreground transition-colors hover:text-primary">
                 AI Resume Builder
               </Link>
-              <Link href="/ats-checker" className="block text-slate-400 transition-colors hover:text-cyan-400">
+              <Link href="/ats-checker" className="block text-muted-foreground transition-colors hover:text-primary">
                 ATS Readiness Analyzer
               </Link>
-              <Link href="/saved-jobs" className="block text-slate-400 transition-colors hover:text-cyan-400">
+              <Link href="/saved-jobs" className="block text-muted-foreground transition-colors hover:text-primary">
                 Application Tracker
               </Link>
             </nav>
           </div>
 
           <div>
-            <h3 className="mb-4 text-base font-semibold text-white tracking-wide uppercase text-xs">Contact Us</h3>
-            <address className="space-y-3 text-sm not-italic text-slate-400">
+            <h3 className="mb-4 text-base font-semibold text-foreground tracking-wide uppercase text-xs">Contact Us</h3>
+            <address className="space-y-3 text-sm not-italic text-muted-foreground">
               <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
+                <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                 <span>Tech Park, Bengaluru, Karnataka, India</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <Phone className="w-4 h-4 text-cyan-400 shrink-0" />
-                <a href="tel:+919670630486" className="hover:text-cyan-400 transition-colors font-medium">
+                <Phone className="w-4 h-4 text-primary shrink-0" />
+                <a href="tel:+919670630486" className="hover:text-primary transition-colors font-medium">
                   +919670630486
                 </a>
               </div>
               <div className="flex items-center gap-2.5">
-                <Mail className="w-4 h-4 text-cyan-400 shrink-0" />
-                <a href="mailto:techelevate258@gmail.com" className="hover:text-cyan-400 transition-colors font-medium">
+                <Mail className="w-4 h-4 text-primary shrink-0" />
+                <a href="mailto:techelevate258@gmail.com" className="hover:text-primary transition-colors font-medium">
                   techelevate258@gmail.com
                 </a>
               </div>
@@ -156,12 +150,12 @@ function Footerdemo() {
           </div>
 
           <div className="relative">
-            <h3 className="mb-4 text-base font-semibold text-white tracking-wide uppercase text-xs">Follow Us</h3>
+            <h3 className="mb-4 text-base font-semibold text-foreground tracking-wide uppercase text-xs">Follow Us</h3>
             <div className="mb-6 flex space-x-3">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <Button variant="outline" size="icon" className="rounded-full bg-background border-border text-foreground hover:bg-accent">
                       <FacebookIcon className="h-4 w-4" />
                       <span className="sr-only">Facebook</span>
                     </Button>
@@ -175,7 +169,7 @@ function Footerdemo() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <Button variant="outline" size="icon" className="rounded-full bg-background border-border text-foreground hover:bg-accent">
                       <TwitterIcon className="h-4 w-4" />
                       <span className="sr-only">Twitter</span>
                     </Button>
@@ -189,7 +183,7 @@ function Footerdemo() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <Button variant="outline" size="icon" className="rounded-full bg-background border-border text-foreground hover:bg-accent">
                       <InstagramIcon className="h-4 w-4" />
                       <span className="sr-only">Instagram</span>
                     </Button>
@@ -203,7 +197,7 @@ function Footerdemo() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="rounded-full bg-slate-900 border-slate-800 text-slate-300 hover:text-white hover:bg-slate-800">
+                    <Button variant="outline" size="icon" className="rounded-full bg-background border-border text-foreground hover:bg-accent">
                       <LinkedinIcon className="h-4 w-4" />
                       <span className="sr-only">LinkedIn</span>
                     </Button>
@@ -215,31 +209,31 @@ function Footerdemo() {
               </TooltipProvider>
             </div>
 
-            <div className="flex items-center space-x-2 text-slate-400 text-xs">
+            <div className="flex items-center space-x-2 text-muted-foreground text-xs">
               <Sun className="h-4 w-4" />
               <Switch
                 id="dark-mode"
                 checked={isDarkMode}
-                onCheckedChange={setIsDarkMode}
+                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
               />
               <Moon className="h-4 w-4" />
-              <Label htmlFor="dark-mode" className="text-xs text-slate-400 cursor-pointer">
+              <Label htmlFor="dark-mode" className="text-xs text-muted-foreground cursor-pointer">
                 Dark Mode
               </Label>
             </div>
           </div>
         </div>
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-slate-900 pt-8 text-center md:flex-row text-xs text-slate-500">
+        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-border pt-8 text-center md:flex-row text-xs text-muted-foreground">
           <p>© 2026 Rozgar Radar. All rights reserved. Direct official ATS links.</p>
           <nav className="flex gap-5">
-            <Link href="/privacy" className="transition-colors hover:text-cyan-400">
+            <Link href="/privacy" className="transition-colors hover:text-primary">
               Privacy Policy
             </Link>
-            <Link href="/terms" className="transition-colors hover:text-cyan-400">
+            <Link href="/terms" className="transition-colors hover:text-primary">
               Terms of Service
             </Link>
-            <Link href="/cookies" className="transition-colors hover:text-cyan-400">
+            <Link href="/cookies" className="transition-colors hover:text-primary">
               Cookie Settings
             </Link>
           </nav>
@@ -250,4 +244,3 @@ function Footerdemo() {
 }
 
 export { Footerdemo }
-

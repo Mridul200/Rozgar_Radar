@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 import {
   Home,
   Compass,
@@ -16,8 +17,8 @@ import {
   Settings,
   LogOut,
   Bell,
-  Sparkles,
-  Loader2,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 interface AppSidebarLayoutProps {
@@ -27,7 +28,8 @@ interface AppSidebarLayoutProps {
 export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, token, logout, isLoading: authLoading } = useAuth();
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Load sidebar preference from localStorage
@@ -64,29 +66,29 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
   ];
 
   return (
-    <div className="flex min-h-screen w-full bg-slate-950 text-slate-100">
+    <div className="flex min-h-screen w-full bg-background text-foreground transition-colors duration-200">
       {/* COLLAPSIBLE SIDEBAR */}
       <aside
-        className={`sticky top-0 h-screen shrink-0 border-r border-slate-800/80 bg-slate-900/95 backdrop-blur-xl transition-all duration-300 ease-in-out ${
+        className={`sticky top-0 h-screen shrink-0 border-r border-border bg-card backdrop-blur-xl transition-all duration-300 ease-in-out ${
           sidebarOpen ? "w-64" : "w-16"
-        } p-3 flex flex-col justify-between z-40 shadow-2xl select-none`}
+        } p-3 flex flex-col justify-between z-40 shadow-xl select-none`}
       >
         <div>
           {/* Brand Header */}
-          <div className="mb-6 border-b border-slate-800 pb-4">
+          <div className="mb-6 border-b border-border pb-4">
             <Link
               href="/"
-              className="flex cursor-pointer items-center justify-between rounded-xl p-1.5 transition-colors hover:bg-slate-800/60"
+              className="flex cursor-pointer items-center justify-between rounded-xl p-1.5 transition-colors hover:bg-accent"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <img
                   src="/logo.jpg"
                   alt="Rozgar Radar"
-                  className="size-9 shrink-0 rounded-lg object-contain bg-white border border-slate-700/60 p-0.5 shadow-sm"
+                  className="size-9 shrink-0 rounded-lg object-contain bg-white border border-border p-0.5 shadow-sm"
                 />
                 {sidebarOpen && (
                   <div className="transition-opacity duration-200 opacity-100 min-w-0">
-                    <span className="block text-sm font-extrabold text-white tracking-tight truncate">
+                    <span className="block text-sm font-extrabold text-foreground tracking-tight truncate">
                       Rozgar Radar
                     </span>
                     <span className="block text-[10px] text-emerald-400 font-semibold truncate">
@@ -112,8 +114,8 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
                   href={item.href}
                   className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-200 ${
                     isSelected
-                      ? "bg-emerald-500/15 text-emerald-300 shadow-sm border-l-2 border-emerald-400"
-                      : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
+                      ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary font-semibold"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                   title={!sidebarOpen ? item.title : undefined}
                 >
@@ -122,7 +124,7 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
                   </div>
 
                   {sidebarOpen && (
-                    <span className="text-xs font-semibold truncate pr-4">
+                    <span className="text-xs truncate pr-4">
                       {item.title}
                     </span>
                   )}
@@ -133,26 +135,44 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
 
           {/* Account & Profile */}
           {sidebarOpen && (
-            <div className="border-t border-slate-800 pt-4 space-y-1">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="border-t border-border pt-4 space-y-1">
+              <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 Settings
               </div>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex h-10 w-full items-center justify-between rounded-xl px-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+              >
+                <div className="flex items-center">
+                  {theme === "dark" ? (
+                    <Sun className="h-4 w-4 mr-3 text-muted-foreground" />
+                  ) : (
+                    <Moon className="h-4 w-4 mr-3 text-muted-foreground" />
+                  )}
+                  <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                </div>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase">
+                  {theme}
+                </span>
+              </button>
+
               <Link
                 href="/profile"
                 className={`flex h-10 w-full items-center rounded-xl px-2 text-xs font-medium transition-colors ${
                   pathname === "/profile"
-                    ? "bg-emerald-500/15 text-emerald-300"
-                    : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
+                    ? "bg-primary/10 text-primary font-semibold"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
-                <Settings className="h-4 w-4 mr-3 text-slate-400" />
+                <Settings className="h-4 w-4 mr-3 text-muted-foreground" />
                 <span>Account Profile</span>
               </Link>
               {user && (
                 <button
                   type="button"
                   onClick={logout}
-                  className="flex h-10 w-full items-center rounded-xl px-2 text-xs font-medium text-rose-400 hover:bg-rose-500/10 transition-colors"
+                  className="flex h-10 w-full items-center rounded-xl px-2 text-xs font-medium text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >
                   <LogOut className="h-4 w-4 mr-3" />
                   <span>Sign Out</span>
@@ -166,11 +186,11 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
         <button
           type="button"
           onClick={toggleSidebar}
-          className="w-full border-t border-slate-800 transition-colors hover:bg-slate-800/60 rounded-xl mt-4"
+          className="w-full border-t border-border transition-colors hover:bg-accent rounded-xl mt-4 cursor-pointer"
           title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
         >
           <div className="flex items-center p-2.5">
-            <div className="grid size-8 place-content-center shrink-0 text-slate-400">
+            <div className="grid size-8 place-content-center shrink-0 text-muted-foreground">
               <ChevronsRight
                 className={`h-4 w-4 transition-transform duration-300 ${
                   sidebarOpen ? "rotate-180" : ""
@@ -178,7 +198,7 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
               />
             </div>
             {sidebarOpen && (
-              <span className="text-xs font-semibold text-slate-400 transition-opacity duration-200">
+              <span className="text-xs font-semibold text-muted-foreground transition-opacity duration-200">
                 Collapse Sidebar
               </span>
             )}
@@ -186,12 +206,12 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
         </button>
       </aside>
 
-      {/* MAIN CONTENT PANE (OPENS RIGHT NEXT TO THE SIDEBAR) */}
+      {/* MAIN CONTENT PANE */}
       <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
-        {/* Minimal top status bar (No bulky horizontal navbar) */}
-        <header className="h-14 shrink-0 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md px-6 flex items-center justify-between z-30">
+        {/* Minimal top status bar */}
+        <header className="h-14 shrink-0 border-b border-border bg-card/75 backdrop-blur-md px-6 flex items-center justify-between z-30 transition-colors duration-200">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               {pathname === "/dashboard"
                 ? "Dashboard"
                 : pathname === "/automation"
@@ -210,19 +230,29 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer border border-border"
+              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+
             <Link
               href="/automation"
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors"
+              className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               title="Daily Automation Alerts"
             >
               <Bell className="h-4 w-4" />
             </Link>
+
             <Link
               href="/profile"
-              className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+              className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-xl bg-accent border border-border hover:border-primary text-xs font-semibold text-foreground transition-colors"
             >
-              <div className="size-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[11px]">
+              <div className="size-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-bold text-[11px]">
                 {(user?.full_name || user?.email || "U")[0].toUpperCase()}
               </div>
               <span className="max-w-[120px] truncate">
@@ -240,4 +270,3 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
     </div>
   );
 }
-

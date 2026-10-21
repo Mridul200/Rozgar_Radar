@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 import {
   Compass,
   Sparkles,
@@ -16,12 +17,15 @@ import {
   Menu,
   X,
   ChevronDown,
-  LayoutDashboard
+  LayoutDashboard,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 export function Navbar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
@@ -39,7 +43,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 w-full border-b border-border bg-background/85 backdrop-blur-xl transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-8">
@@ -47,18 +51,18 @@ export function Navbar() {
             <img
               src="/logo.jpg"
               alt="Rozgar Radar Logo"
-              className="w-10 h-10 rounded-xl object-contain bg-white shadow-md shadow-emerald-500/10 border border-slate-700/60 p-0.5 group-hover:scale-105 transition-transform duration-200"
+              className="w-10 h-10 rounded-xl object-contain bg-white shadow-md border border-border p-0.5 group-hover:scale-105 transition-transform duration-200"
             />
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-lg tracking-tight text-white group-hover:text-emerald-400 transition-colors">
+                <span className="font-extrabold text-lg tracking-tight text-foreground group-hover:text-primary transition-colors">
                   Rozgar Radar
                 </span>
                 <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
                   AI Agent
                 </span>
               </div>
-              <span className="text-[10px] text-slate-400 -mt-0.5 block font-medium">Find Jobs. Build Your Future.</span>
+              <span className="text-[10px] text-muted-foreground -mt-0.5 block font-medium">Find Jobs. Build Your Future.</span>
             </div>
           </Link>
 
@@ -73,8 +77,8 @@ export function Navbar() {
                   href={link.href}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                     active
-                      ? "text-cyan-400 bg-cyan-500/10 border border-cyan-500/20"
-                      : "text-slate-300 hover:text-white hover:bg-slate-900"
+                      ? "text-primary bg-primary/10 border border-primary/20"
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent"
                   }`}
                 >
                   <Icon className="w-4 h-4 opacity-80" />
@@ -87,17 +91,27 @@ export function Navbar() {
 
         {/* Right CTA / User controls */}
         <div className="hidden md:flex items-center gap-3">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="p-2 rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+            title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
           {user ? (
             <div className="relative">
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/90 text-sm font-medium text-slate-200 hover:border-slate-700 hover:bg-slate-800 transition-all shadow-sm"
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-border bg-card text-sm font-medium text-foreground hover:bg-accent transition-all shadow-sm"
               >
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white uppercase">
                   {user.full_name ? user.full_name.charAt(0) : "U"}
                 </div>
                 <span className="max-w-[120px] truncate">{user.full_name || user.email}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               </button>
 
               {userDropdownOpen && (
@@ -106,56 +120,56 @@ export function Navbar() {
                     className="fixed inset-0 z-10"
                     onClick={() => setUserDropdownOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-800 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl z-20 animate-in">
-                    <div className="px-3 py-2 border-b border-slate-800 mb-1">
-                      <p className="text-xs font-medium text-slate-400">Signed in as</p>
-                      <p className="text-sm font-semibold text-white truncate">{user.email}</p>
+                  <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card p-1.5 shadow-2xl backdrop-blur-xl z-20 animate-in">
+                    <div className="px-3 py-2 border-b border-border mb-1">
+                      <p className="text-xs font-medium text-muted-foreground">Signed in as</p>
+                      <p className="text-sm font-semibold text-foreground truncate">{user.email}</p>
                     </div>
 
                     <Link
                       href="/dashboard"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-800 hover:text-cyan-400 transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent hover:text-primary transition-colors"
                     >
-                      <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                      <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
                       Dashboard
                     </Link>
 
                     <Link
                       href="/profile"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-800 hover:text-cyan-400 transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent hover:text-primary transition-colors"
                     >
-                      <UserIcon className="w-4 h-4 text-slate-400" />
+                      <UserIcon className="w-4 h-4 text-muted-foreground" />
                       My Profile & Preferences
                     </Link>
 
                     <Link
                       href="/saved-jobs"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-800 hover:text-cyan-400 transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent hover:text-primary transition-colors"
                     >
-                      <BookmarkCheck className="w-4 h-4 text-slate-400" />
+                      <BookmarkCheck className="w-4 h-4 text-muted-foreground" />
                       Saved & Applied Jobs
                     </Link>
 
                     <Link
                       href="/automation"
                       onClick={() => setUserDropdownOpen(false)}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-slate-200 hover:bg-slate-800 hover:text-cyan-400 transition-colors"
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-foreground hover:bg-accent hover:text-primary transition-colors"
                     >
-                      <Zap className="w-4 h-4 text-cyan-400" />
+                      <Zap className="w-4 h-4 text-primary" />
                       Daily Alert Settings
                     </Link>
 
-                    <div className="border-t border-slate-800 my-1" />
+                    <div className="border-t border-border my-1" />
 
                     <button
                       onClick={() => {
                         setUserDropdownOpen(false);
                         logout();
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-rose-400 hover:bg-rose-500/10 transition-colors text-left"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-rose-500 hover:bg-rose-500/10 transition-colors text-left"
                     >
                       <LogOut className="w-4 h-4" />
                       Sign Out
@@ -168,13 +182,13 @@ export function Navbar() {
             <>
               <Link
                 href="/auth/login"
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               >
                 Sign In
               </Link>
               <Link
                 href="/auth/register"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 shadow-lg shadow-cyan-500/25 transition-all transform hover:-translate-y-0.5"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-primary-foreground bg-primary hover:opacity-90 shadow-lg transition-all transform hover:-translate-y-0.5"
               >
                 Get Started
                 <Sparkles className="w-4 h-4" />
@@ -185,17 +199,24 @@ export function Navbar() {
 
         {/* Mobile menu trigger */}
         <div className="flex md:hidden items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground"
+          >
+            {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           {user && (
             <Link
               href="/dashboard"
-              className="p-2 rounded-lg text-slate-300 hover:text-cyan-400 hover:bg-slate-900"
+              className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent"
             >
               <LayoutDashboard className="w-5 h-5" />
             </Link>
           )}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-900"
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -205,7 +226,7 @@ export function Navbar() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-800 bg-slate-950/98 px-4 py-4 space-y-2 animate-in">
+        <div className="md:hidden border-b border-border bg-card px-4 py-4 space-y-2 animate-in">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const active = isActive(link.href);
@@ -216,8 +237,8 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-base font-medium ${
                   active
-                    ? "text-cyan-400 bg-cyan-500/10 border border-cyan-500/20"
-                    : "text-slate-300 hover:bg-slate-900"
+                    ? "text-primary bg-primary/10 border border-primary/20"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -226,23 +247,23 @@ export function Navbar() {
             );
           })}
 
-          <div className="pt-3 border-t border-slate-800 space-y-2">
+          <div className="pt-3 border-t border-border space-y-2">
             {user ? (
               <>
                 <Link
                   href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2 rounded-xl text-base font-medium text-slate-200 hover:bg-slate-900"
+                  className="flex items-center gap-3 px-3 py-2 rounded-xl text-base font-medium text-foreground hover:bg-accent"
                 >
-                  <LayoutDashboard className="w-5 h-5 text-cyan-400" />
+                  <LayoutDashboard className="w-5 h-5 text-primary" />
                   Dashboard
                 </Link>
                 <Link
                   href="/profile"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2 rounded-xl text-base font-medium text-slate-200 hover:bg-slate-900"
+                  className="flex items-center gap-3 px-3 py-2 rounded-xl text-base font-medium text-foreground hover:bg-accent"
                 >
-                  <UserIcon className="w-5 h-5 text-slate-400" />
+                  <UserIcon className="w-5 h-5 text-muted-foreground" />
                   Profile & Preferences
                 </Link>
                 <button
@@ -250,7 +271,7 @@ export function Navbar() {
                     setMobileMenuOpen(false);
                     logout();
                   }}
-                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-base font-medium text-rose-400 hover:bg-rose-500/10 text-left"
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-base font-medium text-rose-500 hover:bg-rose-500/10 text-left"
                 >
                   <LogOut className="w-5 h-5" />
                   Sign Out ({user.email})
@@ -261,14 +282,14 @@ export function Navbar() {
                 <Link
                   href="/auth/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 text-center text-sm font-medium rounded-xl border border-slate-800 text-slate-200 bg-slate-900"
+                  className="w-full py-2.5 text-center text-sm font-medium rounded-xl border border-border text-foreground bg-accent"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/auth/register"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-2.5 text-center text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-cyan-500 to-indigo-600 shadow-md"
+                  className="w-full py-2.5 text-center text-sm font-semibold rounded-xl text-primary-foreground bg-primary shadow-md"
                 >
                   Get Started
                 </Link>

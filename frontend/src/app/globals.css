@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-border: var(--border);
   --color-input: var(--input);
@@ -25,25 +27,50 @@
 }
 
 :root {
-  --background: #090b10;
+  --background: #ffffff;
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --card-border: #e4e4e7;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+  --primary: #06b6d4;
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e4e4e7;
+  --input: #f4f4f5;
+  --ring: #06b6d4;
+  --color-violet-500: #8b5cf6;
+  --color-teal-500: #14b8a6;
+}
+
+.dark {
+  --background: #000000;
   --foreground: #f4f4f5;
-  --card: #0f131a;
+  --card: #09090b;
   --card-foreground: #f4f4f5;
-  --card-border: #1e2533;
-  --popover: #0f131a;
+  --card-border: #18181b;
+  --popover: #09090b;
   --popover-foreground: #f4f4f5;
   --primary: #06b6d4;
-  --primary-foreground: #020617;
-  --secondary: #161b26;
+  --primary-foreground: #000000;
+  --secondary: #121214;
   --secondary-foreground: #a1a1aa;
-  --muted: #181e2b;
-  --muted-foreground: #94a3b8;
-  --accent: #1e2638;
+  --muted: #121214;
+  --muted-foreground: #a1a1aa;
+  --accent: #18181b;
   --accent-foreground: #f4f4f5;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #1e2533;
-  --input: #1e2533;
+  --border: #18181b;
+  --input: #121214;
   --ring: #06b6d4;
   --color-violet-500: #8b5cf6;
   --color-teal-500: #14b8a6;
@@ -59,40 +86,34 @@ body {
   color: var(--foreground);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(99, 102, 241, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(56, 189, 248, 0.04), transparent);
 }
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #070b14; }
-::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: #334155; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
 /* Glassmorphism helpers */
 .glass-panel {
-  background: rgba(15, 23, 42, 0.72);
+  background: rgba(9, 9, 11, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border);
 }
 
 .glass-card {
-  background: linear-gradient(145deg, rgba(18, 27, 46, 0.90) 0%, rgba(14, 22, 40, 0.95) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.055);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--card);
+  border: 1px solid var(--border);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.35);
-  box-shadow: 0 8px 32px -10px rgba(99, 102, 241, 0.22), 0 0 0 1px rgba(99, 102, 241, 0.12);
-  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 30px -10px rgba(6, 182, 212, 0.15);
 }
 
-/* Prose overrides for dark mode job descriptions */
+/* Prose overrides for job descriptions */
 .prose.prose-invert {
   color: #cbd5e1;
 }
@@ -118,7 +139,7 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
+  background: linear-gradient(90deg, #18181b 0%, #09090b 50%, #18181b 100%);
   background-size: 800px 100%;
   animation: shimmer 1.5s infinite;
 }
