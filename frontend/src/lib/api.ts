@@ -13,7 +13,10 @@ import {
   AutomationLogItem,
   ResumeRecord,
   ResumeData,
-  ATSAnalysisResult
+  ATSAnalysisResult,
+  ATSAnalysisHistoryItem,
+  ResumeSuggestResponse,
+  ResumeImportResponse
 } from "@/types/user";
 
 const RAW_API_URL = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000").trim();
@@ -367,6 +370,103 @@ export async function deleteResume(id: string, token?: string | null): Promise<v
   }
 }
 
+export async function duplicateResume(id: string, token?: string | null): Promise<ResumeRecord> {
+  const res = await fetch(`${API_BASE}/resumes/${id}/duplicate`, {
+    method: "POST",
+    headers: { ...getAuthHeader(token) },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to duplicate resume");
+  }
+  return res.json();
+}
+
+export async function importResume(file: File, token?: string | null): Promise<ResumeImportResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch(`${API_BASE}/resumes/import`, {
+    method: "POST",
+    headers: { ...getAuthHeader(token) },
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to parse resume document");
+  }
+  return res.json();
+}
+
+export async function suggestResumeAI(
+  task: "summary" | "bullets" | "project" | "enhance" | "tailor",
+  context: Record<string, any>,
+  token?: string | null
+): Promise<ResumeSuggestResponse> {
+  const res = await fetch(`${API_BASE}/resumes/ai/suggest`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...getAuthHeader(token),
+    },
+    body: JSON.stringify({ task, context }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "AI suggestion failed");
+  }
+  return res.json();
+}
+
+export async function exportResumePdf(
+  id: string,
+  template?: string,
+  token?: string | null
+): Promise<Blob> {
+  const q = template ? `?template=${encodeURIComponent(template)}` : "";
+  const res = await fetch(`${API_BASE}/resumes/${id}/export/pdf${q}`, {
+    headers: { ...getAuthHeader(token) },
+  });
+  if (!res.ok) {
+    throw new Error("Failed to export PDF resume");
+  }
+  return res.blob();
+}
+
+export async function exportResumeDocx(
+  id: string,
+  token?: string | null
+): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/resumes/${id}/export/docx`, {
+    headers: { ...getAuthHeader(token) },
+  });
+  if (!res.ok) {
+    throw new Error("Failed to export DOCX resume");
+  }
+  return res.blob();
+}
+
+export async function fetchATSHistory(token?: string | null): Promise<ATSAnalysisHistoryItem[]> {
+  const res = await fetch(`${API_BASE}/resumes/ats/history`, {
+    headers: { ...getAuthHeader(token) },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch ATS history");
+  }
+  return res.json();
+}
+
+export async function deleteATSHistoryItem(id: string, token?: string | null): Promise<void> {
+  const res = await fetch(`${API_BASE}/resumes/ats/history/${id}`, {
+    method: "DELETE",
+    headers: { ...getAuthHeader(token) },
+  });
+  if (!res.ok) {
+    throw new Error("Failed to delete ATS history item");
+  }
+}
+
 export async function analyzeATS(
   data: {
     resume_text?: string;
@@ -374,6 +474,7 @@ export async function analyzeATS(
     job_id?: string;
     job_description?: string;
     target_role?: string;
+    company_name?: string;
   },
   token?: string | null
 ): Promise<ATSAnalysisResult> {

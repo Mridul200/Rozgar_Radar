@@ -20,6 +20,7 @@ class User(Base):
     automation_logs = relationship("AutomationLog", back_populates="user", cascade="all, delete-orphan")
     resumes = relationship("Resume", back_populates="user", cascade="all, delete-orphan")
     email_notifications = relationship("EmailNotificationLog", back_populates="user", cascade="all, delete-orphan")
+    ats_analyses = relationship("ATSAnalysis", back_populates="user", cascade="all, delete-orphan")
 
 
 class UserProfile(Base):
@@ -140,3 +141,21 @@ class EmailNotificationLog(Base):
     __table_args__ = (
         Index("idx_user_job_alert", "user_id", "job_id"),
     )
+
+
+class ATSAnalysis(Base):
+    __tablename__ = "ats_analyses"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String(36), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    resume_id = Column(String(36), ForeignKey("resumes.id", ondelete="SET NULL"), nullable=True, index=True)
+    resume_title = Column(String(128), default="Resume", nullable=False)
+    target_role = Column(String(128), nullable=False)
+    company_name = Column(String(128), nullable=True)
+    overall_score = Column(Integer, default=0, nullable=False)
+    category_scores_json = Column(Text, nullable=False)
+    report_json = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="ats_analyses")
+    resume = relationship("Resume")

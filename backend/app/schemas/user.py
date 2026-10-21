@@ -142,7 +142,7 @@ class AutomationLogResponse(BaseModel):
 
 class ResumeCreateRequest(BaseModel):
     title: str = "My Resume"
-    template: str = "modern"
+    template: str = "classic"
     content_json: Dict[str, Any]
 
 class ResumeUpdateRequest(BaseModel):
@@ -165,6 +165,7 @@ class ATSAnalysisRequest(BaseModel):
     job_id: Optional[str] = None
     job_description: Optional[str] = None
     target_role: Optional[str] = None
+    company_name: Optional[str] = None
 
 class SkillMatchItem(BaseModel):
     skill: str
@@ -176,12 +177,50 @@ class ATSAnalysisResponse(BaseModel):
     match_level: str  # "High", "Moderate", "Needs Improvement"
     matched_skills: List[str]
     missing_skills: List[str]
-    skill_breakdown: List[SkillMatchItem]
-    experience_score: int
-    readability_score: int
-    keyword_coverage_percent: int
-    formatting_observations: List[str]
-    actionable_suggestions: List[str]
-    evidence_snippets: List[str]
-    role_alignment_notes: str
-    disclaimer: str
+    skill_breakdown: List[SkillMatchItem] = []
+    experience_score: int = 0
+    readability_score: int = 0
+    keyword_coverage_percent: int = 0
+    formatting_observations: List[str] = []
+    actionable_suggestions: List[str] = []
+    evidence_snippets: List[str] = []
+    role_alignment_notes: str = ""
+    disclaimer: str = ""
+    subscores: Optional[Dict[str, int]] = None
+    keyword_analysis: Optional[Dict[str, Any]] = None
+    formatting_warnings: Optional[List[Dict[str, Any]]] = None
+    prioritized_improvements: Optional[List[Dict[str, Any]]] = None
+    analysis_id: Optional[str] = None
+    resume_id: Optional[str] = None
+    resume_title: Optional[str] = None
+    target_role: Optional[str] = None
+    company_name: Optional[str] = None
+
+class ATSAnalysisHistoryItem(BaseModel):
+    id: str
+    user_id: str
+    resume_id: Optional[str] = None
+    resume_title: Optional[str] = None
+    target_role: Optional[str] = None
+    company_name: Optional[str] = None
+    overall_score: int
+    category_scores: Dict[str, Any]
+    report: Dict[str, Any]
+    created_at: datetime
+
+class ResumeSuggestRequest(BaseModel):
+    task: str  # "summary" | "bullets" | "project" | "enhance" | "tailor"
+    context: Dict[str, Any]
+
+class ResumeSuggestResponse(BaseModel):
+    original: str = ""
+    suggested: str = ""
+    variations: List[str] = []
+    bullets: List[str] = []
+    explanation: str = ""
+
+class ResumeImportResponse(BaseModel):
+    success: bool
+    raw_text: str
+    parsed_data: Dict[str, Any]
+    warnings: List[str] = []

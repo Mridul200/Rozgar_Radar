@@ -89,54 +89,81 @@ export interface AutomationLogItem {
   created_at: string;
 }
 
+export interface ExperienceItem {
+  id: string;
+  title: string;
+  company: string;
+  location?: string;
+  startDate?: string;
+  endDate?: string;
+  current?: boolean;
+  description?: string;
+  bullets?: string[];
+}
+
+export interface EducationItem {
+  id: string;
+  degree: string;
+  school: string;
+  location?: string;
+  gradYear?: string;
+  gpa?: string;
+}
+
+export interface ProjectItem {
+  id: string;
+  name: string;
+  link?: string;
+  technologies?: string | string[];
+  description?: string;
+  bullets?: string[];
+}
+
+export interface CertificationItem {
+  id: string;
+  name: string;
+  issuer?: string;
+  year?: string;
+  link?: string;
+}
+
+export interface CustomSectionItem {
+  id: string;
+  title: string;
+  content: string;
+}
+
 export interface ResumeData {
   fullName: string;
+  professionalTitle?: string;
+  title?: string;
   email: string;
   phone: string;
   location: string;
   website?: string;
+  portfolio?: string;
   linkedin?: string;
   github?: string;
+  otherLink?: string;
   summary: string;
-  skills: string[];
-  experience: {
-    id: string;
-    title: string;
-    company: string;
-    location: string;
-    startDate: string;
-    endDate: string;
-    current: boolean;
-    description: string;
-  }[];
-  education: {
-    id: string;
-    degree: string;
-    school: string;
-    location: string;
-    gradYear: string;
-    gpa?: string;
-  }[];
-  projects: {
-    id: string;
-    name: string;
-    link?: string;
-    technologies: string;
-    description: string;
-  }[];
-  certifications: {
-    id: string;
-    name: string;
-    issuer: string;
-    year: string;
-  }[];
+  skills: string[] | {
+    technical?: string[];
+    tools?: string[];
+    soft?: string[];
+    other?: string[];
+  };
+  experience: ExperienceItem[];
+  education: EducationItem[];
+  projects: ProjectItem[];
+  certifications: CertificationItem[];
+  customSections?: CustomSectionItem[];
 }
 
 export interface ResumeRecord {
   id: string;
   user_id: string;
   title: string;
-  template: "modern" | "executive" | "minimal";
+  template: "classic" | "modern" | "minimal" | "technical" | string;
   content_json: ResumeData;
   created_at: string;
   updated_at: string;
@@ -146,6 +173,23 @@ export interface SkillMatchItem {
   skill: string;
   found: boolean;
   category: "technical" | "soft" | "domain" | "tool";
+}
+
+export interface FormattingWarning {
+  title: string;
+  severity: "risk" | "info";
+  confidence: "high" | "medium" | "low";
+  detail: string;
+  fix: string;
+}
+
+export interface PrioritizedImprovement {
+  priority: "high" | "medium" | "optional";
+  category: string;
+  recommendation: string;
+  reason: string;
+  can_fix_with_ai: boolean;
+  target_section: string;
 }
 
 export interface ATSAnalysisResult {
@@ -162,4 +206,53 @@ export interface ATSAnalysisResult {
   evidence_snippets: string[];
   role_alignment_notes: string;
   disclaimer: string;
+  subscores?: {
+    keyword_match: number;
+    experience_relevance: number;
+    section_completeness: number;
+    formatting_compatibility: number;
+    content_quality: number;
+  };
+  keyword_analysis?: {
+    required_matched: string[];
+    required_missing: string[];
+    preferred_matched: string[];
+    preferred_missing: string[];
+    synonym_matches: Array<{ original_jd_term: string; resume_matched_variant: string }>;
+  };
+  formatting_warnings?: FormattingWarning[];
+  prioritized_improvements?: PrioritizedImprovement[];
+  analysis_id?: string;
+  resume_id?: string;
+  resume_title?: string;
+  target_role?: string;
+  company_name?: string;
+}
+
+export interface ATSAnalysisHistoryItem {
+  id: string;
+  user_id: string;
+  resume_id?: string;
+  resume_title?: string;
+  target_role?: string;
+  company_name?: string;
+  overall_score: number;
+  category_scores: Record<string, any>;
+  report: ATSAnalysisResult;
+  created_at: string;
+}
+
+export interface ResumeSuggestResponse {
+  original: string;
+  suggested: string;
+  variations: string[];
+  bullets: string[];
+  explanation: string;
+}
+
+export interface ResumeImportResponse {
+  success: boolean;
+  raw_text: string;
+  parsed_data: Partial<ResumeData>;
+  warnings: string[];
 }
