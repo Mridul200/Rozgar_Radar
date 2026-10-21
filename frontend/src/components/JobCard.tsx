@@ -8,43 +8,42 @@ interface JobCardProps {
   onSelect: (job: JobListing) => void;
 }
 
-// Platform color + label map
+// Platform color + label map (optimized for both Light and Dark modes)
 const PLATFORM_CONFIG: Record<string, { label: string; color: string }> = {
-  greenhouse:      { label: "Greenhouse",      color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/25" },
-  lever:           { label: "Lever",           color: "bg-violet-500/15 text-violet-300 border-violet-500/25" },
-  ashby:           { label: "Ashby",           color: "bg-sky-500/15 text-sky-300 border-sky-500/25" },
-  smartrecruiters: { label: "SmartRecruiters", color: "bg-orange-500/15 text-orange-300 border-orange-500/25" },
-  workday:         { label: "Workday",         color: "bg-blue-500/15 text-blue-300 border-blue-500/25" },
-  workable:        { label: "Workable",        color: "bg-teal-500/15 text-teal-300 border-teal-500/25" },
-  recruitee:       { label: "Recruitee",       color: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/25" },
-  arbeitnow:       { label: "Arbeitnow",       color: "bg-rose-500/15 text-rose-300 border-rose-500/25" },
-  aggregator:      { label: "Aggregator",      color: "bg-slate-700/60 text-slate-300 border-slate-600/50" },
+  greenhouse:      { label: "Greenhouse",      color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30" },
+  lever:           { label: "Lever",           color: "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30" },
+  ashby:           { label: "Ashby",           color: "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30" },
+  smartrecruiters: { label: "SmartRecruiters", color: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30" },
+  workday:         { label: "Workday",         color: "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30" },
+  workable:        { label: "Workable",        color: "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/30" },
+  recruitee:       { label: "Recruitee",       color: "bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-500/30" },
+  arbeitnow:       { label: "Arbeitnow",       color: "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30" },
+  aggregator:      { label: "Aggregator",      color: "bg-muted text-muted-foreground border-border" },
 };
 
 const WORK_MODE_STYLES: Record<string, string> = {
-  remote:       "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  hybrid:       "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  on_site:      "bg-sky-500/10 text-sky-400 border-sky-500/20",
-  not_disclosed:"bg-slate-800 text-slate-500 border-slate-700",
+  remote:        "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+  hybrid:        "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  on_site:       "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30",
+  not_disclosed: "bg-muted text-muted-foreground border-border",
 };
 
 const WORK_MODE_LABELS: Record<string, string> = {
-  remote:       "Remote",
-  hybrid:       "Hybrid",
-  on_site:      "On-site",
-  not_disclosed:"Flexible",
+  remote:        "Remote",
+  hybrid:        "Hybrid",
+  on_site:       "On-site",
+  not_disclosed: "Flexible",
 };
 
 const EMP_TYPE_LABELS: Record<string, string> = {
-  full_time:    "Full-time",
-  part_time:    "Part-time",
-  contract:     "Contract",
-  internship:   "Internship",
-  not_disclosed:"",
+  full_time:     "Full-time",
+  part_time:     "Part-time",
+  contract:      "Contract",
+  internship:    "Internship",
+  not_disclosed: "",
 };
 
 export function JobCard({ job, onSelect }: JobCardProps) {
-  // Determine date source: prefer real publication_date from ATS, fallback to first_seen_at
   const hasRealPubDate = !!job.publication_date;
   const firstDate = job.publication_date || job.first_seen_at;
   const firstDateFormatted = firstDate
@@ -78,50 +77,50 @@ export function JobCard({ job, onSelect }: JobCardProps) {
   return (
     <div
       className="group relative glass-card rounded-2xl flex flex-col justify-between overflow-hidden
-                 border border-slate-800/60 hover:border-indigo-500/40 transition-all duration-300
-                 hover:shadow-lg hover:shadow-indigo-900/20 hover:-translate-y-0.5"
+                 border border-border hover:border-primary/50 transition-all duration-300
+                 hover:shadow-md hover:-translate-y-0.5 bg-card text-card-foreground"
     >
       {/* Subtle top accent line on hover */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/0 to-transparent
-                      group-hover:via-indigo-500/60 transition-all duration-300" />
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-primary/0 to-transparent
+                      group-hover:via-primary/80 transition-all duration-300" />
 
-      <div className="p-5 sm:p-6 flex flex-col gap-3">
+      <div className="p-5 sm:p-6 flex flex-col gap-3.5">
         {/* Top row: Platform badge + work mode badge + freshness */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${platformCfg.color}`}>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${platformCfg.color}`}>
               {platformCfg.label}
             </span>
-            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full border ${workModeStyle}`}>
+            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-md border ${workModeStyle}`}>
               {workModeLabel}
             </span>
             {empTypeLabel && (
-              <span className="text-[11px] text-slate-400 bg-slate-800/70 px-2 py-0.5 rounded-full border border-slate-700/50 flex items-center gap-1">
-                <Briefcase className="w-2.5 h-2.5" />
+              <span className="text-[11px] text-muted-foreground bg-muted/80 px-2 py-0.5 rounded-md border border-border flex items-center gap-1 font-medium">
+                <Briefcase className="w-3 h-3 opacity-70" />
                 {empTypeLabel}
               </span>
             )}
             {job.location_category === "india_office" && (
-              <span className="text-[10px] font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/25 px-2 py-0.5 rounded-md flex items-center gap-1">
                 <span>🇮🇳</span>
                 <span>India Office</span>
               </span>
             )}
             {job.location_category === "remote_india" && (
-              <span className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 px-2 py-0.5 rounded-md flex items-center gap-1">
                 <span>🇮🇳</span>
                 <span>Remote (India)</span>
               </span>
             )}
             {job.location_category === "apac_worldwide" && (
-              <span className="text-[10px] font-semibold text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="text-[10px] font-semibold text-sky-700 dark:text-sky-300 bg-sky-500/10 border border-sky-500/25 px-2 py-0.5 rounded-md flex items-center gap-1">
                 <span>🌏</span>
                 <span>APAC / Global</span>
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-400 shrink-0 font-medium">
-            <CheckCircle2 className="w-3 h-3" />
+          <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 shrink-0 font-semibold">
+            <CheckCircle2 className="w-3.5 h-3.5" />
             <span>Verified</span>
           </div>
         </div>
@@ -129,46 +128,46 @@ export function JobCard({ job, onSelect }: JobCardProps) {
         {/* Job Title */}
         <h3
           onClick={() => onSelect(job)}
-          className="text-base sm:text-lg font-bold text-white group-hover:text-indigo-300
+          className="text-base sm:text-lg font-bold text-foreground group-hover:text-primary
                      transition-colors cursor-pointer line-clamp-2 leading-snug"
         >
           {job.title}
         </h3>
 
         {/* Company & Location */}
-        <div className="flex flex-col gap-1.5 text-xs text-slate-400">
+        <div className="flex flex-col gap-1.5 text-xs">
           <div className="flex items-center gap-1.5">
-            <Building2 className="w-3.5 h-3.5 shrink-0 text-slate-500" />
-            <span className="font-semibold text-slate-200 truncate">{job.company_name}</span>
+            <Building2 className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+            <span className="font-semibold text-foreground truncate">{job.company_name}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 shrink-0 text-slate-500" />
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
             <span className="truncate">{job.location_display}</span>
           </div>
         </div>
 
         {/* Salary chip */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10
-                        border border-emerald-500/20 text-emerald-300 text-xs font-semibold w-fit">
-          <Banknote className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold w-fit">
+          <Banknote className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
           <span>{salaryDisplay}</span>
         </div>
 
-        {/* Registration Dates: only show if we have real data */}
+        {/* Registration Dates */}
         {(firstDateFormatted || lastDateFormatted) && (
-          <div className="pt-2.5 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-[11px]">
-            <div className="flex items-center gap-1.5 text-slate-400 bg-slate-900/60 px-2.5 py-1.5 rounded-lg border border-slate-800/80">
-              <Calendar className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+          <div className="pt-2 border-t border-border grid grid-cols-2 gap-2 text-[11px]">
+            <div className="flex items-center gap-2 bg-muted/60 dark:bg-muted/30 px-2.5 py-1.5 rounded-lg border border-border">
+              <Calendar className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
               <div className="truncate">
-                <span className="text-[10px] text-slate-500 block uppercase font-semibold tracking-wider">{firstDateLabel}</span>
-                <span className="font-bold text-slate-200 text-xs">{firstDateFormatted || "—"}</span>
+                <span className="text-[10px] text-muted-foreground block uppercase font-semibold tracking-wider">{firstDateLabel}</span>
+                <span className="font-bold text-foreground text-xs">{firstDateFormatted || "—"}</span>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 text-slate-400 bg-slate-900/60 px-2.5 py-1.5 rounded-lg border border-slate-800/80">
-              <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            <div className="flex items-center gap-2 bg-muted/60 dark:bg-muted/30 px-2.5 py-1.5 rounded-lg border border-border">
+              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
               <div className="truncate">
-                <span className="text-[10px] text-slate-500 block uppercase font-semibold tracking-wider">Deadline</span>
-                <span className={`font-bold text-xs ${lastDateFormatted ? "text-amber-300" : "text-slate-500"}`}>
+                <span className="text-[10px] text-muted-foreground block uppercase font-semibold tracking-wider">Deadline</span>
+                <span className={`font-bold text-xs ${lastDateFormatted ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"}`}>
                   {lastDateFormatted || "Open until filled"}
                 </span>
               </div>
@@ -178,16 +177,16 @@ export function JobCard({ job, onSelect }: JobCardProps) {
       </div>
 
       {/* Card Footer */}
-      <div className="px-5 sm:px-6 pb-4 sm:pb-5 pt-2 flex items-center justify-between gap-3 border-t border-slate-800/40">
-        <div className="text-[11px] text-slate-500 font-medium truncate">
+      <div className="px-5 sm:px-6 pb-4 sm:pb-5 pt-3 flex items-center justify-between gap-3 border-t border-border bg-muted/20 dark:bg-transparent">
+        <div className="text-[11px] text-muted-foreground font-medium truncate">
           Official ATS Posting
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={() => onSelect(job)}
-            className="text-xs font-semibold text-slate-400 hover:text-white px-2.5 py-1.5
-                       rounded-lg hover:bg-slate-800/80 transition-colors cursor-pointer"
+            className="text-xs font-semibold text-muted-foreground hover:text-foreground px-2.5 py-1.5
+                       rounded-lg hover:bg-muted transition-colors cursor-pointer"
           >
             Details
           </button>
@@ -196,9 +195,8 @@ export function JobCard({ job, onSelect }: JobCardProps) {
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-lg
-                       bg-indigo-600 hover:bg-indigo-500 text-white
-                       shadow-sm shadow-indigo-700/40 transition-all cursor-pointer whitespace-nowrap
-                       hover:shadow-indigo-500/50 hover:shadow-md"
+                       bg-primary hover:opacity-90 text-primary-foreground
+                       shadow-sm transition-all cursor-pointer whitespace-nowrap hover:scale-102"
           >
             Apply
             <ExternalLink className="w-3 h-3" />

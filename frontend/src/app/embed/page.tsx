@@ -41,7 +41,7 @@ export default function EmbedPage() {
   }, [keyword, workMode]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 sm:p-6 font-sans">
+    <div className="min-h-screen bg-background text-foreground p-4 sm:p-6 font-sans">
       <div className="max-w-4xl mx-auto">
         {/* Compact Header */}
         <div className="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-800">

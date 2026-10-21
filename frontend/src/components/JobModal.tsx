@@ -12,15 +12,15 @@ interface JobModalProps {
 }
 
 const PLATFORM_COLORS: Record<string, string> = {
-  greenhouse:      "bg-emerald-500/15 text-emerald-300 border-emerald-500/25",
-  lever:           "bg-violet-500/15 text-violet-300 border-violet-500/25",
-  ashby:           "bg-sky-500/15 text-sky-300 border-sky-500/25",
-  smartrecruiters: "bg-orange-500/15 text-orange-300 border-orange-500/25",
-  workday:         "bg-blue-500/15 text-blue-300 border-blue-500/25",
-  workable:        "bg-teal-500/15 text-teal-300 border-teal-500/25",
-  recruitee:       "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/25",
-  arbeitnow:       "bg-rose-500/15 text-rose-300 border-rose-500/25",
-  aggregator:      "bg-slate-700/60 text-slate-300 border-slate-600/50",
+  greenhouse:      "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30",
+  lever:           "bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-500/30",
+  ashby:           "bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/30",
+  smartrecruiters: "bg-orange-500/10 text-orange-700 dark:text-orange-300 border-orange-500/30",
+  workday:         "bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30",
+  workable:        "bg-teal-500/10 text-teal-700 dark:text-teal-300 border-teal-500/30",
+  recruitee:       "bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 border-fuchsia-500/30",
+  arbeitnow:       "bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30",
+  aggregator:      "bg-muted text-muted-foreground border-border",
 };
 
 const WORK_MODE_LABELS: Record<string, string> = {
@@ -31,10 +31,10 @@ const WORK_MODE_LABELS: Record<string, string> = {
 };
 
 const WORK_MODE_STYLES: Record<string, string> = {
-  remote:       "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-  hybrid:       "bg-amber-500/10 text-amber-400 border-amber-500/20",
-  on_site:      "bg-sky-500/10 text-sky-400 border-sky-500/20",
-  not_disclosed:"bg-slate-800 text-slate-400 border-slate-700",
+  remote:        "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+  hybrid:        "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
+  on_site:       "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30",
+  not_disclosed: "bg-muted text-muted-foreground border-border",
 };
 
 const EMP_TYPE_LABELS: Record<string, string> = {
@@ -59,10 +59,13 @@ export function JobModal({ job, onClose }: JobModalProps) {
     }
     setSaving(true);
     try {
-      await saveJob({ job_id: job.id, status: "saved" }, token);
-      setIsSaved(true);
-    } catch (e) {
-      console.error(e);
+      await saveJob({
+        job_id: job.id,
+        status: isSaved ? "rejected" : "saved",
+      }, token);
+      setIsSaved(!isSaved);
+    } catch (err: any) {
+      alert(err.message || "Failed to update saved job status.");
     } finally {
       setSaving(false);
     }
@@ -91,67 +94,67 @@ export function JobModal({ job, onClose }: JobModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="relative w-full max-w-2xl glass-panel bg-slate-900/95 border border-slate-700/80
-                      rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div className="relative w-full max-w-2xl bg-card border border-border
+                      rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] flex flex-col text-card-foreground">
         {/* Gradient accent top */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-indigo-500 via-violet-500 to-sky-500" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-indigo-500 to-teal-400" />
 
         {/* Header */}
-        <div className="p-5 sm:p-6 border-b border-slate-800/80 flex items-start justify-between gap-4">
+        <div className="p-5 sm:p-6 border-b border-border flex items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${platformStyle}`}>
+              <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border ${platformStyle}`}>
                 {platformLabel}
               </span>
-              <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full border ${workModeStyle}`}>
+              <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-md border ${workModeStyle}`}>
                 {workModeLabel}
               </span>
               {job.employment_type !== "not_disclosed" && (
-                <span className="text-[11px] text-slate-400 bg-slate-800/70 px-2.5 py-0.5 rounded-full border border-slate-700/50">
+                <span className="text-[11px] text-muted-foreground bg-muted px-2.5 py-0.5 rounded-md border border-border font-medium">
                   {empTypeLabel}
                 </span>
               )}
               {job.location_category === "india_office" && (
-                <span className="text-[11px] font-semibold text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 rounded-md flex items-center gap-1">
                   <span>🇮🇳</span>
                   <span>India Office</span>
                 </span>
               )}
               {job.location_category === "remote_india" && (
-                <span className="text-[11px] font-semibold text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 rounded-md flex items-center gap-1">
                   <span>🇮🇳</span>
                   <span>Remote (India Eligible)</span>
                 </span>
               )}
               {job.location_category === "apac_worldwide" && (
-                <span className="text-[11px] font-semibold text-sky-300 bg-sky-500/15 border border-sky-500/30 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[11px] font-semibold text-sky-700 dark:text-sky-300 bg-sky-500/15 border border-sky-500/30 px-2.5 py-0.5 rounded-md flex items-center gap-1">
                   <span>🌏</span>
-                  <span>APAC / Worldwide (Verified)</span>
+                  <span>APAC / Worldwide</span>
                 </span>
               )}
               {job.location_category === "international_only" && (
-                <span className="text-[11px] font-medium text-slate-400 bg-slate-800/60 border border-slate-700 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[11px] font-medium text-muted-foreground bg-muted border border-border px-2.5 py-0.5 rounded-md flex items-center gap-1">
                   <span>🌍</span>
                   <span>International Only</span>
                 </span>
               )}
             </div>
 
-            <h2 className="text-lg sm:text-xl font-extrabold text-white leading-snug mb-2">
+            <h2 className="text-lg sm:text-xl font-extrabold text-foreground leading-snug mb-2">
               {job.title}
             </h2>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-              <span className="font-bold text-indigo-300">{job.company_name}</span>
-              <span className="flex items-center gap-1 text-slate-400 text-xs">
+              <span className="font-bold text-primary">{job.company_name}</span>
+              <span className="flex items-center gap-1 text-muted-foreground text-xs">
                 <MapPin className="w-3.5 h-3.5" />
                 {job.location_display}
               </span>
               {hasSalary && (
-                <span className="flex items-center gap-1 text-emerald-400 font-semibold text-xs">
+                <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold text-xs">
                   <Banknote className="w-3.5 h-3.5" />
                   {job.salary_display}
                 </span>
@@ -161,24 +164,24 @@ export function JobModal({ job, onClose }: JobModalProps) {
 
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors shrink-0"
+            className="p-2 text-muted-foreground hover:text-foreground rounded-xl hover:bg-muted transition-colors shrink-0 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content body */}
-        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5 text-slate-300 text-sm leading-relaxed">
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1 space-y-5 text-foreground text-sm leading-relaxed">
           {/* Source attribution row */}
-          <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700/60 text-xs flex-wrap">
-            <div className="flex items-center gap-2 text-slate-300">
-              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-muted/60 border border-border text-xs flex-wrap">
+            <div className="flex items-center gap-2 text-foreground">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <span>
-                Source: <strong className="text-white">{job.source_name || job.source_id}</strong>
-                {platform !== "aggregator" && <span className="text-slate-400"> (ATS Direct Feed)</span>}
+                Source: <strong className="text-foreground">{job.source_name || job.source_id}</strong>
+                {platform !== "aggregator" && <span className="text-muted-foreground"> (ATS Direct Feed)</span>}
               </span>
             </div>
-            <div className="flex items-center gap-3 text-slate-500">
+            <div className="flex items-center gap-3 text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
                 Verified {lastChecked}
@@ -187,28 +190,28 @@ export function JobModal({ job, onClose }: JobModalProps) {
           </div>
 
           {/* Registration & Compensation Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-800/40 border border-slate-700/60 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-muted/40 border border-border text-xs">
             <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-sky-400 shrink-0" />
+              <Calendar className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0" />
               <div>
-                <span className="text-[10px] text-slate-500 block uppercase font-medium">{pubDateLabel}:</span>
-                <span className="font-bold text-slate-200">{pubDateFormatted}</span>
+                <span className="text-[10px] text-muted-foreground block uppercase font-medium">{pubDateLabel}:</span>
+                <span className="font-bold text-foreground">{pubDateFormatted}</span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+              <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
               <div>
-                <span className="text-[10px] text-slate-500 block uppercase font-medium">Deadline:</span>
-                <span className={`font-bold ${job.application_deadline ? "text-amber-300" : "text-slate-500"}`}>
+                <span className="text-[10px] text-muted-foreground block uppercase font-medium">Deadline:</span>
+                <span className={`font-bold ${job.application_deadline ? "text-amber-700 dark:text-amber-300" : "text-muted-foreground"}`}>
                   {job.application_deadline ? new Date(job.application_deadline).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "Open until filled"}
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Banknote className="w-4 h-4 text-emerald-400 shrink-0" />
+              <Banknote className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div>
-                <span className="text-[10px] text-slate-500 block uppercase font-medium">Salary / CTC:</span>
-                <span className="font-bold text-emerald-300">
+                <span className="text-[10px] text-muted-foreground block uppercase font-medium">Salary / CTC:</span>
+                <span className="font-bold text-emerald-700 dark:text-emerald-300">
                   {job.salary_display && job.salary_display !== "Not disclosed" ? job.salary_display : "Competitive / Industry Standard"}
                 </span>
               </div>
@@ -217,20 +220,18 @@ export function JobModal({ job, onClose }: JobModalProps) {
 
           {/* Job description */}
           <div>
-            <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-3">
+            <h4 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-3">
               Job Description & Details
             </h4>
             {job.description ? (
               <div
-                className="prose prose-invert max-w-none prose-sm prose-p:leading-relaxed
-                           prose-headings:text-white prose-headings:font-semibold
-                           prose-li:text-slate-300 prose-strong:text-white"
+                className="prose max-w-none prose-sm prose-p:leading-relaxed text-foreground"
                 dangerouslySetInnerHTML={{ __html: job.description }}
               />
             ) : job.description_plain ? (
-              <p className="whitespace-pre-line text-slate-300">{job.description_plain}</p>
+              <p className="whitespace-pre-line text-foreground">{job.description_plain}</p>
             ) : (
-              <p className="text-slate-500 italic text-sm">
+              <p className="text-muted-foreground italic text-sm">
                 No detailed description is included in this feed.
                 View the complete listing on the company&apos;s official career page.
               </p>
@@ -239,30 +240,30 @@ export function JobModal({ job, onClose }: JobModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 sm:px-6 py-4 border-t border-slate-800/80 bg-slate-950/60 flex items-center justify-between gap-3 flex-wrap">
-          <p className="text-[11px] text-slate-500 hidden sm:block">
+        <div className="px-5 sm:px-6 py-4 border-t border-border bg-card flex items-center justify-between gap-3 flex-wrap">
+          <p className="text-[11px] text-muted-foreground hidden sm:block">
             Always verify credentials independently before applying.
           </p>
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white
-                         rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+              className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground
+                         rounded-lg hover:bg-muted transition-colors cursor-pointer"
             >
               Close
             </button>
             <button
               onClick={handleToggleSave}
               disabled={saving}
-              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all ${
+              className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
                 isSaved
-                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
-                  : "bg-slate-800/80 hover:bg-slate-800 border-slate-700 text-slate-200"
+                  ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
+                  : "bg-card hover:bg-muted border-border text-foreground"
               }`}
             >
               {isSaved ? (
                 <>
-                  <BookmarkCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <BookmarkCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   Saved
                 </>
               ) : (
@@ -276,9 +277,9 @@ export function JobModal({ job, onClose }: JobModalProps) {
               href={job.application_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500
-                         text-white font-bold text-xs rounded-xl shadow-md shadow-indigo-700/30
-                         transition-all cursor-pointer hover:shadow-indigo-500/50 hover:shadow-lg"
+              className="flex items-center gap-1.5 px-5 py-2.5 bg-primary hover:opacity-90
+                         text-primary-foreground font-bold text-xs rounded-xl shadow-md
+                         transition-all cursor-pointer hover:scale-102"
             >
               <Globe className="w-3.5 h-3.5" />
               Apply on Official Site

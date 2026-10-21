@@ -27,37 +27,39 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #09090b;
+  /* Premium Crisp Light Theme (Stripe/Linear Inspired) */
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #09090b;
-  --card-border: #e4e4e7;
+  --card-foreground: #0f172a;
+  --card-border: #e2e8f0;
   --popover: #ffffff;
-  --popover-foreground: #09090b;
-  --primary: #06b6d4;
+  --popover-foreground: #0f172a;
+  --primary: #0284c7;
   --primary-foreground: #ffffff;
-  --secondary: #f4f4f5;
-  --secondary-foreground: #18181b;
-  --muted: #f4f4f5;
-  --muted-foreground: #71717a;
-  --accent: #f4f4f5;
-  --accent-foreground: #18181b;
-  --destructive: #ef4444;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1e293b;
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+  --accent: #f8fafc;
+  --accent-foreground: #0f172a;
+  --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: #e4e4e7;
-  --input: #f4f4f5;
-  --ring: #06b6d4;
-  --color-violet-500: #8b5cf6;
-  --color-teal-500: #14b8a6;
+  --border: #e2e8f0;
+  --input: #ffffff;
+  --ring: #0284c7;
+  --color-violet-500: #7c3aed;
+  --color-teal-500: #0d9488;
 }
 
 .dark {
+  /* True Deep Black Neutral Dark Theme */
   --background: #000000;
   --foreground: #f4f4f5;
-  --card: #09090b;
+  --card: #08080a;
   --card-foreground: #f4f4f5;
   --card-border: #18181b;
-  --popover: #09090b;
+  --popover: #08080a;
   --popover-foreground: #f4f4f5;
   --primary: #06b6d4;
   --primary-foreground: #000000;
@@ -94,33 +96,42 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
-/* Glassmorphism helpers */
+/* Glassmorphism & Card helpers */
 .glass-panel {
-  background: rgba(9, 9, 11, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--card);
   border: 1px solid var(--border);
 }
 
 .glass-card {
   background: var(--card);
   border: 1px solid var(--border);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .glass-card:hover {
   border-color: var(--primary);
-  box-shadow: 0 8px 30px -10px rgba(6, 182, 212, 0.15);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.07), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+  transform: translateY(-2px);
+}
+
+.dark .glass-card {
+  box-shadow: none;
+}
+
+.dark .glass-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 8px 30px -10px rgba(6, 182, 212, 0.18);
 }
 
 /* Prose overrides for job descriptions */
-.prose.prose-invert {
-  color: #cbd5e1;
+.prose {
+  color: var(--foreground);
 }
-.prose.prose-invert ul { list-style-type: disc; padding-left: 1.25rem; }
-.prose.prose-invert li { margin-bottom: 0.25rem; }
-.prose.prose-invert h2,
-.prose.prose-invert h3 { font-weight: 700; color: #f1f5f9; margin-top: 1.25rem; }
+.prose ul { list-style-type: disc; padding-left: 1.25rem; }
+.prose li { margin-bottom: 0.25rem; }
+.prose h2,
+.prose h3 { font-weight: 700; color: var(--foreground); margin-top: 1.25rem; }
 
 /* Marquee Animation */
 @keyframes marquee {
@@ -139,7 +150,7 @@ body {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #18181b 0%, #09090b 50%, #18181b 100%);
+  background: linear-gradient(90deg, var(--muted) 0%, var(--card) 50%, var(--muted) 100%);
   background-size: 800px 100%;
   animation: shimmer 1.5s infinite;
 }
