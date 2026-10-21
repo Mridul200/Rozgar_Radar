@@ -6,8 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { registerUser } from "@/lib/api";
 import { AuthenticationCard } from "@/components/ui/authentication-card";
-import { useTheme } from "@/lib/theme-context";
-import { Sun, Moon, ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 function RegisterForm() {
   const router = useRouter();
@@ -15,7 +14,6 @@ function RegisterForm() {
   const redirectTarget = searchParams.get("redirect");
 
   const { login } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -60,66 +58,33 @@ function RegisterForm() {
       : "/auth/login";
 
   return (
-    <div className="min-h-screen w-full flex flex-col justify-between bg-background text-foreground p-4 sm:p-6 transition-colors duration-200">
-      {/* Minimal Top Bar */}
-      <header className="w-full max-w-5xl mx-auto flex items-center justify-between py-2">
-        <Link
-          href="/"
-          className="flex items-center gap-2.5 text-muted-foreground hover:text-foreground transition-colors group"
-        >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-          <img
-            src="/logo.jpg"
-            alt="Rozgar Radar Logo"
-            className="w-7 h-7 rounded-lg object-contain bg-white p-0.5 border border-border"
-          />
-          <span className="font-semibold text-sm tracking-tight text-foreground">Rozgar Radar</span>
-        </Link>
-
-        {/* Dark/Light Mode Toggle */}
-        <button
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          className="p-2 rounded-lg border border-border bg-card text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-        >
-          {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-        </button>
-      </header>
-
-      {/* Centered Auth Card */}
-      <main className="flex-1 flex items-center justify-center py-6">
-        <AuthenticationCard
-          mode="register"
-          title="Create your account"
-          description={
-            redirectTarget
-              ? "Create your account to unlock Resume Builder & ATS Scorer."
-              : "Start discovering verified tech jobs and building ATS-ready resumes."
-          }
-          fullName={fullName}
-          setFullName={setFullName}
-          email={email}
-          setEmail={setEmail}
-          password={password}
-          setPassword={setPassword}
-          loading={loading}
-          error={error}
-          onSubmit={handleSubmit}
-          footerLink={
-            <span>
-              Already have an account?{" "}
-              <Link href={loginHref} className="text-primary font-medium hover:underline">
-                Sign in
-              </Link>
-            </span>
-          }
-        />
-      </main>
-
-      {/* Minimal Bottom Copyright */}
-      <footer className="w-full text-center py-2 text-xs text-muted-foreground">
-        © 2026 Rozgar Radar. All rights reserved.
-      </footer>
+    <div className="min-h-screen w-full flex items-center justify-center bg-background text-foreground p-4 sm:p-6 transition-colors duration-200">
+      <AuthenticationCard
+        mode="register"
+        title="Create your account"
+        description={
+          redirectTarget
+            ? "Create your account to unlock Resume Builder & ATS Scorer."
+            : "Start discovering verified tech jobs and building ATS-ready resumes."
+        }
+        fullName={fullName}
+        setFullName={setFullName}
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        loading={loading}
+        error={error}
+        onSubmit={handleSubmit}
+        footerLink={
+          <span>
+            Already have an account?{" "}
+            <Link href={loginHref} className="text-primary font-medium hover:underline">
+              Sign in
+            </Link>
+          </span>
+        }
+      />
     </div>
   );
 }

@@ -116,10 +116,10 @@ function Footerdemo() {
                 Daily Email Automation
               </Link>
               <Link href="/resume-builder" className="block text-muted-foreground transition-colors hover:text-primary">
-                AI Resume Builder
+                Resume Builder
               </Link>
               <Link href="/ats-checker" className="block text-muted-foreground transition-colors hover:text-primary">
-                ATS Readiness Analyzer
+                ATS Scorer
               </Link>
               <Link href="/saved-jobs" className="block text-muted-foreground transition-colors hover:text-primary">
                 Application Tracker

@@ -13,19 +13,10 @@ import { TextMarquee } from "@/components/ui/block-hero-utils/text-marquee";
 
 // project-imports
 import HoverBg from "@/components/ui/block-hero-utils/hover-bg";
-import BaseUi from "@/components/ui/block-hero-utils/baseui-icon";
-import Shadcn from "@/components/ui/block-hero-utils/shadcn-icon";
-import Tailwind from "@/components/ui/block-hero-utils/tailwind-icon";
-
 // assets
 import {
   IconArrowUpRight,
-  IconBrandNextjs,
-  IconBrandReact,
-  IconBrandTypescript,
-  IconShieldCheck,
   IconCompass,
-  IconSparkles,
 } from "@tabler/icons-react";
 
 //  ------------------------------ | CONSTANTS | ------------------------------  //
@@ -34,15 +25,6 @@ const branding = {
   brandName: "Rozgar Radar",
   title: "Direct ATS Feeds to In-Demand Careers",
 };
-
-const techIcons = [
-  { name: "React", Icon: IconBrandReact },
-  { name: "Next.js", Icon: IconBrandNextjs },
-  { name: "TypeScript", Icon: IconBrandTypescript },
-  { name: "Tailwind CSS", Icon: Tailwind },
-  { name: "Shadcn UI", Icon: Shadcn },
-  { name: "Direct ATS", Icon: BaseUi },
-];
 
 interface HeroProps {
   totalJobs?: number;
@@ -156,29 +138,7 @@ export default function Hero({ totalJobs }: HeroProps) {
         </Button>
       </div>
 
-      {/* Tech & ATS Platform Badges */}
-      <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 pt-2">
-        <span className="text-xs font-semibold text-muted-foreground mr-1 uppercase tracking-wider">
-          Direct ATS Integrations:
-        </span>
-        {techIcons.map((item) => {
-          const IconComponent = item.Icon;
-          return (
-            <div
-              key={item.name}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/80 bg-card/60 text-xs font-medium text-foreground hover:border-border transition-colors shadow-none"
-              title={item.name}
-            >
-              <IconComponent
-                className="size-4 text-sky-400"
-                stroke="1.5"
-                aria-hidden="true"
-              />
-              <span>{item.name}</span>
-            </div>
-          );
-        })}
-      </div>
+
 
       {/* Verified Product Badge */}
       <div className="relative z-10 flex items-center justify-center pt-2">
