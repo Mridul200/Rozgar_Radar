@@ -9,7 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@radix-ui/react-label": "^2.1.17",
     "@radix-ui/react-slot": "^1.5.0",
+    "@radix-ui/react-switch": "^1.4.1",
+    "@radix-ui/react-tooltip": "^1.4.1",
     "@supabase/supabase-js": "^2.118.0",
     "@tabler/icons-react": "^3.49.0",
     "@types/three": "^0.186.0",
