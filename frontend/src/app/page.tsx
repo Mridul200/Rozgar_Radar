@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/layout/Navbar";
+import Hero from "@/components/ui/block-hero";
 import { Footer } from "@/components/layout/Footer";
 import { CareerNodes3D } from "@/components/3d/CareerNodes3D";
 import { JobCard } from "@/components/JobCard";
@@ -60,74 +61,8 @@ export default function HomePage() {
       <Navbar />
 
       <main className="flex-1">
-        {/* HERO SECTION WITH 3D CAREER NODES */}
-        <section className="relative overflow-hidden pt-8 pb-16 md:py-20 border-b border-slate-900">
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-gradient-to-tr from-cyan-500/10 via-indigo-600/10 to-transparent rounded-full blur-3xl pointer-events-none" />
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-              {/* Left copy */}
-              <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-semibold text-cyan-400">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  India&apos;s Premier AI Job Hunting Copilot
-                </div>
-
-                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1]">
-                  Discover Verified Jobs. <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-indigo-400">
-                    Automate Your Hunt.
-                  </span>
-                </h1>
-
-                <p className="text-base sm:text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                  Stop scrolling duplicate spam and ghost postings. HirePulse aggregates direct official ATS feeds, matches your exact eligibility, dispatches daily morning alerts, and optimizes your resume for ATS scoring.
-                </p>
-
-                {/* CTAs */}
-                <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
-                  <Link
-                    href="/jobs"
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 shadow-xl shadow-cyan-500/25 transition-all transform hover:-translate-y-0.5"
-                  >
-                    <Compass className="w-4 h-4" />
-                    Explore Verified Jobs
-                  </Link>
-                  <Link
-                    href={user ? "/automation" : "/onboarding"}
-                    className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-sm font-semibold text-slate-200 border border-slate-800 bg-slate-900/90 hover:bg-slate-800 hover:border-slate-700 transition-colors shadow-sm"
-                  >
-                    <Zap className="w-4 h-4 text-cyan-400" />
-                    Automate My Job Search
-                  </Link>
-                </div>
-
-                {/* Micro trust stats */}
-                <div className="pt-4 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-400">
-                  <div className="flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                    <span>100% Direct ATS Links</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Zap className="w-4 h-4 text-cyan-400" />
-                    <span>12-Hour Sync Cadence</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4 text-indigo-400" />
-                    <span>Layered Deduplication</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: 3D Career Opportunity Universe */}
-              <div className="lg:col-span-5 relative">
-                <div className="p-2 rounded-3xl bg-slate-900/40 border border-slate-800/80 shadow-2xl backdrop-blur-xl relative">
-                  <CareerNodes3D />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* BLOCK HERO COMPONENT */}
+        <Hero totalJobs={totalJobs} />
 
         {/* LIVE REAL BACKEND JOBS PREVIEW */}
         <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-b border-slate-900">

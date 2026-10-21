@@ -1,3 +1,5 @@
+"use client";
+
 // react
 import { Fragment } from "react";
 
@@ -21,40 +23,47 @@ import {
   IconBrandNextjs,
   IconBrandReact,
   IconBrandTypescript,
+  IconShieldCheck,
+  IconCompass,
+  IconSparkles,
 } from "@tabler/icons-react";
 
 //  ------------------------------ | CONSTANTS | ------------------------------  //
 
 const branding = {
-  brandName: "UIAble",
-  title: "Components to Complete Interfaces",
+  brandName: "HirePulse",
+  title: "Direct ATS Feeds to In-Demand Careers",
 };
 
 const techIcons = [
   { name: "React", Icon: IconBrandReact },
   { name: "Next.js", Icon: IconBrandNextjs },
-  { name: "Shadcn", Icon: Shadcn },
-  { name: "Base UI", Icon: BaseUi },
-  { name: "Tailwind CSS", Icon: Tailwind },
   { name: "TypeScript", Icon: IconBrandTypescript },
+  { name: "Tailwind CSS", Icon: Tailwind },
+  { name: "Shadcn UI", Icon: Shadcn },
+  { name: "Direct ATS", Icon: BaseUi },
 ];
 
-const stats = [
-  { label: "Blocks", value: "400+" },
-  { label: "Templates", value: "7" },
-  { label: "Components", value: "790+" },
-  { label: "Dashboards", value: "2" },
-];
+interface HeroProps {
+  totalJobs?: number;
+}
 
 //  ------------------------------ | HELPERS | ------------------------------  //
 
-function StatItems() {
+function StatItems({ totalJobs }: { totalJobs?: number }) {
+  const stats = [
+    { label: "Verified Openings", value: totalJobs && totalJobs > 0 ? `${totalJobs.toLocaleString()}+` : "2,080+" },
+    { label: "Official ATS Sources", value: "10+" },
+    { label: "Sync Cadence", value: "12h" },
+    { label: "Ghost Postings", value: "0%" },
+  ];
+
   return (
     <>
       {stats.map((item, index) => (
         <Fragment key={item.label}>
-          <span className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs whitespace-nowrap sm:text-sm">
-            <span className="text-muted-foreground">{item.value}</span>
+          <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs whitespace-nowrap sm:text-sm">
+            <span className="font-bold text-foreground">{item.value}</span>
             <span className="text-muted-foreground">{item.label}</span>
           </span>
           {index < stats.length - 1 && (
@@ -68,125 +77,121 @@ function StatItems() {
 
 //  ------------------------------ | HERO | ------------------------------  //
 
-export default function Hero() {
+export default function Hero({ totalJobs }: HeroProps) {
   return (
     <section
       aria-labelledby="hero-heading"
-      className="relative mx-auto flex w-full flex-col items-center gap-9 overflow-hidden px-4 pt-20 pb-12.5 sm:px-8 lg:px-24"
+      className="relative mx-auto flex w-full flex-col items-center gap-8 overflow-hidden px-4 pt-16 pb-12 sm:px-8 lg:px-24 border-b border-border"
     >
       <div
-        className="pointer-events-none absolute -top-30 left-1/2 z-0 h-96 w-226 -translate-x-1/2 opacity-30 dark:opacity-60"
+        className="pointer-events-none absolute -top-28 left-1/2 z-0 h-96 w-[680px] -translate-x-1/2 opacity-35 dark:opacity-60"
         style={{
           background:
             "linear-gradient(90deg, var(--color-violet-500) 0%, var(--primary) 50%, var(--color-teal-500) 100%)",
-          filter: "blur(260px)",
+          filter: "blur(240px)",
         }}
       />
 
       <HoverBg className="opacity-60 dark:opacity-60" />
 
+      {/* Pill marquee / stats bar */}
       <div className="relative z-10 flex w-full justify-center">
         {/* Mobile: scrolling marquee */}
-        <div className="w-full max-w-xs overflow-hidden rounded-full border border-border bg-card px-1.5 py-1 shadow-sm sm:hidden">
-          <TextMarquee duration={16} gap="0px" repeat={3}>
+        <div className="w-full max-w-sm overflow-hidden rounded-full border border-border bg-card/80 backdrop-blur-md px-1.5 py-1 shadow-sm sm:hidden">
+          <TextMarquee duration={18} gap="0px" repeat={3}>
             <div className="flex items-center">
-              <StatItems />
+              <StatItems totalJobs={totalJobs} />
               <span aria-hidden className="h-3.5 w-px shrink-0 bg-border" />
             </div>
           </TextMarquee>
         </div>
 
         {/* sm and up: single-row pill */}
-        <div className="hidden max-w-full flex-wrap items-center justify-center rounded-full border border-border bg-card px-1.5 py-1 shadow-sm sm:inline-flex">
-          <StatItems />
+        <div className="hidden max-w-full flex-wrap items-center justify-center rounded-full border border-border bg-card/80 backdrop-blur-md px-2 py-1 shadow-sm sm:inline-flex">
+          <StatItems totalJobs={totalJobs} />
         </div>
       </div>
 
-      <div className="relative z-10 flex w-full flex-col items-center gap-7">
+      {/* Heading & Subtitle */}
+      <div className="relative z-10 flex w-full flex-col items-center gap-5 text-center">
         <h1
           id="hero-heading"
-          className="text-center text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl md:leading-none lg:text-7xl"
+          className="text-center text-4xl font-extrabold tracking-tight text-foreground sm:text-6xl md:leading-tight lg:text-7xl max-w-5xl"
         >
-          Components to{" "}
-          <span className="block whitespace-nowrap text-primary">
-            Complete Interfaces
+          Discover Verified Jobs.{" "}
+          <span className="block whitespace-nowrap text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-sky-300 to-teal-400">
+            Automate Your Hunt.
           </span>
         </h1>
 
-        <p className="max-w-182 text-center text-base font-normal text-foreground md:text-lg md:leading-7">
-          {branding.brandName} is a structured, shadcn-based UI system designed
-          to help developers build scalable, production-ready applications
-          faster.
+        <p className="max-w-2xl text-center text-base font-normal text-muted-foreground md:text-lg md:leading-relaxed">
+          Stop scrolling duplicate spam and ghost postings. {branding.brandName} aggregates
+          direct official ATS feeds, matches your exact eligibility, dispatches daily morning alerts,
+          and optimizes your applications for top recruiters.
         </p>
       </div>
 
-      <div className="relative z-10 flex flex-wrap items-center justify-center gap-4">
+      {/* CTAs */}
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-4 pt-2">
         <Button
           size="lg"
           id="cta-start-building"
           nativeButton={false}
-          render={<Link href="/doc/introduction" />}
-          className="h-11 rounded-lg bg-foreground px-6 font-medium text-background hover:bg-foreground/90"
+          render={<Link href="/jobs" />}
+          className="h-12 rounded-xl bg-gradient-to-r from-indigo-500 to-sky-500 px-7 font-bold text-white shadow-lg shadow-indigo-500/25 hover:from-indigo-400 hover:to-sky-400 transition-all transform hover:-translate-y-0.5"
         >
-          Start Building
+          <IconCompass className="size-4 mr-2" aria-hidden="true" />
+          Explore Verified Jobs
         </Button>
         <Button
           variant="outline"
           size="lg"
           id="cta-view-components"
           nativeButton={false}
-          render={<Link href="/components" />}
-          className="h-11 gap-2 rounded-lg border-border bg-card px-6 font-medium text-foreground hover:bg-accent dark:border-border dark:bg-card dark:hover:bg-accent/10"
+          render={<Link href="/automation" />}
+          className="h-12 gap-2 rounded-xl border-border bg-card/90 px-6 font-semibold text-foreground hover:bg-accent/40 hover:border-slate-700 transition-all"
         >
-          View Components
-          <IconArrowUpRight className="size-4" aria-hidden="true" />
+          Automate Job Search
+          <IconArrowUpRight className="size-4 text-sky-400" aria-hidden="true" />
         </Button>
       </div>
 
-      <div className="relative z-10 flex items-center justify-center gap-4">
+      {/* Tech & ATS Platform Badges */}
+      <div className="relative z-10 flex flex-wrap items-center justify-center gap-3 pt-2">
+        <span className="text-xs font-semibold text-muted-foreground mr-1 uppercase tracking-wider">
+          Direct ATS Integrations:
+        </span>
         {techIcons.map((item) => {
           const IconComponent = item.Icon;
           return (
-            <Button
+            <div
               key={item.name}
-              size="icon-lg"
-              className="h-11 w-11 border-0 bg-transparent text-foreground shadow-none hover:bg-transparent"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border/80 bg-card/60 text-xs font-medium text-foreground hover:border-border transition-colors shadow-none"
               title={item.name}
-              aria-label={item.name}
             >
               <IconComponent
-                className="size-6"
+                className="size-4 text-sky-400"
                 stroke="1.5"
                 aria-hidden="true"
               />
-            </Button>
+              <span>{item.name}</span>
+            </div>
           );
         })}
       </div>
 
-      <div className="relative z-10 flex items-center justify-center">
-        <Link
-          href="https://codedthemes.com"
-          target="_blank"
-          rel="noopener noreferrer"
+      {/* Verified Product Badge */}
+      <div className="relative z-10 flex items-center justify-center pt-2">
+        <Badge
+          variant="outline"
+          className="inline-flex items-center gap-2 rounded-full border-indigo-500/30 bg-indigo-500/10 px-4 py-2 text-xs font-medium text-indigo-300"
         >
-          <Badge
-            variant="outline"
-            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2.5 text-xs font-medium text-secondary-foreground transition-colors hover:bg-primary/20"
-          >
-            Product by
-            <img
-              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAOdEVYdFNvZnR3YXJlAEZpZ21hnrGWYwAAAlJJREFUeAGdlUty2kAQhrtHPIqEBSkuQG6gI8AJkmxiCqgynMBkmcQUUiCVZZQTRIvYDt6EG+CcwLqBdQFiqmJMgZDaM3oZqfRwuVcz09Pf9LT+HiFkWP/bpmHZhRNAegsEDX/Z4GOjuLdVXa2YabGY5uhNdhohnEC2aWenpQ9PBnenW527jg+WDOJZugHoZt4MPQT62ag0yAXHoCuHaHAxKs8P97R5iZgjLdAvDyHNS7vSQFdxlQiOQwl3rfPPVQMSLA4XtypaxVYAx+dAnwJnYtabbJUs6O/l3XB2u765/Le+nS3/K+H6x4rpMLslYvwl2SpY392MPUlJN2nQ2XKt8HuNDzPlGerv6y/DD9b5eicjlRZ8WBNzrhRkliM9BhEM86DuNoT+5XL9M5iLGJEQH14ROkP38O7UuuZbZSIyz0fl13lQiKauHb2qJuqYCai/6yoSg/AG8oxwmOZiqTF+vZ5rjF/XdEcIcgRM9CMvmAi1dDDh3OOC3J5smoGjXa9qQExJh4Lerr8I69v5sul3p7vrjitdDralfZiZhNKf/njTCOZH9YqaBPegj3LrC7kxSahERkT3gzMhcgAnOLlmFdgiDnccW0AMXneTF1+JQ/eehsND/Qp41ptuxwSo+F6TmPUur6Xd5uItHbzV/GDjnrf0nLd05BGKwHPeiyyoW4rDzb9OyyoCBeCaaNPuZHcch/YmVjMLGilFRuZ+aZgBDq3Qk2UozSRoKjgRnmza2iqqcWgmWJh4b5H/TLnYm3zaANGNvKEcoX0G84tPxb9psQ+CXlM4i1QKLQAAAABJRU5ErkJggg=="
-              alt=""
-              width={16}
-              height={16}
-              className="size-4"
-            />
-            <span className="font-semibold">CodedThemes</span>
-          </Badge>
-        </Link>
+          <IconSparkles className="size-3.5 text-indigo-400" />
+          <span className="font-semibold">HirePulse</span>
+          <span className="text-indigo-400/60">&bull;</span>
+          <span>AI Career Copilot &amp; Multi-Source Aggregator</span>
+        </Badge>
       </div>
     </section>
   );
 }
-
