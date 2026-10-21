@@ -68,6 +68,57 @@ export default function AutomationPage() {
   const [experienceLevel, setExperienceLevel] = useState("");
   const [minSalaryLpa, setMinSalaryLpa] = useState("");
 
+  const [countdown, setCountdown] = useState<{
+    hours: number;
+    minutes: number;
+    seconds: number;
+    isDue: boolean;
+    formatted: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!config?.next_run_at || !isActive) {
+      setCountdown(null);
+      return;
+    }
+
+    const calcCountdown = () => {
+      const targetTime = new Date(config.next_run_at!).getTime();
+      const now = Date.now();
+      const diff = targetTime - now;
+
+      if (diff <= 0) {
+        setCountdown({
+          hours: 0,
+          minutes: 0,
+          seconds: 0,
+          isDue: true,
+          formatted: "Scheduled moment reached (Processing...)"
+        });
+        return;
+      }
+
+      const totalSec = Math.floor(diff / 1000);
+      const hours = Math.floor(totalSec / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const seconds = totalSec % 60;
+
+      const pad = (n: number) => String(n).padStart(2, "0");
+      setCountdown({
+        hours,
+        minutes,
+        seconds,
+        isDue: false,
+        formatted: `${pad(hours)}h : ${pad(minutes)}m : ${pad(seconds)}s`
+      });
+    };
+
+    calcCountdown();
+    const interval = setInterval(calcCountdown, 1000);
+    return () => clearInterval(interval);
+  }, [config?.next_run_at, isActive]);
+
+
   const loadData = () => {
     if (!token) return;
     setLoading(true);
@@ -227,7 +278,7 @@ export default function AutomationPage() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-semibold text-cyan-400 mb-2">
               <Zap className="w-3.5 h-3.5" />
-              Automated Eligibility Digest Engine &bull; Gmail SMTP Active
+              Automated Eligibility Digest Engine &bull; Brevo Email API Active
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
               Daily Job Alerts & Automation
@@ -327,6 +378,79 @@ export default function AutomationPage() {
           </div>
         )}
 
+                {/* Next Automated Dispatch Live Countdown Banner */}
+        <div className="mb-8 p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 shadow-xl shadow-indigo-950/20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none" />
+          
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                  AUTOMATIC DISPATCH SCHEDULE
+                </span>
+                {isActive ? (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Auto-Send Active
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                    <Pause className="w-3 h-3" />
+                    Automation Paused
+                  </span>
+                )}
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Next Automatic Mail In:
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 mt-1">
+                Scheduled for <strong className="text-slate-200">{deliveryTime} IST</strong> ({deliveryFrequency === "weekly" ? "Weekly" : "Daily"}) &bull; Delivered automatically to <strong className="text-cyan-400">{deliveryEmail || user?.email}</strong>
+              </p>
+            </div>
+
+            {/* Countdown digits display */}
+            <div className="flex items-center gap-3">
+              {isActive && countdown ? (
+                countdown.isDue ? (
+                  <div className="px-5 py-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-semibold text-sm flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-emerald-400" />
+                    <span>Scheduled Window Reached &bull; Dispatching...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 bg-slate-950/90 px-4 sm:px-6 py-3 rounded-2xl border border-indigo-500/40 shadow-inner">
+                    <div className="text-center min-w-[50px]">
+                      <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono tracking-tight">
+                        {String(countdown.hours).padStart(2, "0")}
+                      </div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">Hours</div>
+                    </div>
+                    <span className="text-indigo-400 font-bold text-2xl mb-4">:</span>
+                    <div className="text-center min-w-[50px]">
+                      <div className="text-2xl sm:text-3xl font-extrabold text-white font-mono tracking-tight">
+                        {String(countdown.minutes).padStart(2, "0")}
+                      </div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">Mins</div>
+                    </div>
+                    <span className="text-indigo-400 font-bold text-2xl mb-4">:</span>
+                    <div className="text-center min-w-[50px]">
+                      <div className="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-mono tracking-tight">
+                        {String(countdown.seconds).padStart(2, "0")}
+                      </div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">Secs</div>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 text-xs">
+                  Countdown paused. Toggle "Daily Digest Status" to Active to enable automated delivery.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+
         {/* System Status Banner */}
         <div className="mb-8 p-4 rounded-2xl bg-slate-900/70 border border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
           <div className="flex items-center gap-3">
@@ -341,7 +465,7 @@ export default function AutomationPage() {
             <Clock className="w-4 h-4 text-cyan-400" />
             <div>
               <div className="font-semibold text-white">{deliveryFrequency === "weekly" ? "Weekly" : "Daily"} Dispatch Window</div>
-              <div className="text-slate-400">{deliveryTime} IST (Next: {config?.next_run_at ? new Date(config.next_run_at).toLocaleString() : "Scheduled"})</div>
+              <div className="text-slate-400">{deliveryTime} IST {countdown && !countdown.isDue ? `(in ${countdown.formatted})` : `(Next: ${config?.next_run_at ? new Date(config.next_run_at).toLocaleDateString() : 'Scheduled'})`}</div>
             </div>
           </div>
 

@@ -458,8 +458,9 @@ def trigger_automation_digest(
     )
     db.add(log)
 
+    frequency = normalize_frequency(config.delivery_frequency)
     config.last_run_at = now
-    config.next_run_at = now + timedelta(days=1)
+    config.next_run_at = next_delivery_moment(now, config.delivery_time, config.timezone, frequency)
     db.commit()
     db.refresh(log)
 
@@ -595,5 +596,22 @@ def trigger_all_digests(
     result = run_all_due_daily_digests(force=force)
     return {
         "status": "success",
+        "result": result
+    }
+
+
+@router.get("/cron-tick")
+def cron_tick(db: Session = Depends(get_db)):
+    """
+    Public health & automatic dispatch tick endpoint.
+    Can be pinged by uptime monitors / cron services (e.g. cron-job.org or UptimeRobot every 5-10m).
+    1. Keeps Render backend alive 24/7 (prevents free tier sleep).
+    2. Immediately triggers any daily digests whose scheduled delivery moment has arrived.
+    """
+    from services.digest_scheduler import run_all_due_daily_digests
+    result = run_all_due_daily_digests(force=False, db=db)
+    return {
+        "status": "ok",
+        "scheduler": "active",
         "result": result
     }

@@ -39,8 +39,8 @@ def run_all_due_daily_digests(force: bool = False, db: Session = None) -> dict:
     open for the caller; otherwise a private SessionLocal is created and closed.
     """
     if not is_smtp_configured():
-        logger.warning("SMTP is not configured. Daily digests skipped.")
-        return {"processed": 0, "emails_sent": 0, "status": "smtp_not_configured"}
+        logger.warning("Email provider is not configured. Daily digests skipped.")
+        return {"processed": 0, "emails_sent": 0, "status": "email_not_configured"}
 
     own_session = db is None
     if own_session:
@@ -192,7 +192,7 @@ async def periodic_daily_digest_worker():
     (daily/weekly at the user's configured delivery time) are due.
     Performs an initial check 10 seconds after startup, then checks every 30 minutes.
     """
-    CHECK_INTERVAL = 30 * 60  # 30 minutes
+    CHECK_INTERVAL = 60  # Check every 60 seconds (1 min) for precise automatic dispatch
     _WORKER_STATE["alive"] = True
     try:
         # Initial short grace period to allow database tables & startup initialization to complete
