@@ -18,6 +18,7 @@ export interface JobListing {
   salary_display: string;
   location_display: string;
   application_url: string;
+  canonical_url?: string;
   publication_date?: string;
   application_deadline?: string;
   first_seen_at: string;

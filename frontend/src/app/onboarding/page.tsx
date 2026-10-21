@@ -1,11 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { updateUserProfile, fetchUserProfile, updateAutomationConfig } from "@/lib/api";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
+import { updateUserProfile, updateAutomationConfig } from "@/lib/api";
 import {
   Sparkles,
   MapPin,
@@ -19,7 +18,11 @@ import {
   ArrowLeft,
   CheckCircle2,
   Loader2,
-  Building2
+  Check,
+  Plus,
+  X,
+  Compass,
+  Laptop,
 } from "lucide-react";
 
 const POPULAR_LOCATIONS = [
@@ -30,7 +33,7 @@ const POPULAR_LOCATIONS = [
   "Delhi NCR",
   "Chennai",
   "Remote India",
-  "APAC/Worldwide"
+  "APAC/Worldwide",
 ];
 
 const POPULAR_ROLES = [
@@ -41,13 +44,25 @@ const POPULAR_ROLES = [
   "DevOps / Cloud Engineer",
   "AI / Machine Learning Engineer",
   "Data Engineer",
-  "Software Engineer"
+  "Software Engineer",
 ];
 
 const POPULAR_SKILLS = [
-  "Python", "JavaScript", "TypeScript", "React", "Next.js", "Node.js",
-  "FastAPI", "SQL", "PostgreSQL", "Docker", "Kubernetes", "AWS",
-  "Git", "REST APIs", "GraphQL", "Tailwind CSS", "Microservices"
+  "Python",
+  "JavaScript",
+  "TypeScript",
+  "React",
+  "Next.js",
+  "Node.js",
+  "FastAPI",
+  "SQL",
+  "PostgreSQL",
+  "Docker",
+  "Kubernetes",
+  "AWS",
+  "Git",
+  "REST APIs",
+  "Tailwind CSS",
 ];
 
 export default function OnboardingPage() {
@@ -59,15 +74,27 @@ export default function OnboardingPage() {
   // Form State
   const [currentCity, setCurrentCity] = useState("Bengaluru");
   const [currentState, setCurrentState] = useState("Karnataka");
-  const [preferredLocations, setPreferredLocations] = useState<string[]>(["Bengaluru", "Remote India"]);
-  const [preferredRoles, setPreferredRoles] = useState<string[]>(["Full Stack Engineer"]);
-  const [skills, setSkills] = useState<string[]>(["Python", "React", "TypeScript", "FastAPI"]);
+  const [preferredLocations, setPreferredLocations] = useState<string[]>([
+    "Bengaluru",
+    "Remote India",
+  ]);
+  const [preferredRoles, setPreferredRoles] = useState<string[]>([
+    "Full Stack Engineer",
+  ]);
+  const [skills, setSkills] = useState<string[]>([
+    "Python",
+    "React",
+    "TypeScript",
+    "FastAPI",
+  ]);
   const [customSkillInput, setCustomSkillInput] = useState("");
   const [experienceLevel, setExperienceLevel] = useState("1-3_years");
   const [yearsExperience, setYearsExperience] = useState<number>(3);
   const [education, setEducation] = useState("B.Tech / B.E. Computer Science");
   const [workModes, setWorkModes] = useState<string[]>(["remote", "hybrid"]);
-  const [employmentTypes, setEmploymentTypes] = useState<string[]>(["full_time"]);
+  const [employmentTypes, setEmploymentTypes] = useState<string[]>([
+    "full_time",
+  ]);
   const [minSalary, setMinSalary] = useState<number>(1500000); // 15 LPA
   const [resumeText, setResumeText] = useState("");
   const [emailAlertsEnabled, setEmailAlertsEnabled] = useState(true);
@@ -78,7 +105,11 @@ export default function OnboardingPage() {
     }
   }, [authLoading, user, router]);
 
-  const toggleItem = (list: string[], item: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => {
+  const toggleItem = (
+    list: string[],
+    item: string,
+    setter: React.Dispatch<React.SetStateAction<string[]>>
+  ) => {
     if (list.includes(item)) {
       setter(list.filter((x) => x !== item));
     } else {
@@ -134,7 +165,6 @@ export default function OnboardingPage() {
       router.push("/dashboard");
     } catch (err) {
       console.error("Error saving onboarding:", err);
-      // Still proceed to dashboard if profile saved
       router.push("/dashboard");
     } finally {
       setSaving(false);
@@ -144,49 +174,82 @@ export default function OnboardingPage() {
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-        <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
-      <Navbar />
+  const formatSalaryLPA = (num: number) => {
+    const lpa = num / 100000;
+    return `₹${lpa.toFixed(1)} LPA`;
+  };
 
-      <main className="flex-1 max-w-3xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-            <span>Step {step} of 4: {step === 1 ? "Target Role & Location" : step === 2 ? "Skills & Background" : step === 3 ? "Work & Compensation" : "Resume & Alerts"}</span>
-            <span className="font-semibold text-cyan-400">{step * 25}% Completed</span>
+  return (
+    <div className="min-h-screen w-full flex flex-col justify-between bg-background text-foreground transition-colors duration-200 py-6 px-4 sm:px-6">
+      {/* Standalone Minimal Top Header */}
+      <header className="w-full max-w-2xl mx-auto flex items-center justify-between pb-4 border-b border-border">
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/logo.jpg"
+            alt="Rozgar Radar"
+            className="w-8 h-8 rounded-lg object-contain bg-white p-0.5 border border-border shadow-sm"
+          />
+          <div>
+            <span className="font-extrabold text-sm tracking-tight text-foreground">
+              Rozgar Radar
+            </span>
+            <span className="block text-[10px] text-muted-foreground -mt-0.5">
+              Candidate Profile Setup
+            </span>
           </div>
-          <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden border border-slate-800">
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-medium">
+            Step {step} of 4
+          </span>
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-primary/10 text-primary border border-primary/20">
+            {step * 25}%
+          </span>
+        </div>
+      </header>
+
+      {/* Main Centered Content */}
+      <main className="flex-1 flex flex-col items-center justify-center py-6 w-full">
+        {/* Progress Tracker Bar */}
+        <div className="w-full max-w-2xl mb-6">
+          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden border border-border">
             <div
-              className="h-full bg-gradient-to-r from-cyan-500 to-indigo-600 transition-all duration-300"
+              className="h-full bg-primary transition-all duration-300"
               style={{ width: `${step * 25}%` }}
             />
           </div>
         </div>
 
-        {/* Wizard Container */}
-        <div className="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 shadow-2xl relative">
-          {/* STEP 1 */}
+        {/* Wizard Card Container */}
+        <div className="w-full max-w-2xl bg-card border border-border rounded-2xl sm:rounded-3xl p-6 sm:p-9 shadow-xl relative animate-in fade-in duration-200">
+          {/* ========================================================== */}
+          {/* STEP 1: TARGET ROLE & LOCATIONS                            */}
+          {/* ========================================================== */}
           {step === 1 && (
-            <div className="space-y-6 animate-in">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                  <Briefcase className="w-6 h-6 text-cyan-400" />
-                  What role are you targeting?
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary mb-1">
+                  <Briefcase className="w-4 h-4" />
+                  <span>Target Roles & Location</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  What opportunities are you looking for?
                 </h2>
-                <p className="text-sm text-slate-400 mt-1">
-                  We use this to classify eligible opportunities across top verified tech feeds.
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Select your primary job titles and preferred employment hubs.
                 </p>
               </div>
 
               {/* Roles */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Select Target Roles
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-foreground uppercase tracking-wider">
+                  Target Job Titles
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {POPULAR_ROLES.map((role) => {
@@ -196,13 +259,14 @@ export default function OnboardingPage() {
                         key={role}
                         type="button"
                         onClick={() => toggleItem(preferredRoles, role, setPreferredRoles)}
-                        className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                           selected
-                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm shadow-cyan-500/10"
-                            : "bg-slate-900 border border-slate-800 text-slate-300 hover:border-slate-700"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-muted/60 text-muted-foreground border border-border hover:bg-muted hover:text-foreground"
                         }`}
                       >
-                        {role} {selected && "✓"}
+                        {selected && <Check className="w-3.5 h-3.5" />}
+                        <span>{role}</span>
                       </button>
                     );
                   })}
@@ -210,9 +274,9 @@ export default function OnboardingPage() {
               </div>
 
               {/* Locations */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Preferred Hubs & Remote
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-foreground uppercase tracking-wider">
+                  Preferred Cities / Remote
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {POPULAR_LOCATIONS.map((loc) => {
@@ -222,309 +286,308 @@ export default function OnboardingPage() {
                         key={loc}
                         type="button"
                         onClick={() => toggleItem(preferredLocations, loc, setPreferredLocations)}
-                        className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                           selected
-                            ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
-                            : "bg-slate-900 border border-slate-800 text-slate-300 hover:border-slate-700"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-muted/60 text-muted-foreground border border-border hover:bg-muted hover:text-foreground"
                         }`}
                       >
-                        <MapPin className="w-3.5 h-3.5 inline mr-1 opacity-70" />
-                        {loc} {selected && "✓"}
+                        {selected && <Check className="w-3.5 h-3.5" />}
+                        <span>{loc}</span>
                       </button>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Current City */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Current City</label>
+              {/* Current City & State */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Current City</label>
                   <input
                     type="text"
                     value={currentCity}
                     onChange={(e) => setCurrentCity(e.target.value)}
                     placeholder="e.g. Bengaluru"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Current State</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Current State</label>
                   <input
                     type="text"
                     value={currentState}
                     onChange={(e) => setCurrentState(e.target.value)}
                     placeholder="e.g. Karnataka"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                 </div>
               </div>
             </div>
           )}
 
-          {/* STEP 2 */}
+          {/* ========================================================== */}
+          {/* STEP 2: SKILLS & BACKGROUND                                */}
+          {/* ========================================================== */}
           {step === 2 && (
-            <div className="space-y-6 animate-in">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                  <Code2 className="w-6 h-6 text-cyan-400" />
-                  Your Skills & Experience
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary mb-1">
+                  <Code2 className="w-4 h-4" />
+                  <span>Technical Qualifications</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  Highlight your core skills
                 </h2>
-                <p className="text-sm text-slate-400 mt-1">
-                  Our matching engine compares your skill graph against ATS requirements.
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  ATS matching checks your skills against requirements to calculate candidate fit.
                 </p>
               </div>
 
-              {/* Skills */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Select Core Technical Skills
+              {/* Skills Tag Selector */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-foreground uppercase tracking-wider">
+                  Select Core Technologies
                 </label>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {POPULAR_SKILLS.map((sk) => {
-                    const selected = skills.includes(sk);
+                <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto scrollbar-none p-1">
+                  {POPULAR_SKILLS.map((skill) => {
+                    const selected = skills.includes(skill);
                     return (
                       <button
-                        key={sk}
+                        key={skill}
                         type="button"
-                        onClick={() => toggleItem(skills, sk, setSkills)}
-                        className={`px-3 py-1.5 rounded-xl text-xs sm:text-sm font-medium transition-all ${
+                        onClick={() => toggleItem(skills, skill, setSkills)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                           selected
-                            ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                            : "bg-slate-900 border border-slate-800 text-slate-300 hover:border-slate-700"
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-muted/60 text-muted-foreground border border-border hover:bg-muted hover:text-foreground"
                         }`}
                       >
-                        {sk} {selected && "✓"}
+                        {selected && <Check className="w-3.5 h-3.5" />}
+                        <span>{skill}</span>
                       </button>
                     );
                   })}
                 </div>
 
-                <div className="flex gap-2">
+                {/* Add Custom Skill */}
+                <div className="flex gap-2 pt-2">
                   <input
                     type="text"
                     value={customSkillInput}
                     onChange={(e) => setCustomSkillInput(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomSkill(); } }}
-                    placeholder="Add custom skill (e.g. Rust, Kafka, PyTorch)..."
-                    className="flex-1 px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-cyan-500"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCustomSkill();
+                      }
+                    }}
+                    placeholder="Add custom skill (e.g. Redis, GCP, Flutter)..."
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs outline-none focus:border-primary"
                   />
                   <button
                     type="button"
                     onClick={addCustomSkill}
-                    className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 text-white hover:bg-slate-700"
+                    className="px-4 py-2 rounded-xl bg-muted border border-border hover:bg-accent text-xs font-semibold text-foreground flex items-center gap-1"
                   >
+                    <Plus className="w-3.5 h-3.5" />
                     Add
                   </button>
                 </div>
               </div>
 
               {/* Experience Level & Education */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Experience Level</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Experience Tier</label>
                   <select
                     value={experienceLevel}
                     onChange={(e) => setExperienceLevel(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500"
+                    className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs outline-none focus:border-primary"
                   >
-                    <option value="fresher">Fresher / Graduate (0 years)</option>
-                    <option value="1-3_years">Early Career (1 - 3 years)</option>
-                    <option value="3-5_years">Mid-Senior (3 - 5 years)</option>
-                    <option value="5+_years">Senior / Lead (5+ years)</option>
+                    <option value="entry">Fresher / Graduate (0-1 yrs)</option>
+                    <option value="1-3_years">Junior Developer (1-3 yrs)</option>
+                    <option value="3-5_years">Mid-Level Engineer (3-5 yrs)</option>
+                    <option value="senior">Senior Engineer (5-8 yrs)</option>
+                    <option value="lead_architect">Lead / Architect (8+ yrs)</option>
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-medium text-slate-300 mb-1">Years of Experience</label>
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Highest Degree</label>
                   <input
-                    type="number"
-                    min={0}
-                    max={30}
-                    step={0.5}
-                    value={yearsExperience}
-                    onChange={(e) => setYearsExperience(parseFloat(e.target.value) || 0)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500"
+                    type="text"
+                    value={education}
+                    onChange={(e) => setEducation(e.target.value)}
+                    placeholder="e.g. B.Tech / B.E. / BCA / MCA"
+                    className="w-full px-3.5 py-2 rounded-xl bg-background border border-border text-foreground text-xs outline-none focus:border-primary"
                   />
                 </div>
               </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Highest Education</label>
-                <input
-                  type="text"
-                  value={education}
-                  onChange={(e) => setEducation(e.target.value)}
-                  placeholder="e.g. B.Tech / B.E. Computer Science, MCA, M.Tech"
-                  className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500"
-                />
-              </div>
             </div>
           )}
 
-          {/* STEP 3 */}
+          {/* ========================================================== */}
+          {/* STEP 3: WORK MODE & COMPENSATION                           */}
+          {/* ========================================================== */}
           {step === 3 && (
-            <div className="space-y-6 animate-in">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                  <Building2 className="w-6 h-6 text-cyan-400" />
-                  Work Modes & Compensation
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary mb-1">
+                  <Laptop className="w-4 h-4" />
+                  <span>Work Modes & Compensation</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  Your work environment preferences
                 </h2>
-                <p className="text-sm text-slate-400 mt-1">
-                  Specify your ideal setup and baseline salary expectations.
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Filter out roles that don&apos;t meet your remote preferences or salary expectations.
                 </p>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Work Mode Preference
+              {/* Work Mode Cards */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-foreground uppercase tracking-wider">
+                  Preferred Work Modes
                 </label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {[
                     { id: "remote", label: "Remote", desc: "Work from anywhere in India" },
                     { id: "hybrid", label: "Hybrid", desc: "Mix of office and home" },
-                    { id: "on_site", label: "On-Site", desc: "Direct office presence" },
+                    { id: "on_site", label: "On-Site", desc: "In-office presence" },
                   ].map((mode) => {
                     const selected = workModes.includes(mode.id);
                     return (
-                      <button
+                      <div
                         key={mode.id}
-                        type="button"
                         onClick={() => toggleItem(workModes, mode.id, setWorkModes)}
-                        className={`p-3.5 rounded-xl text-left border transition-all ${
+                        className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
                           selected
-                            ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-300"
-                            : "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700"
+                            ? "bg-primary/10 border-primary text-foreground shadow-sm"
+                            : "bg-muted/40 border-border text-muted-foreground hover:bg-muted"
                         }`}
                       >
-                        <div className="font-semibold text-sm">{mode.label} {selected && "✓"}</div>
-                        <div className="text-[11px] text-slate-400 mt-0.5">{mode.desc}</div>
-                      </button>
+                        <div className="flex items-center justify-between font-semibold text-xs text-foreground">
+                          <span>{mode.label}</span>
+                          {selected && <Check className="w-4 h-4 text-primary" />}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-1">{mode.desc}</p>
+                      </div>
                     );
                   })}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                  Employment Type
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: "full_time", label: "Full Time" },
-                    { id: "contract", label: "Contract / C2H" },
-                    { id: "internship", label: "Internship" },
-                  ].map((t) => {
-                    const selected = employmentTypes.includes(t.id);
-                    return (
-                      <button
-                        key={t.id}
-                        type="button"
-                        onClick={() => toggleItem(employmentTypes, t.id, setEmploymentTypes)}
-                        className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all ${
-                          selected
-                            ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40"
-                            : "bg-slate-900 border border-slate-800 text-slate-300 hover:border-slate-700"
-                        }`}
-                      >
-                        {t.label} {selected && "✓"}
-                      </button>
-                    );
-                  })}
+              {/* Salary Expectation Slider */}
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                    Minimum Target Salary
+                  </label>
+                  <span className="text-sm font-bold text-primary">
+                    {formatSalaryLPA(minSalary)}
+                  </span>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1">
-                  Minimum Desired CTC (Annual INR)
-                </label>
-                <div className="flex items-center gap-3">
-                  <div className="relative flex-1">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-sm">₹</span>
-                    <input
-                      type="number"
-                      step={50000}
-                      value={minSalary}
-                      onChange={(e) => setMinSalary(parseInt(e.target.value) || 0)}
-                      className="w-full pl-8 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500"
-                    />
-                  </div>
-                  <div className="px-3 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold text-cyan-400">
-                    ≈ {(minSalary / 100000).toFixed(1)} LPA
-                  </div>
+                <input
+                  type="range"
+                  min={300000}
+                  max={6000000}
+                  step={100000}
+                  value={minSalary}
+                  onChange={(e) => setMinSalary(Number(e.target.value))}
+                  className="w-full accent-primary cursor-pointer"
+                />
+                <div className="flex justify-between text-[11px] text-muted-foreground">
+                  <span>₹3 LPA</span>
+                  <span>₹25 LPA</span>
+                  <span>₹60+ LPA</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* STEP 4 */}
+          {/* ========================================================== */}
+          {/* STEP 4: RESUME & DAILY DIGEST                              */}
+          {/* ========================================================== */}
           {step === 4 && (
-            <div className="space-y-6 animate-in">
-              <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-                  <FileText className="w-6 h-6 text-cyan-400" />
-                  Resume & Daily Automation
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary mb-1">
+                  <Bell className="w-4 h-4" />
+                  <span>Resume & Automated Alerts</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  Finalize your job-search engine
                 </h2>
-                <p className="text-sm text-slate-400 mt-1">
-                  Paste your resume text to enable instant ATS matching and activate daily verified job alerts.
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  Paste your resume text to enable instant ATS matching and personalized morning digests.
                 </p>
               </div>
 
-              {/* Resume Text */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Paste Resume Plain Text (or summary)
-                </label>
+              {/* Resume Text Area */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                    Resume Summary / Text (Optional)
+                  </label>
+                  <span className="text-[11px] text-muted-foreground">Can be edited later</span>
+                </div>
                 <textarea
-                  rows={6}
+                  rows={4}
                   value={resumeText}
                   onChange={(e) => setResumeText(e.target.value)}
-                  placeholder="Paste your resume bullet points, work history, skills, and projects here... (You can also build one from scratch in the AI Resume Builder)"
-                  className="w-full p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 font-mono leading-relaxed"
+                  placeholder="Paste your past roles, achievements, or summary to automatically calculate ATS matches..."
+                  className="w-full p-3 rounded-xl bg-background border border-border text-foreground text-xs leading-relaxed outline-none focus:border-primary"
                 />
               </div>
 
-              {/* Alert Toggle */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-cyan-950/40 to-indigo-950/40 border border-cyan-500/20 flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-white">
-                    <Bell className="w-4 h-4 text-cyan-400" />
-                    Automated Daily Eligible Job Digest
+              {/* Email Alerts Toggle */}
+              <div className="p-4 rounded-xl border border-border bg-muted/30 flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span className="font-semibold text-xs text-foreground">
+                      Daily Automated Job Digest
+                    </span>
                   </div>
-                  <p className="text-xs text-slate-400">
-                    Receive newly discovered, deduplicated jobs matching your {preferredRoles.join(", ") || "role"} preferences every morning.
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    Receive verified new tech openings matching your target roles and salary threshold
+                    directly in your inbox every morning.
                   </p>
                 </div>
+
                 <input
                   type="checkbox"
                   checked={emailAlertsEnabled}
                   onChange={(e) => setEmailAlertsEnabled(e.target.checked)}
-                  className="w-5 h-5 accent-cyan-500 rounded mt-1 cursor-pointer"
+                  className="w-4 h-4 rounded border-border text-primary cursor-pointer mt-1"
                 />
               </div>
             </div>
           )}
 
           {/* Navigation Controls */}
-          <div className="flex items-center justify-between pt-6 border-t border-slate-800/80 mt-8">
+          <div className="pt-6 mt-6 border-t border-border flex items-center justify-between">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={() => setStep(step - 1)}
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-900 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
               >
-                <ArrowLeft className="w-4 h-4" />
-                Previous Step
+                <ArrowLeft className="w-3.5 h-3.5" />
+                Back
               </button>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
 
             {step < 4 ? (
               <button
                 type="button"
                 onClick={() => setStep(step + 1)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 shadow-lg shadow-cyan-500/25 transition-all"
+                className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-all shadow-sm"
               >
-                Next Step
+                <span>Continue</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             ) : (
@@ -532,26 +595,39 @@ export default function OnboardingPage() {
                 type="button"
                 disabled={saving}
                 onClick={handleFinish}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50"
+                className="flex items-center gap-2 px-7 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:bg-primary/90 transition-all shadow-md disabled:opacity-50"
               >
                 {saving ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Activating Agent...
+                    <span>Saving Profile...</span>
                   </>
                 ) : (
                   <>
-                    Complete & Enter Dashboard
-                    <Sparkles className="w-4 h-4" />
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Complete Setup & Launch Dashboard</span>
                   </>
                 )}
               </button>
             )}
           </div>
         </div>
+
+        {/* Subtle Skip Link */}
+        <div className="mt-4 text-center">
+          <Link
+            href="/dashboard"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors hover:underline"
+          >
+            Skip for now & go to Dashboard &rarr;
+          </Link>
+        </div>
       </main>
 
-      <Footer />
+      {/* Minimal Footer */}
+      <footer className="w-full text-center py-2 text-[11px] text-muted-foreground">
+        © 2026 Rozgar Radar. Verified Tech Career Intelligence.
+      </footer>
     </div>
   );
 }
