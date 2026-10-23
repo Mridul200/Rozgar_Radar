@@ -173,23 +173,62 @@ export function HeroSplit({ totalJobs = 1885 }: HeroSplitProps) {
             </div>
           </div>
 
-          {/* Right Column (High-Res Hero Visual Graphic from Designer) */}
+          {/* Right Column (Seamless Integrated Career Composition) */}
           <div className="lg:col-span-5 relative flex items-center justify-center">
-            {/* Ambient Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 via-teal-500/10 to-transparent rounded-3xl blur-2xl -z-10" />
+            {/* Ambient Aura Background */}
+            <div className="absolute -inset-6 bg-gradient-to-tr from-emerald-500/15 via-teal-500/5 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
 
-            {/* Crisp High-Res Hero Graphic */}
-            <div className="relative w-full max-w-[560px] rounded-2xl sm:rounded-3xl overflow-hidden border border-border/80 shadow-2xl bg-card">
-              <Image
-                src="/hero-career.jpg"
-                alt="Rozgar Radar — AI Career Companion"
-                width={1024}
-                height={682}
-                priority
-                quality={95}
-                sizes="(max-width: 768px) 100vw, 560px"
-                className="w-full h-auto object-contain block select-none"
-              />
+            {/* Integrated Photo Container (NO BOX, NO BORDER, NO BG-CARD) */}
+            <div className="relative w-full max-w-[480px]">
+              {/* Softly Masked Hero Photograph */}
+              <div className="relative w-full aspect-[470/456] overflow-hidden rounded-[2.5rem] [mask-image:radial-gradient(ellipse_at_center,black_78%,transparent_100%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_78%,transparent_100%)]">
+                <Image
+                  src="/woman-laptop-clean-crop.png"
+                  alt="Career professional working on laptop"
+                  fill
+                  priority
+                  quality={95}
+                  sizes="(max-width: 768px) 100vw, 480px"
+                  className="object-cover object-center select-none"
+                />
+              </div>
+
+              {/* Floating Badge 1: Profile Complete (Top Right) */}
+              <div className="absolute -top-3 sm:-top-4 -right-2 sm:-right-4 rounded-2xl p-3 sm:p-3.5 border border-border bg-card/95 backdrop-blur-md shadow-lg flex flex-col gap-1.5 min-w-[170px] sm:min-w-[190px] z-10 transition-transform hover:scale-[1.02]">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-5 h-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-foreground">Profile Complete</span>
+                  </div>
+                  <span className="text-xs font-extrabold text-[#087F68] dark:text-[#21A67A]">85%</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-[#087F68] to-[#21A67A] rounded-full w-[85%]" />
+                </div>
+              </div>
+
+              {/* Floating Badge 2: Your Skills (Bottom Right) */}
+              <div className="absolute -bottom-4 sm:-bottom-6 -right-2 sm:-right-4 rounded-2xl p-3 sm:p-4 border border-border bg-card/95 backdrop-blur-md shadow-lg flex flex-col gap-2 max-w-[240px] sm:max-w-[270px] z-10 transition-transform hover:scale-[1.02]">
+                <span className="text-[11px] font-bold text-foreground uppercase tracking-wider">Your Skills</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Python", "JavaScript", "React", "SQL", "Communication", "+3"].map((skill) => (
+                    <span
+                      key={skill}
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-foreground/80 border border-border"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Subtle Handwritten Caption (Bottom Left) */}
+              <div className="absolute -bottom-8 left-2 sm:left-4 hidden sm:flex items-center gap-1.5 text-xs font-bold text-[#087F68] dark:text-[#21A67A] select-none rotate-[-3deg]">
+                <span className="italic tracking-wide font-serif">Your Career, Our Mission</span>
+                <span className="text-sm">➔</span>
+              </div>
             </div>
           </div>
         </div>
