@@ -38,9 +38,17 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(regs) {
+                  for (var reg of regs) { reg.unregister(); }
+                });
+              }
               try {
                 var saved = localStorage.getItem('rozgar_radar_theme');
                 var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
