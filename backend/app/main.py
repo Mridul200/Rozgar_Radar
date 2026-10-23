@@ -101,6 +101,140 @@ def seed_jobs_from_backup(db):
         db.rollback()
         logger.error(f"Error seeding jobs from backup: {e}")
 
+def seed_users_from_backup(db):
+    """If database is missing essential users (freshly deployed on Render), seeds users from database/users.json."""
+    try:
+        from app.models.user import User, UserProfile, AutomationConfig
+        from app.api.auth_deps import hash_password
+        from datetime import timezone
+        import uuid
+        import json
+
+        json_path = os.path.join(root_dir, "database", "users.json")
+        if not os.path.exists(json_path):
+            json_path = os.path.join(root_dir, "users.json")
+
+        records = []
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, "r", encoding="utf-8") as f:
+                    records = json.load(f)
+            except Exception as e:
+                logger.warning(f"Error reading users.json: {e}")
+
+        # Known bcrypt hash for password123
+        pwd123_hash = "$2b$12$iwcoDUML.vnbcNhtoojZ9.5k65EdhdBkp/ojnD8O1RpDB2jTkbwTa"
+
+        default_seed = [
+            {
+                "email": "testuser@example.com",
+                "full_name": "Aarav Sharma",
+                "hashed_password": pwd123_hash,
+                "is_verified": True,
+                "profile": {
+                    "current_city": "Bengaluru",
+                    "work_status": "experienced",
+                    "profile_completion_pct": 85,
+                    "skills": json.dumps(["Python", "JavaScript", "React", "SQL", "FastAPI"]),
+                    "preferred_roles": json.dumps(["Full Stack Engineer", "Python Developer"]),
+                    "preferred_locations": json.dumps(["Bengaluru", "Remote India"]),
+                    "onboarding_completed": True
+                }
+            },
+            {
+                "email": "mridul008@gmail.com",
+                "full_name": "Mridul",
+                "hashed_password": pwd123_hash,
+                "is_verified": True,
+                "profile": {
+                    "current_city": "Bengaluru",
+                    "work_status": "experienced",
+                    "profile_completion_pct": 85,
+                    "skills": json.dumps(["Python", "JavaScript", "React", "SQL", "FastAPI", "Docker"]),
+                    "preferred_roles": json.dumps(["Full Stack Engineer", "Backend Developer"]),
+                    "preferred_locations": json.dumps(["Bengaluru", "Remote India"]),
+                    "onboarding_completed": True
+                }
+            }
+        ]
+
+        known_emails = {r.get("email") for r in records if r.get("email")}
+        for d in default_seed:
+            if d["email"] not in known_emails:
+                records.append(d)
+
+        added = 0
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        for r in records:
+            email = r.get("email", "").strip().lower()
+            if not email:
+                continue
+            existing = db.query(User).filter(User.email == email).first()
+            if existing:
+                if not getattr(existing, "is_verified", True):
+                    existing.is_verified = True
+                    db.commit()
+                continue
+
+            user_id = r.get("id") or str(uuid.uuid4())
+            user = User(
+                id=user_id,
+                email=email,
+                hashed_password=r.get("hashed_password") or pwd123_hash,
+                full_name=r.get("full_name") or "Job Seeker",
+                is_verified=bool(r.get("is_verified", True)),
+                email_verified_at=now,
+                created_at=now,
+                updated_at=now,
+            )
+            db.add(user)
+            db.flush()
+
+            p_data = r.get("profile") or {}
+            skills_val = p_data.get("skills")
+            if not isinstance(skills_val, str) and skills_val is not None:
+                skills_val = json.dumps(skills_val)
+            roles_val = p_data.get("preferred_roles")
+            if not isinstance(roles_val, str) and roles_val is not None:
+                roles_val = json.dumps(roles_val)
+            locs_val = p_data.get("preferred_locations")
+            if not isinstance(locs_val, str) and locs_val is not None:
+                locs_val = json.dumps(locs_val)
+
+            profile = UserProfile(
+                user_id=user.id,
+                current_city=p_data.get("current_city") or "Bengaluru",
+                mobile_number=p_data.get("mobile_number"),
+                work_status=p_data.get("work_status") or "fresher",
+                profile_completion_pct=p_data.get("profile_completion_pct") or 85,
+                skills=skills_val or json.dumps(["Python", "JavaScript", "React", "SQL"]),
+                preferred_roles=roles_val or json.dumps(["Full Stack Engineer"]),
+                preferred_locations=locs_val or json.dumps(["Bengaluru"]),
+                onboarding_completed=bool(p_data.get("onboarding_completed", True)),
+                email_alerts_enabled=True,
+            )
+            db.add(profile)
+
+            a_data = r.get("automation") or {}
+            auto = AutomationConfig(
+                user_id=user.id,
+                is_active=bool(a_data.get("is_active", True)),
+                delivery_frequency=a_data.get("delivery_frequency") or "daily",
+                delivery_time=a_data.get("delivery_time") or "09:00",
+                timezone=a_data.get("timezone") or "Asia/Kolkata",
+                min_match_score=a_data.get("min_match_score") or 60,
+            )
+            db.add(auto)
+            added += 1
+
+        db.commit()
+        if added > 0:
+            logger.info(f"Successfully seeded {added} users and profiles into database.")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error seeding users from backup: {e}")
+
+
 async def periodic_12h_sync():
     """Runs data synchronization across all approved sources every 12 hours with an initial post-boot sync."""
     try:
@@ -222,6 +356,7 @@ async def lifespan(app: FastAPI):
     try:
         seed_source_registry(db)
         seed_jobs_from_backup(db)
+        seed_users_from_backup(db)
         from app.services.skill_taxonomy import seed_skill_taxonomy
         from app.services.matching_service import seed_default_config
         seed_skill_taxonomy(db)

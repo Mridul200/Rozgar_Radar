@@ -31,7 +31,7 @@ function LoginForm() {
     setError(null);
 
     try {
-      const res = await loginUser({ email, password });
+      const res = await loginUser({ email: email.trim().toLowerCase(), password });
       login(res.access_token, res.user);
       router.push(redirectTarget);
     } catch (err: any) {

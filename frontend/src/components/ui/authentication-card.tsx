@@ -123,6 +123,25 @@ export const AuthenticationCard = ({
           </div>
         )}
 
+        {mode === "login" && (
+          <div className="mb-4 flex items-center justify-between text-xs px-3.5 py-2.5 rounded-2xl bg-primary/10 border border-primary/20">
+            <div className="text-foreground text-[11px] leading-tight">
+              <span className="font-semibold text-primary">Demo account:</span>{" "}
+              <code className="text-foreground font-mono">testuser@example.com</code> / <code className="text-foreground font-mono">password123</code>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (setEmail) setEmail("testuser@example.com");
+                if (setPassword) setPassword("password123");
+              }}
+              className="text-[11px] font-bold text-primary hover:underline cursor-pointer shrink-0 ml-2"
+            >
+              Auto-fill
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleFormSubmit} className="flex flex-col gap-4">
           {mode === "register" && setFullName && (
             <div className="flex flex-col gap-2">

@@ -1,0 +1,212 @@
+[
+  {
+    "id": "8514d844-4739-4599-84a1-d209072567b4",
+    "email": "testuser@example.com",
+    "hashed_password": ".vnbcNhtoojZ9.5k65EdhdBkp/ojnD8O1RpDB2jTkbwTa",
+    "full_name": "Aarav Sharma",
+    "is_verified": true,
+    "profile": {
+      "current_city": null,
+      "mobile_number": null,
+      "work_status": "fresher",
+      "profile_completion_pct": 85,
+      "skills": null,
+      "preferred_roles": null,
+      "preferred_locations": null,
+      "onboarding_completed": true
+    },
+    "automation": {
+      "is_active": true,
+      "delivery_frequency": "daily",
+      "delivery_time": "09:00",
+      "timezone": "Asia/Kolkata",
+      "min_match_score": 60
+    }
+  },
+  {
+    "id": "5f42bdea-f296-4408-9656-eda22ff9a13b",
+    "email": "candidate_test@example.com",
+    "hashed_password": ".vnbcNhtoojZ9.5k65EdhdBkp/ojnD8O1RpDB2jTkbwTa",
+    "full_name": "Test Candidate",
+    "is_verified": true,
+    "profile": {
+      "current_city": "Bengaluru",
+      "mobile_number": null,
+      "work_status": "fresher",
+      "profile_completion_pct": 85,
+      "skills": "[\"Python\", \"FastAPI\", \"React\", \"Docker\"]",
+      "preferred_roles": "[\"Full Stack Engineer\", \"Python Developer\"]",
+      "preferred_locations": "[\"Bengaluru\", \"Remote India\"]",
+      "onboarding_completed": true
+    },
+    "automation": {
+      "is_active": true,
+      "delivery_frequency": "daily",
+      "delivery_time": "08:30",
+      "timezone": "Asia/Kolkata",
+      "min_match_score": 50
+    }
+  },
+  {
+    "id": "30362ebb-035b-495e-8fbc-527c44e83b68",
+    "email": "mridul008@gmail.com",
+    "hashed_password": ".vnbcNhtoojZ9.5k65EdhdBkp/ojnD8O1RpDB2jTkbwTa",
+    "full_name": "Mridul",
+    "is_verified": true,
+    "profile": {
+      "current_city": "Bengaluru",
+      "mobile_number": null,
+      "work_status": "fresher",
+      "profile_completion_pct": 85,
+      "skills": "[\"Python\", \"React\", \"TypeScript\", \"FastAPI\", \"REST APIs\", \"Git\", \"Kubernetes\", \"Docker\"]",
+      "preferred_roles": "[\"Full Stack Engineer\", \"Backend Developer\", \"Frontend Engineer\", \"Software Engineer\"]",
+      "preferred_locations": "[\"Bengaluru\", \"Remote India\", \"Chennai\"]",
+      "onboarding_completed": true
+    },
+    "automation": {
+      "is_active": true,
+      "delivery_frequency": "daily",
+      "delivery_time": "09:00",
+      "timezone": "Asia/Kolkata",
+      "min_match_score": 60
+    }
+  },
+  {
+    "id": "93a5c790-a236-4044-a71e-d359118f26cb",
+    "email": "testuser@rozgar.com",
+    "hashed_password": ".vnbcNhtoojZ9.5k65EdhdBkp/ojnD8O1RpDB2jTkbwTa",
+    "full_name": "Test Engineer",
+    "is_verified": true,
+    "profile": {
+      "current_city": null,
+      "mobile_number": null,
+      "work_status": "fresher",
+      "profile_completion_pct": 85,
+      "skills": null,
+      "preferred_roles": null,
+      "preferred_locations": null,
+      "onboarding_completed": true
+    },
+    "automation": {
+      "is_active": true,
+      "delivery_frequency": "daily",
+      "delivery_time": "09:00",
+      "timezone": "Asia/Kolkata",
+      "min_match_score": 60
+    }
+  },
+  {
+    "id": "619b0314-7659-46bd-8cec-0962aaf41332",
+    "email": "dev_candidate_a@rozgar.com",
+    "hashed_password": "$2b$12$BbFDTBN.LhRsnjr6uhMdwOYEZoC9bKRcww1/Uc1JlYWdtf/DBYjCK",
+    "full_name": "Candidate A",
+    "is_verified": true,
+    "profile": {
+      "current_city": null,
+      "mobile_number": null,
+      "work_status": "fresher",
+      "profile_completion_pct": 20,
+      "skills": null,
+      "preferred_roles": null,
+      "preferred_locations": null,
+      "onboarding_completed": false
+    },
+    "automation": {
+      "is_active": true,
+      "delivery_frequency": "daily",
+      "delivery_time": "09:00",
+      "timezone": "Asia/Kolkata",
+      "min_match_score": 60
+    }
+  },
+  {
+    "id": "d206edb4-5e48-4684-94a4-b788957503b8",
+    "email": "dev_candidate_b@rozgar.com",
+    "hashed_password": "$2b$12$/IXwEORcX13WINWl4oHqkOHm3DXpuz71aY5W1kPfv499uRjfZVAFm",
+    "full_name": "Candidate B",
+    "is_verified": true,
+    "profile": {
+      "current_city": null,
+      "mobile_number": null,
+      "work_status": "fresher",
+      "profile_completion_pct": 20,
+      "skills": null,
+      "preferred_roles": null,
+      "preferred_locations": null,
+      "onboarding_completed": false
+    },
+    "automation": {
+      "is_active": true,
+      "delivery_frequency": "daily",
+      "delivery_time": "09:00",
+      "timezone": "Asia/Kolkata",
+      "min_match_score": 60
+    }
+  },
+  {
+    "id": "bed4383e-596b-4f5b-93fd-bd7a0f5d5418",
+    "email": "otp_verify_user@example.com",
+    "hashed_password": "$2b$12$3.8tW1iDCiL4vLkJkcJMVu2T6CoG9eu6ttxk8ZJkuBEf0gQ.Ri8AC",
+    "full_name": "Aarav Sharma",
+    "is_verified": true,
+    "profile": {
+      "current_city": null,
+      "mobile_number": null,
+      "work_status": "fresher",
+      "profile_completion_pct": 15,
+      "skills": null,
+      "preferred_roles": null,
+      "preferred_locations": null,
+      "onboarding_completed": false
+    },
+    "automation": {
+      "is_active": true,
+      "delivery_frequency": "daily",
+      "delivery_time": "09:00",
+      "timezone": "Asia/Kolkata",
+      "min_match_score": 60
+    }
+  },
+  {
+    "id": "61636d81-57f9-457b-8fef-61b6803175c3",
+    "email": "cooldown_test@example.com",
+    "hashed_password": "$2b$12$tTn0ozI9E0YiCSVKxulpfeJyp4Wt.SZ0WPw8xnfyeDJpuXM8T2c3W",
+    "full_name": "Cooldown Test",
+    "is_verified": true,
+    "profile": {
+      "current_city": null,
+      "mobile_number": null,
+      "work_status": "fresher",
+      "profile_completion_pct": 15,
+      "skills": null,
+      "preferred_roles": null,
+      "preferred_locations": null,
+      "onboarding_completed": false
+    },
+    "automation": {
+      "is_active": true,
+      "delivery_frequency": "daily",
+      "delivery_time": "09:00",
+      "timezone": "Asia/Kolkata",
+      "min_match_score": 60
+    }
+  },
+  {
+    "id": "564c45c9-42f9-473a-ae38-000248a27553",
+    "email": "unverified_login@example.com",
+    "hashed_password": "$2b$12$qi7Qzz/cNWlWZ5vY4IlRxup5jxZsDJOqc64ZHymIzhBBMNVQwq1/i",
+    "full_name": "Unverified User",
+    "is_verified": false,
+    "profile": null,
+    "automation": null
+  },
+  {
+    "id": "ce09f1fe-e60b-4670-a428-815f1878567b",
+    "email": "duplicate_test@example.com",
+    "hashed_password": "$2b$12$A71MVrK9rqsUsTnqGiJ70OFbnyLHkYvDvSdpAyu3ZKn9iO9FMLVgq",
+    "full_name": "Verified User",
+    "is_verified": true,
+    "profile": null,
+    "automation": null
+  }
+]
