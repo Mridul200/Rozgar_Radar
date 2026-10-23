@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from app.database import utc_now
 from app.models.job import JobListing
 from app.models.source import JobSource
 from services.job_ingestion.freshness import FreshnessEngine
@@ -24,9 +25,9 @@ def test_freshness_lifecycle(db_session):
         company_name="Freshness Co",
         canonical_url="https://fresh.co/jobs/a",
         application_url="https://fresh.co/jobs/a",
-        first_seen_at=datetime.utcnow() - timedelta(days=2),
-        last_seen_at=datetime.utcnow() - timedelta(days=2),
-        last_checked_at=datetime.utcnow() - timedelta(days=2),
+        first_seen_at=utc_now() - timedelta(days=2),
+        last_seen_at=utc_now() - timedelta(days=2),
+        last_checked_at=utc_now() - timedelta(days=2),
         freshness_status="active",
     )
     # Job B: Not seen for 10 days (past 7-day threshold)
@@ -39,9 +40,9 @@ def test_freshness_lifecycle(db_session):
         company_name="Freshness Co",
         canonical_url="https://fresh.co/jobs/b",
         application_url="https://fresh.co/jobs/b",
-        first_seen_at=datetime.utcnow() - timedelta(days=15),
-        last_seen_at=datetime.utcnow() - timedelta(days=10),
-        last_checked_at=datetime.utcnow() - timedelta(days=10),
+        first_seen_at=utc_now() - timedelta(days=15),
+        last_seen_at=utc_now() - timedelta(days=10),
+        last_checked_at=utc_now() - timedelta(days=10),
         freshness_status="active",
     )
     db_session.add_all([job_a, job_b])

@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.database import utc_now
 from app.models.job import JobListing
 from app.models.source import JobSource
 from services.job_ingestion.deduplicator import Deduplicator
@@ -28,9 +29,9 @@ def test_deduplicator_layered_checks(db_session):
         canonical_url="https://acme.com/jobs/100",
         application_url="https://acme.com/jobs/100",
         dedup_fingerprint=Deduplicator.compute_fingerprint("Acme Corp", "software engineer", "Remote"),
-        first_seen_at=datetime.utcnow(),
-        last_seen_at=datetime.utcnow(),
-        last_checked_at=datetime.utcnow(),
+        first_seen_at=utc_now(),
+        last_seen_at=utc_now(),
+        last_checked_at=utc_now(),
         freshness_status="active",
         is_duplicate=False,
     )

@@ -1,5 +1,6 @@
 import sys
 import os
+os.environ.setdefault("ENVIRONMENT", "test")
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker

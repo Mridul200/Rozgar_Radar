@@ -449,9 +449,14 @@ def seed_source_registry(db: Session) -> int:
         else:
             # Update key configuration attributes without wiping last_sync state
             for key in ["name", "source_type", "ats_platform", "official_domain", "career_page_url", 
-                        "api_endpoint", "board_identifier", "access_method", "permission_status",
-                        "auth_requirement", "rate_limit_notes", "coverage_notes", "is_active"]:
+                        "api_endpoint", "board_identifier", "access_method",
+                        "auth_requirement", "rate_limit_notes", "coverage_notes"]:
                 if key in item and getattr(existing, key) != item[key]:
                     setattr(existing, key, item[key])
+
+            # Apply explicit revocations: if registry marks a source restricted, revoke stored approval and deactivate
+            if item.get("permission_status") == "restricted":
+                existing.permission_status = "restricted"
+                existing.is_active = False
     db.commit()
     return count

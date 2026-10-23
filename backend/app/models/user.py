@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from sqlalchemy import Column, String, Text, Boolean, DateTime, Integer, Numeric, ForeignKey, Index
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.database import Base, utc_now
 
 class User(Base):
     __tablename__ = "users"
@@ -11,8 +11,8 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     profile = relationship("UserProfile", back_populates="user", uselist=False, cascade="all, delete-orphan")
     saved_jobs = relationship("SavedJob", back_populates="user", cascade="all, delete-orphan")
@@ -46,7 +46,7 @@ class UserProfile(Base):
     email_alerts_enabled = Column(Boolean, default=True, nullable=False)
     onboarding_completed = Column(Boolean, default=False, nullable=False)
 
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     user = relationship("User", back_populates="profile")
 
@@ -60,8 +60,8 @@ class SavedJob(Base):
     status = Column(String(32), default="saved", nullable=False)  # saved, applied, interviewing, offered, rejected
     notes = Column(Text, nullable=True)
     applied_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     user = relationship("User", back_populates="saved_jobs")
     job = relationship("JobListing")
@@ -89,7 +89,7 @@ class AutomationConfig(Base):
     min_match_score = Column(Integer, default=60, nullable=False)
     last_run_at = Column(DateTime, nullable=True)
     next_run_at = Column(DateTime, nullable=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     user = relationship("User", back_populates="automation")
 
@@ -104,7 +104,7 @@ class AutomationLog(Base):
     status = Column(String(32), default="success", nullable=False)  # success, no_matches, failed
     sent_job_ids = Column(Text, nullable=True)  # JSON list of job IDs
     error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
 
     user = relationship("User", back_populates="automation_logs")
 
@@ -117,8 +117,8 @@ class Resume(Base):
     title = Column(String(128), default="My Resume", nullable=False)
     template = Column(String(64), default="modern", nullable=False)
     content_json = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     user = relationship("User", back_populates="resumes")
 
@@ -134,7 +134,7 @@ class EmailNotificationLog(Base):
     subject = Column(String(255), nullable=False)
     status = Column(String(32), default="sent", nullable=False) # sent, failed
     error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
 
     user = relationship("User", back_populates="email_notifications")
 
@@ -155,7 +155,7 @@ class ATSAnalysis(Base):
     overall_score = Column(Integer, default=0, nullable=False)
     category_scores_json = Column(Text, nullable=False)
     report_json = Column(Text, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
 
     user = relationship("User", back_populates="ats_analyses")
     resume = relationship("Resume")

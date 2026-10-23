@@ -95,6 +95,8 @@ class WorkdayConnector(BaseJobConnector):
                     "searchText": "India"
                 }
 
+                postings = []
+                page_ok = False
                 for attempt in range(1, retries + 1):
                     try:
                         logger.info(f"[{self.source_id}] POST to Workday CXS {url} (Offset {offset}, Attempt {attempt}/{retries})")
@@ -105,6 +107,7 @@ class WorkdayConnector(BaseJobConnector):
                             postings = data.get("jobPostings", [])
                             total_found = data.get("total", len(postings))
                             all_postings.extend(postings)
+                            page_ok = True
                             break
                         elif response.status_code == 429:
                             wait_seconds = backoff ** attempt
@@ -121,6 +124,9 @@ class WorkdayConnector(BaseJobConnector):
                         if attempt == retries:
                             raise
                         await asyncio.sleep(backoff ** attempt)
+
+                if not page_ok:
+                    raise RuntimeError(f"[{self.source_id}] Workday offset {offset} failed after {retries} attempts.")
 
                 # If no more postings or we reached the total count, stop paging
                 if len(all_postings) >= total_found or not postings:

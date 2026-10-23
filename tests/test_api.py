@@ -1,4 +1,5 @@
 from datetime import datetime
+from app.database import utc_now
 from app.models.job import JobListing
 from app.models.source import JobSource
 
@@ -27,9 +28,9 @@ def test_api_jobs_pagination_and_search(client, db_session):
             employment_type="full_time",
             canonical_url=f"https://test.com/jobs/{i}",
             application_url=f"https://test.com/jobs/{i}",
-            first_seen_at=datetime.utcnow(),
-            last_seen_at=datetime.utcnow(),
-            last_checked_at=datetime.utcnow(),
+            first_seen_at=utc_now(),
+            last_seen_at=utc_now(),
+            last_checked_at=utc_now(),
             freshness_status="active",
             is_duplicate=False,
         )
@@ -85,3 +86,42 @@ def test_api_sync_protection(client):
         )
         assert res_authorized.status_code == 200
         assert res_authorized.json()["status"] == "accepted"
+
+
+def test_utc_now_and_model_timestamp_defaults(db_session):
+    now = utc_now()
+    assert now.tzinfo is None
+
+    source = JobSource(
+        id="src_dt_test",
+        name="DT Test Source",
+        source_type="ats",
+        access_method="public_api",
+        permission_status="approved",
+    )
+    db_session.add(source)
+    db_session.commit()
+
+    job = JobListing(
+        id="job_dt_test",
+        source_id="src_dt_test",
+        title="Datetime Compatibility Engineer",
+        normalized_title="datetime compatibility engineer",
+        company_name="DT Test Company",
+        canonical_url="https://test.com/jobs/dt-1",
+        application_url="https://test.com/jobs/dt-1",
+    )
+    db_session.add(job)
+    db_session.commit()
+    db_session.refresh(job)
+
+    # Verify defaults are populated as naive UTC
+    assert job.created_at is not None
+    assert job.created_at.tzinfo is None
+    assert job.first_seen_at.tzinfo is None
+    assert job.last_seen_at.tzinfo is None
+    assert job.last_checked_at.tzinfo is None
+    assert job.created_at <= utc_now()
+    # Verify comparisons and arithmetic do not raise TypeError
+    diff = (utc_now() - job.created_at).total_seconds()
+    assert diff >= 0

@@ -227,7 +227,7 @@ def test_run_all_digests_requires_smtp(db_session, monkeypatch):
 
     result = digest_scheduler.run_all_due_daily_digests(force=True, db=db_session)
 
-    assert result == {"processed": 0, "emails_sent": 0, "status": "smtp_not_configured"}
+    assert result == {"processed": 0, "emails_sent": 0, "status": "email_not_configured"}
     assert db_session.query(AutomationLog).count() == 0
 
 

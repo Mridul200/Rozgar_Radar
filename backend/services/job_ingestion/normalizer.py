@@ -56,12 +56,17 @@ class Normalizer:
     def strip_html(html_content: Optional[str]) -> str:
         if not html_content:
             return ""
-        # Replace line breaks and paragraphs with newlines
-        text = re.sub(r"<(?:br|/p|/div|/li)>", "\n", html_content, flags=re.IGNORECASE)
+        import html as _html
+        # Strip markup first to preserve encoded brackets
+        text = re.sub(r"<(?:br\s*/?|/p|/div|/li)>", "\n", html_content, flags=re.IGNORECASE)
+
+
+
+
         # Strip all other HTML tags
         text = re.sub(r"<[^>]+>", " ", text)
-        # Decode common HTML entities
-        text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", '"').replace("&#39;", "'").replace("&nbsp;", " ")
+        # Final decode for any remaining entities
+        text = _html.unescape(text).replace("\xa0", " ")
         # Clean multiple spaces while preserving single newlines
         lines = [re.sub(r"[ \t]+", " ", line).strip() for line in text.split("\n")]
         return "\n".join(l for l in lines if l)
@@ -126,31 +131,39 @@ class Normalizer:
         if not text:
             return (None, None, None, None)
         
+        low = text.lower()
         currency = None
-        if "$" in text or "usd" in text.lower():
+        if "$" in text or re.search(r"\busd\b", low):
             currency = "USD"
-        elif "₹" in text or "inr" in text.lower() or "rs" in text.lower():
+        elif "₹" in text or re.search(r"\b(?:inr|rs\.?|lpa|lakhs?)\b", low):
             currency = "INR"
-        elif "€" in text or "eur" in text.lower():
+        elif "€" in text or re.search(r"\beur\b", low):
             currency = "EUR"
-        elif "£" in text or "gbp" in text.lower():
+        elif "£" in text or re.search(r"\bgbp\b", low):
             currency = "GBP"
 
+        # Explicit currency required to avoid interpreting arbitrary numbers as salary
+        if currency is None:
+            return (None, None, None, None)
+
         period = None
-        tl = text.lower()
-        if "year" in tl or "/yr" in tl or "annual" in tl or "per annum" in tl or "p.a." in tl:
+        if re.search(r"\b(?:year|yearly|annual|annually|per annum|lpa)\b|\bp\.a\.(?!\w)", low) or "/yr" in low:
             period = "yearly"
-        elif "month" in tl or "/mo" in tl:
+        elif re.search(r"\b(?:month|monthly)\b", low) or "/mo" in low:
             period = "monthly"
-        elif "hour" in tl or "/hr" in tl:
+        elif re.search(r"\b(?:hour|hourly)\b", low) or "/hr" in low:
             period = "hourly"
 
         # Regex for numbers (e.g., $120,000 - $150,000 or 15 - 25 LPA)
         numbers = re.findall(r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\b", text)
+        is_lpa = bool(re.search(r"\b(?:lpa|lakhs?)\b", low))
         clean_nums = []
         for n in numbers:
             try:
-                clean_nums.append(float(n.replace(",", "")))
+                val = float(n.replace(",", ""))
+                if is_lpa and val < 1000:
+                    val = val * 100_000.0
+                clean_nums.append(val)
             except ValueError:
                 pass
         

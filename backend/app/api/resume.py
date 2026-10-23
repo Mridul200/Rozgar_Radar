@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from app.database import get_db
+from app.database import get_db, utc_now
 from app.models.user import User, Resume, UserProfile, ATSAnalysis
 from app.models.job import JobListing
 from app.schemas.user import (
@@ -39,7 +39,7 @@ _AI_RATE_LIMITS: Dict[str, List[datetime]] = defaultdict(list)
 AI_MAX_REQUESTS_PER_HOUR = 40
 
 def check_ai_rate_limit(identifier: str):
-    now = datetime.utcnow()
+    now = utc_now()
     window_start = now - timedelta(hours=1)
     _AI_RATE_LIMITS[identifier] = [t for t in _AI_RATE_LIMITS[identifier] if t > window_start]
     if len(_AI_RATE_LIMITS[identifier]) >= AI_MAX_REQUESTS_PER_HOUR:
@@ -414,13 +414,12 @@ def analyze_ats(
     resume_text = req.resume_text or ""
     resume_title = "Uploaded Resume"
 
-    # If resume_id is provided, fetch resume content
+    # If resume_id is provided, fetch resume content with strict auth and ownership check
     if req.resume_id:
-        resume_q = db.query(Resume).filter(Resume.id == req.resume_id)
-        if user:
-            resume_q = resume_q.filter(Resume.user_id == user.id)
-        resume = resume_q.first()
-        if not resume and user:
+        if not user:
+            raise HTTPException(status_code=401, detail="Authentication required to analyze a saved resume")
+        resume = db.query(Resume).filter(Resume.id == req.resume_id, Resume.user_id == user.id).first()
+        if not resume:
             raise HTTPException(status_code=404, detail="Selected resume not found or access denied")
         if resume:
             resume_title = resume.title

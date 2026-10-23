@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, Integer, Text, DateTime, ForeignKey, Index
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.database import Base, utc_now
 
 class SyncLog(Base):
     __tablename__ = "sync_logs"
@@ -18,7 +18,7 @@ class SyncLog(Base):
     duration_ms = Column(Integer, default=0, nullable=False)
     error_message = Column(Text, nullable=True)
 
-    started_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+    started_at = Column(DateTime, default=utc_now, nullable=False, index=True)
     completed_at = Column(DateTime, nullable=True)
 
     # Relationships

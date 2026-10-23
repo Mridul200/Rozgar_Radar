@@ -25,16 +25,19 @@ const API_BASE = RAW_API_URL.endsWith("/api/v1")
   : `${RAW_API_URL.replace(/\/+$/, "")}/api/v1`;
 
 function getAuthHeader(token?: string | null): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Cache-Control": "no-cache, no-store, must-revalidate",
+    Pragma: "no-cache",
+  };
   if (token) {
-    return { Authorization: `Bearer ${token}` };
-  }
-  if (typeof window !== "undefined") {
+    headers["Authorization"] = `Bearer ${token}`;
+  } else if (typeof window !== "undefined") {
     const saved = localStorage.getItem("hirepulse_auth_token");
     if (saved) {
-      return { Authorization: `Bearer ${saved}` };
+      headers["Authorization"] = `Bearer ${saved}`;
     }
   }
-  return {};
+  return headers;
 }
 
 /* ===========================
@@ -79,7 +82,7 @@ export async function fetchJobs(params: FetchJobsParams = {}): Promise<JobListRe
   if (params.page) query.set("page", params.page.toString());
   if (params.page_size) query.set("page_size", params.page_size.toString());
 
-  const res = await fetch(`${API_BASE}/jobs?${query.toString()}`, { cache: "no-store" });
+  const res = await fetch(`${API_BASE}/jobs?${query.toString()}`, { cache: "no-store", headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache" } });
   if (!res.ok) {
     throw new Error(`Failed to fetch jobs: ${res.statusText}`);
   }
@@ -87,7 +90,7 @@ export async function fetchJobs(params: FetchJobsParams = {}): Promise<JobListRe
 }
 
 export async function fetchFilterOptions(): Promise<JobFilterOptions> {
-  const res = await fetch(`${API_BASE}/jobs/filters`, { cache: "no-store" });
+  const res = await fetch(`${API_BASE}/jobs/filters`, { cache: "no-store", headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache" } });
   if (!res.ok) {
     throw new Error(`Failed to fetch filters: ${res.statusText}`);
   }
@@ -95,7 +98,7 @@ export async function fetchFilterOptions(): Promise<JobFilterOptions> {
 }
 
 export async function fetchJobById(id: string): Promise<JobListing> {
-  const res = await fetch(`${API_BASE}/jobs/${id}`, { cache: "no-store" });
+  const res = await fetch(`${API_BASE}/jobs/${id}`, { cache: "no-store", headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache" } });
   if (!res.ok) {
     throw new Error(`Job not found: ${res.statusText}`);
   }
@@ -191,6 +194,18 @@ export async function fetchSavedJobs(statusFilter?: string, token?: string | nul
     throw new Error("Failed to fetch saved jobs");
   }
   return res.json();
+}
+
+export async function checkJobSaved(jobId: string, token?: string | null): Promise<SavedJobItem | null> {
+  const res = await fetch(`${API_BASE}/saved-jobs?job_id=${encodeURIComponent(jobId)}`, {
+    headers: { ...getAuthHeader(token) },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error("Failed to check saved job status");
+  }
+  const items: SavedJobItem[] = await res.json();
+  return items.length > 0 ? items[0] : null;
 }
 
 export async function saveJob(data: { job_id: string; status?: string; notes?: string }, token?: string | null): Promise<SavedJobItem> {
@@ -424,7 +439,7 @@ export async function exportResumePdf(
   token?: string | null
 ): Promise<Blob> {
   const q = template ? `?template=${encodeURIComponent(template)}` : "";
-  const res = await fetch(`${API_BASE}/resumes/${id}/export/pdf${q}`, {
+  const res = await fetch(`${API_BASE}/resumes/${id}/export/pdf${q}`, { cache: "no-store",
     headers: { ...getAuthHeader(token) },
   });
   if (!res.ok) {
@@ -437,7 +452,7 @@ export async function exportResumeDocx(
   id: string,
   token?: string | null
 ): Promise<Blob> {
-  const res = await fetch(`${API_BASE}/resumes/${id}/export/docx`, {
+  const res = await fetch(`${API_BASE}/resumes/${id}/export/docx`, { cache: "no-store",
     headers: { ...getAuthHeader(token) },
   });
   if (!res.ok) {

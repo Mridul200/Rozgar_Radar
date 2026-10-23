@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
-from app.database import get_db
+from app.database import get_db, utc_now
 from app.models.user import User, SavedJob
 from app.models.job import JobListing
 from app.schemas.user import SavedJobCreateRequest, SavedJobUpdateRequest, SavedJobResponse
@@ -38,10 +38,13 @@ def _format_saved_job(sj: SavedJob) -> SavedJobResponse:
 @router.get("", response_model=List[SavedJobResponse])
 def get_user_saved_jobs(
     status_filter: Optional[str] = None,
+    job_id: Optional[str] = None,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     query = db.query(SavedJob).filter(SavedJob.user_id == user.id)
+    if job_id:
+        query = query.filter(SavedJob.job_id == job_id)
     if status_filter:
         query = query.filter(SavedJob.status == status_filter)
     saved_list = query.order_by(desc(SavedJob.updated_at)).all()
@@ -59,15 +62,22 @@ def save_job(req: SavedJobCreateRequest, user: User = Depends(get_current_user),
     ).first()
 
     if existing:
+        if req.status == "saved" and existing.status in ("applied", "interviewing", "offered"):
+            raise HTTPException(
+                status_code=409,
+                detail=f"This job is already tracked in your applications with status '{existing.status}'. Cannot overwrite with 'saved'."
+            )
         if req.status:
             existing.status = req.status
+            if req.status == "applied" and not existing.applied_at:
+                existing.applied_at = utc_now()
         if req.notes is not None:
             existing.notes = req.notes
         db.commit()
         db.refresh(existing)
         return _format_saved_job(existing)
 
-    applied_date = datetime.utcnow() if req.status == "applied" else None
+    applied_date = utc_now() if req.status == "applied" else None
     sj = SavedJob(
         user_id=user.id,
         job_id=req.job_id,
@@ -98,7 +108,7 @@ def update_saved_job_status(
     if req.status is not None:
         sj.status = req.status
         if req.status == "applied" and not sj.applied_at:
-            sj.applied_at = datetime.utcnow()
+            sj.applied_at = utc_now()
     if req.notes is not None:
         sj.notes = req.notes
     if req.applied_at is not None:

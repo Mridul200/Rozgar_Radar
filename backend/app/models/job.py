@@ -1,7 +1,7 @@
 from datetime import datetime
 from sqlalchemy import Column, String, Text, Boolean, DateTime, Numeric, ForeignKey, Index
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.database import Base, utc_now
 
 class JobListing(Base):
     __tablename__ = "job_listings"
@@ -51,9 +51,9 @@ class JobListing(Base):
     # Timestamps
     publication_date = Column(DateTime, nullable=True, index=True)
     application_deadline = Column(DateTime, nullable=True)
-    first_seen_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    last_seen_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    last_checked_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    first_seen_at = Column(DateTime, default=utc_now, nullable=False)
+    last_seen_at = Column(DateTime, default=utc_now, nullable=False)
+    last_checked_at = Column(DateTime, default=utc_now, nullable=False)
 
     # Freshness Status:
     # 'active', 'potentially_expired', 'link_failed', 'source_unavailable', 'needs_review'
@@ -67,8 +67,8 @@ class JobListing(Base):
     # Audit payload
     raw_metadata = Column(Text, nullable=True)
 
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False, index=True)
+    updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     # Relationships
     source = relationship("JobSource", back_populates="jobs")

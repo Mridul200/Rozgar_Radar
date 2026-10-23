@@ -1,15 +1,27 @@
 import os
+import secrets
 import bcrypt
 import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Header
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
+from app.config import settings
 
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "hirepulse_super_secret_jwt_key_2026_india_first_agent_jwt_token_sign_secure_32bytes")
+_raw_jwt_key = os.getenv("JWT_SECRET_KEY") or (getattr(settings, "JWT_SECRET_KEY", None) if settings else None)
+_env = (os.getenv("ENVIRONMENT") or (getattr(settings, "ENVIRONMENT", None) if settings else None) or "production").lower()
+if _raw_jwt_key:
+    if len(_raw_jwt_key) < 32:
+        raise RuntimeError("Configured JWT_SECRET_KEY is too short (must be >= 32 characters for HS256 security).")
+    JWT_SECRET_KEY = _raw_jwt_key
+elif _env in ("development", "dev", "local", "test", "testing"):
+    JWT_SECRET_KEY = "hirepulse_super_secret_jwt_key_2026_india_first_agent_jwt_token_sign_secure_32bytes"
+else:
+    raise RuntimeError(f"JWT_SECRET_KEY environment variable (>= 32 chars) is required when ENVIRONMENT is '{_env}'.")
+
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 
@@ -25,6 +37,21 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
     except Exception:
         return False
+
+def verify_admin(x_admin_key: Optional[str] = Header(None)):
+    current_env = (os.getenv("ENVIRONMENT") or (getattr(settings, "ENVIRONMENT", None) if settings else None) or "production").lower()
+    admin_key = os.getenv("ADMIN_API_KEY") or (getattr(settings, "ADMIN_API_KEY", None) if settings else None)
+    if not x_admin_key or not admin_key or not secrets.compare_digest(x_admin_key.encode('utf-8'), admin_key.encode('utf-8')):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Admin authentication required"
+        )
+    if current_env in ("production", "prod", "live") and admin_key == "change-this-secure-admin-key-in-production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Default admin key is not allowed in production."
+        )
+    return True
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()

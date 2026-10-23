@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -50,16 +51,14 @@ function LinkedinIcon({ className }: { className?: string }) {
 
 function Footerdemo() {
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
   const isDarkMode = theme === "dark"
-  const [subscribed, setSubscribed] = React.useState(false)
   const [emailInput, setEmailInput] = React.useState("")
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault()
     if (emailInput.trim()) {
-      setSubscribed(true)
-      setTimeout(() => setSubscribed(false), 4000)
-      setEmailInput("")
+      router.push(`/auth/register?email=${encodeURIComponent(emailInput.trim())}`)
     }
   }
 
@@ -77,29 +76,26 @@ function Footerdemo() {
               <span className="font-bold text-xl tracking-tight text-foreground">Rozgar Radar</span>
             </div>
             <p className="mb-6 text-sm text-muted-foreground">
-              Join our automated newsletter for daily verified job alerts and career updates directly delivered to your inbox.
+              Sign up for automated job alerts and daily verified opportunities delivered straight to your inbox.
             </p>
             <form onSubmit={handleSubscribe} className="relative">
               <Input
                 type="email"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
-                placeholder="Enter your email"
+                placeholder="Enter your email to get started"
                 className="pr-12 bg-background border-border text-foreground placeholder:text-muted-foreground"
                 required
               />
               <Button
                 type="submit"
                 size="icon"
-                className="absolute right-1 top-1 h-8 w-8 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-transform hover:scale-105"
+                className="absolute right-1 top-1 h-8 w-8 rounded-full bg-primary text-primary-foreground hover:opacity-90 transition-transform hover:scale-105 cursor-pointer"
               >
                 <Send className="h-4 w-4" />
-                <span className="sr-only">Subscribe</span>
+                <span className="sr-only">Get Started</span>
               </Button>
             </form>
-            {subscribed && (
-              <p className="text-xs text-emerald-400 mt-2">✓ Thank you for subscribing to Rozgar Radar!</p>
-            )}
             <div className="absolute -right-4 top-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
           </div>
 

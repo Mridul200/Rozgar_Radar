@@ -1,6 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from typing import List
 from sqlalchemy.orm import Session
+from app.database import utc_now
 from app.models.job import JobListing
 from app.models.source import JobSource
 
@@ -66,5 +67,5 @@ class FreshnessEngine:
     def mark_source_unavailable(db: Session, source: JobSource):
         """Marks source status without declaring individual jobs as expired."""
         source.sync_status = "failed"
-        source.last_sync_at = datetime.utcnow()
+        source.last_sync_at = utc_now()
         db.commit()

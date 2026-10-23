@@ -405,11 +405,10 @@ export default function OnboardingPage() {
                     onChange={(e) => setExperienceLevel(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl bg-background border border-border text-foreground text-xs outline-none focus:border-primary"
                   >
-                    <option value="entry">Fresher / Graduate (0-1 yrs)</option>
+                    <option value="fresher">Fresher / Graduate (0-1 yrs)</option>
                     <option value="1-3_years">Junior Developer (1-3 yrs)</option>
                     <option value="3-5_years">Mid-Level Engineer (3-5 yrs)</option>
-                    <option value="senior">Senior Engineer (5-8 yrs)</option>
-                    <option value="lead_architect">Lead / Architect (8+ yrs)</option>
+                    <option value="5+_years">Senior / Lead (5+ yrs)</option>
                   </select>
                 </div>
 

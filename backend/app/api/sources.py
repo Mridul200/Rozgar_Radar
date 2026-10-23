@@ -7,14 +7,11 @@ from app.database import get_db
 from app.config import settings
 from app.models.source import JobSource
 from app.models.job import JobListing
+from app.api.auth_deps import verify_admin
 from app.schemas.source import SourceResponse, SourceStatusSummary, SourceUpdate
 
 router = APIRouter(prefix="/sources", tags=["Sources"])
 
-def verify_admin(x_admin_key: Optional[str] = Header(None)):
-    if not x_admin_key or x_admin_key != settings.ADMIN_API_KEY:
-        raise HTTPException(status_code=403, detail="Invalid or missing admin API key")
-    return True
 
 @router.get("", response_model=List[SourceStatusSummary])
 def list_sources(

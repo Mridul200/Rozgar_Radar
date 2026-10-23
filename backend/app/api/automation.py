@@ -8,16 +8,16 @@ from services.email_service import (
 )
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, or_, func
 
 from app.database import get_db
+from app.config import settings
 from app.models.user import User, UserProfile, AutomationConfig, AutomationLog
 from app.models.job import JobListing
 from app.schemas.user import AutomationConfigRequest, AutomationConfigResponse, AutomationLogResponse
-from app.api.auth_deps import get_current_user
-from app.api.sync import verify_admin
+from app.api.auth_deps import get_current_user, verify_admin
 from services.delivery_schedule import next_delivery_moment, normalize_frequency
 
 router = APIRouter(prefix="/automation", tags=["Daily Job Automation"])
@@ -359,7 +359,19 @@ def trigger_automation_digest(
     if not config:
         raise HTTPException(status_code=400, detail="Automation configuration not found")
 
+    import re
+    if target_email:
+        target_email = target_email.strip().lower()
+        if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", target_email):
+            raise HTTPException(status_code=400, detail="Invalid target email address format")
+
     # Determine recipient
+    import re
+    if target_email:
+        target_email = target_email.strip().lower()
+        if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", target_email):
+            raise HTTPException(status_code=400, detail="Invalid target email address format")
+
     recipient = (target_email or (profile.notification_email if profile and profile.notification_email else user.email)).strip().lower()
     if target_email and profile:
         profile.notification_email = recipient
@@ -402,7 +414,7 @@ def trigger_automation_digest(
     # --- Email dispatch (if not a test run) ---
     email_sent = False
     email_error = None
-    if not is_test and is_smtp_configured():
+    if not is_test and top_jobs and is_smtp_configured():
         try:
             today_str = datetime.now(timezone.utc).strftime("%B %d, %Y")
             subject = f"🎯 Rozgar Radar: {len(top_jobs)} Recommended Job Matches – {today_str}"
@@ -441,26 +453,39 @@ def trigger_automation_digest(
     sent_ids = [j[0].id for j in top_jobs]
     now = datetime.now(timezone.utc)
 
-    status_str = "success" if top_jobs else "no_matches"
-    if not is_test and not email_sent and is_smtp_configured() and top_jobs:
+    if is_test:
+        status_str = "success" if top_jobs else "no_matches"
+        error_message = None
+    elif email_error:
         status_str = "email_error"
         error_message = email_error
-    else:
+    elif not is_smtp_configured():
+        status_str = "smtp_not_configured"
+        error_message = "SMTP / Brevo credentials are not configured"
+    elif not top_jobs:
+        status_str = "no_matches"
         error_message = None
+    elif email_sent:
+        status_str = "success"
+        error_message = None
+    else:
+        status_str = "email_error"
+        error_message = "Failed to deliver digest email" 
 
     log = AutomationLog(
         user_id=user.id,
         jobs_found=len(matched_jobs),
-        jobs_sent=len(top_jobs),
+        jobs_sent=len(top_jobs) if email_sent else 0,
         status=status_str,
-        sent_job_ids=json.dumps(sent_ids),
+        sent_job_ids=json.dumps(sent_ids if email_sent else []),
         error_message=error_message
     )
     db.add(log)
 
-    frequency = normalize_frequency(config.delivery_frequency)
-    config.last_run_at = now
-    config.next_run_at = next_delivery_moment(now, config.delivery_time, config.timezone, frequency)
+    if not is_test and email_sent:
+        frequency = normalize_frequency(config.delivery_frequency)
+        config.last_run_at = now
+        config.next_run_at = next_delivery_moment(now, config.delivery_time, config.timezone, frequency)
     db.commit()
     db.refresh(log)
 
@@ -470,7 +495,7 @@ def trigger_automation_digest(
         "email_sent": email_sent,
         "recipient_email": recipient,
         "jobs_found": len(matched_jobs),
-        "jobs_delivered": len(top_jobs),
+        "jobs_delivered": len(top_jobs) if email_sent else 0,
         "delivered_jobs": [
             {
                 "id": j[0].id,
@@ -482,8 +507,18 @@ def trigger_automation_digest(
                 "match_reasons": j[2]
             }
             for j in top_jobs
-        ],
-        "message": f"Successfully processed digest with {len(top_jobs)} matching jobs for {recipient}."
+        ] if (email_sent or is_test) else [],
+        "message": (
+            f"Test simulation: {len(top_jobs)} matching jobs previewed for {recipient}."
+            if is_test
+            else (
+                f"Successfully delivered digest with {len(top_jobs)} matching jobs to {recipient}."
+                if email_sent and top_jobs
+                else f"No matching jobs found for {recipient}."
+                if not top_jobs
+                else f"Digest delivery failed: {error_message}."
+            )
+        )
     }
 
 @router.post("/test-email")
@@ -494,6 +529,12 @@ def send_test_email(
 ):
     """Sends a verification test email to verify SMTP delivery."""
     profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    import re
+    if target_email:
+        target_email = target_email.strip().lower()
+        if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", target_email):
+            raise HTTPException(status_code=400, detail="Invalid target email address format")
+
     recipient = (target_email or (profile.notification_email if profile and profile.notification_email else user.email)).strip().lower()
     if target_email and profile:
         profile.notification_email = recipient
@@ -504,6 +545,9 @@ def send_test_email(
             detail="Email service is not configured. Please set BREVO_API_KEY and BREVO_SENDER_EMAIL in environment variables."
         )
     
+    import html as _html
+    safe_name = _html.escape(user.full_name or "Job Seeker")
+    safe_recipient = _html.escape(recipient)
     cfg = get_smtp_config()
     test_html = f"""
     <!DOCTYPE html>
@@ -516,14 +560,14 @@ def send_test_email(
                 <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Automated Notification Pipeline Verification</p>
             </div>
             <div style="padding: 24px;">
-                <p style="font-size: 15px; color: #1e293b; margin-top: 0;">Hello <strong>{user.full_name}</strong>,</p>
+                <p style="font-size: 15px; color: #1e293b; margin-top: 0;">Hello <strong>{safe_name}</strong>,</p>
                 <p style="font-size: 14px; color: #475569; line-height: 1.5;">
                     This is an automated test message from <strong>Rozgar Radar</strong>. Your SMTP configuration is fully active, authenticated, and ready to deliver real-time job alerts and daily digests!
                 </p>
                 <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #16a34a; padding: 14px; margin: 18px 0; border-radius: 6px;">
                     <p style="margin: 0; font-weight: bold; color: #15803d; font-size: 14px;">✔ SMTP Connection Status: Operational</p>
                     <p style="margin: 4px 0 0 0; color: #166534; font-size: 12px;">Server: {cfg['host']}:{cfg['port']} &bull; Sender: {cfg['sender']}</p>
-                    <p style="margin: 2px 0 0 0; color: #166534; font-size: 12px;">Recipient: {recipient}</p>
+                    <p style="margin: 2px 0 0 0; color: #166534; font-size: 12px;">Recipient: {safe_recipient}</p>
                 </div>
                 <p style="font-size: 13px; color: #64748b; margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 14px;">
                     Rozgar Radar &bull; Automated AI Job Discovery
@@ -538,13 +582,13 @@ def send_test_email(
             to_address=recipient,
             subject="Rozgar Radar – Verification Test Email",
             html_body=test_html,
-            plain_body=f"Rozgar Radar test email successfully delivered to {recipient}."
+            plain_body=f"Rozgar Radar test email successfully delivered to {safe_recipient}."
         )
         return {
             "success": True,
             "recipient": recipient,
             "sender": cfg["sender"],
-            "message": f"Verification email successfully sent to {recipient}!"
+            "message": f"Verification email successfully sent to {safe_recipient}!"
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Failed to send email: {str(exc)}")
@@ -601,13 +645,44 @@ def trigger_all_digests(
 
 
 @router.get("/cron-tick")
-def cron_tick(db: Session = Depends(get_db)):
+def cron_tick(
+    cron_key: Optional[str] = Query(None, description="Optional cron secret or admin key for authorization"),
+    x_cron_secret: Optional[str] = Header(None, alias="X-Cron-Secret"),
+    x_admin_key: Optional[str] = Header(None, alias="X-Admin-Key"),
+    db: Session = Depends(get_db)
+):
     """
-    Public health & automatic dispatch tick endpoint.
-    Can be pinged by uptime monitors / cron services (e.g. cron-job.org or UptimeRobot every 5-10m).
-    1. Keeps Render backend alive 24/7 (prevents free tier sleep).
-    2. Immediately triggers any daily digests whose scheduled delivery moment has arrived.
+    Automatic dispatch tick endpoint for daily digests and keep-alive.
+    If CRON_SECRET or ADMIN_API_KEY is configured, callers must supply matching key
+    via X-Cron-Secret header, X-Admin-Key header, or ?cron_key= query parameter.
     """
+    configured_secret = (
+        os.getenv("CRON_SECRET")
+        or os.getenv("ADMIN_API_KEY")
+        or (getattr(settings, "ADMIN_API_KEY", None) if settings else None)
+    )
+    current_env = (os.getenv("ENVIRONMENT") or (getattr(settings, "ENVIRONMENT", None) if settings else None) or "production").lower()
+
+    if configured_secret == "change-this-secure-admin-key-in-production" and current_env in ("production", "prod", "live"):
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Default admin key cannot be used in production for cron tick."
+        )
+
+    if configured_secret:
+        import secrets
+        supplied = x_cron_secret or x_admin_key or cron_key
+        if not supplied or not secrets.compare_digest(supplied.strip().encode("utf-8"), configured_secret.strip().encode("utf-8")):
+            raise HTTPException(
+                status_code=403,
+                detail="Forbidden: Invalid or missing cron secret authorization"
+            )
+    elif current_env in ("production", "prod", "live"):
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: CRON_SECRET or ADMIN_API_KEY must be configured in production to execute cron tick."
+        )
+
     from services.digest_scheduler import run_all_due_daily_digests
     result = run_all_due_daily_digests(force=False, db=db)
     return {

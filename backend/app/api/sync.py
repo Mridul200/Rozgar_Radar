@@ -7,17 +7,11 @@ from sqlalchemy import desc
 from app.database import get_db
 from app.config import settings
 from app.models.sync_log import SyncLog
-from services.job_ingestion.scheduler import run_all_sources, _RUNNING_LOCK
+from app.api.auth_deps import verify_admin
+from services.job_ingestion import scheduler as ingestion_scheduler
+from services.job_ingestion.scheduler import run_all_sources
 
 router = APIRouter(prefix="/sync", tags=["Synchronization"])
-
-def verify_admin(x_admin_key: Optional[str] = Header(None)):
-    if not x_admin_key or x_admin_key != settings.ADMIN_API_KEY:
-        raise HTTPException(
-            status_code=403,
-            detail="Forbidden: Admin authentication required to trigger data synchronization"
-        )
-    return True
 
 @router.post("")
 async def trigger_sync(
@@ -29,7 +23,7 @@ async def trigger_sync(
     Protected endpoint to trigger job data ingestion.
     Runs asynchronously in the background and logs all operations.
     """
-    if _RUNNING_LOCK:
+    if ingestion_scheduler._RUNNING_LOCK:
         raise HTTPException(
             status_code=409,
             detail="A synchronization process is already active. Please wait for it to complete."
@@ -109,7 +103,7 @@ def get_sync_status(db: Session = Depends(get_db)):
         next_sync = now + timedelta(seconds=cadence_seconds)
 
     return {
-        "is_sync_running": _RUNNING_LOCK,
+        "is_sync_running": bool(ingestion_scheduler._RUNNING_LOCK),
         "cadence_hours": 12,
         "cadence_seconds": cadence_seconds,
         "last_sync_at": last_sync.isoformat() if last_sync else None,

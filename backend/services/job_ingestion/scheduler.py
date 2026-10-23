@@ -14,7 +14,7 @@ backend_dir = os.path.abspath(os.path.join(current_dir, "..", "..", "backend"))
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from app.database import SessionLocal, Base, engine
+from app.database import SessionLocal, Base, engine, utc_now
 from app.models.source import JobSource
 from app.models.job import JobListing
 from app.models.sync_log import SyncLog
@@ -60,6 +60,7 @@ async def sync_source(db: Session, source: JobSource, trigger_type: str = "sched
     try:
         connector = get_connector(source)
         normalized_jobs = await connector.fetch_and_normalize()
+        jobs_fetched = len(normalized_jobs)
         now = datetime.now(timezone.utc)
         loc_mode = location_filter_mode or getattr(settings, "INGESTION_LOCATION_FILTER", "all")
         created_job_records = []
@@ -223,8 +224,25 @@ async def sync_source(db: Session, source: JobSource, trigger_type: str = "sched
         # Trigger instant email alerts for new matching listings if any were created
         if created_job_records:
             try:
-                from services.job_ingestion.alerts import process_instant_alerts_for_new_jobs
-                process_instant_alerts_for_new_jobs(db, created_job_records)
+
+                def _dispatch_alerts_worker(job_ids: list[str]):
+                    from app.database import SessionLocal
+                    from app.models.job import JobListing
+                    from services.job_ingestion.alerts import process_instant_alerts_for_new_jobs
+    
+                    worker_db = SessionLocal()
+                    try:
+                        jobs = worker_db.query(JobListing).filter(JobListing.id.in_(job_ids)).all()
+                        process_instant_alerts_for_new_jobs(worker_db, jobs)
+                        worker_db.commit()
+                    except Exception:
+                        worker_db.rollback()
+                        raise
+                    finally:
+                        worker_db.close()
+
+                created_ids = [j.id for j in created_job_records]
+                await asyncio.to_thread(_dispatch_alerts_worker, created_ids)
             except Exception as alert_err:
                 logger.error(f"Error during instant job alerts dispatch: {alert_err}")
 
@@ -262,13 +280,17 @@ async def sync_source(db: Session, source: JobSource, trigger_type: str = "sched
     except Exception as exc:
         err_msg = str(exc)
         logger.error(f"[{source.id}] Sync FAILED: {err_msg}")
+        try:
+            db.rollback()
+        except Exception:
+            pass
         source.sync_status = "failed"
         source.last_error = err_msg
 
         sync_log.status = "failed"
         sync_log.error_message = err_msg
         sync_log.duration_ms = int((time.time() - start_time) * 1000)
-        sync_log.completed_at = datetime.utcnow()
+        sync_log.completed_at = utc_now()
         db.commit()
 
         return {

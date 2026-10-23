@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { JobListing } from "@/types/job";
-import { X, ExternalLink, MapPin, ShieldCheck, Banknote, Clock, Briefcase, Globe, Calendar, Bookmark, BookmarkCheck, Check } from "lucide-react";
+import { SavedJobItem } from "@/types/user";
+import { X, ExternalLink, MapPin, ShieldCheck, Banknote, Clock, Briefcase, Globe, Calendar, Bookmark, BookmarkCheck, Check, Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { saveJob } from "@/lib/api";
+import { saveJob, removeSavedJob, checkJobSaved } from "@/lib/api";
 
 interface JobModalProps {
   job: JobListing | null;
@@ -47,24 +48,87 @@ const EMP_TYPE_LABELS: Record<string, string> = {
 
 export function JobModal({ job, onClose }: JobModalProps) {
   const { user, token } = useAuth();
-  const [isSaved, setIsSaved] = useState(false);
+  const [savedRecord, setSavedRecord] = useState<SavedJobItem | null>(null);
+  const [lookupState, setLookupState] = useState<"idle" | "loading" | "loaded" | "error">(token ? "loading" : "idle");
+  const [lookupRetryCount, setLookupRetryCount] = useState(0);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!job || !token) {
+      setSavedRecord(null);
+      setLookupState("idle");
+      return;
+    }
+    let isCancelled = false;
+    setLookupState("loading");
+    checkJobSaved(job.id, token)
+      .then((record) => {
+        if (!isCancelled) {
+          setSavedRecord(record);
+          setLookupState("loaded");
+        }
+      })
+      .catch(() => {
+        if (!isCancelled) {
+          setLookupState("error");
+        }
+      });
+    return () => {
+      isCancelled = true;
+    };
+  }, [job?.id, token, lookupRetryCount]);
+
   if (!job) return null;
+
+  const isBookmarked = savedRecord?.status === "saved";
+  const isApplicationTracked = !!savedRecord && savedRecord.status !== "saved";
 
   const handleToggleSave = async () => {
     if (!token) {
       alert("Please sign in to save and track jobs.");
       return;
     }
+    if (lookupState === "loading") {
+      return;
+    }
+    if (lookupState === "error") {
+      setLookupRetryCount((c) => c + 1);
+      return;
+    }
+    if (isApplicationTracked) {
+      alert(`This job is tracked in your applications as '${savedRecord.status}'. Manage it from the Application Tracker.`);
+      return;
+    }
     setSaving(true);
     try {
-      await saveJob({
-        job_id: job.id,
-        status: isSaved ? "rejected" : "saved",
-      }, token);
-      setIsSaved(!isSaved);
+      if (isBookmarked && savedRecord && savedRecord.job_id === job.id) {
+        // Confirm the persisted record still has status 'saved' before removal
+        const fresh = await checkJobSaved(job.id, token);
+        if (fresh && fresh.status !== "saved") {
+          if (fresh.job_id === job.id) setSavedRecord(fresh);
+          alert(`This job is tracked in your applications as '${fresh.status}'. Manage it from the Application Tracker.`);
+          return;
+        }
+        await removeSavedJob(savedRecord.id, token);
+        setSavedRecord(null);
+      } else {
+        const created = await saveJob({
+          job_id: job.id,
+          status: "saved",
+        }, token);
+        if (created.job_id === job.id) {
+          setSavedRecord(created);
+        }
+      }
     } catch (err: any) {
+      try {
+        const latest = await checkJobSaved(job.id, token);
+        if (latest && latest.job_id === job.id) {
+          setSavedRecord(latest);
+        }
+      } catch {
+        // ignore background refresh error
+      }
       alert(err.message || "Failed to update saved job status.");
     } finally {
       setSaving(false);
@@ -254,14 +318,33 @@ export function JobModal({ job, onClose }: JobModalProps) {
             </button>
             <button
               onClick={handleToggleSave}
-              disabled={saving}
+              disabled={saving || (!!token && lookupState === "loading")}
               className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
-                isSaved
+                token && lookupState === "error"
+                  ? "bg-destructive/10 border-destructive/30 text-destructive"
+                  : isApplicationTracked
+                  ? "bg-blue-500/15 border-blue-500/30 text-blue-700 dark:text-blue-300"
+                  : isBookmarked
                   ? "bg-emerald-500/15 border-emerald-500/30 text-emerald-700 dark:text-emerald-300"
                   : "bg-card hover:bg-muted border-border text-foreground"
               }`}
             >
-              {isSaved ? (
+              {token && lookupState === "loading" ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+                  Checking...
+                </>
+              ) : token && lookupState === "error" ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 text-destructive" />
+                  Retry Check
+                </>
+              ) : isApplicationTracked ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                  Tracked ({savedRecord?.status})
+                </>
+              ) : isBookmarked ? (
                 <>
                   <BookmarkCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   Saved

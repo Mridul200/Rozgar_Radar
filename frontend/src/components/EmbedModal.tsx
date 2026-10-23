@@ -14,7 +14,11 @@ export function EmbedModal({ isOpen, onClose }: EmbedModalProps) {
 
   if (!isOpen) return null;
 
-  const backendUrl = typeof window !== "undefined" ? window.location.origin.replace(":3000", ":8000") : "http://localhost:8000";
+  const configuredApiUrl = process.env.NEXT_PUBLIC_API_URL
+    ?.replace(/\/api\/v1\/?$/, "")
+    ?.replace(/\/+$/, "");
+  const fallbackBackend = typeof window !== "undefined" ? window.location.origin.replace(":3000", ":8000") : "http://localhost:8000";
+  const backendUrl = (configuredApiUrl || fallbackBackend).replace(/\/+$/, "");
   const frontendUrl = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
 
   const widgetSnippet = `<!-- 1. Place this container where you want the job board to appear -->

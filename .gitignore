@@ -54,3 +54,8 @@ scratch/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+
+# Agent Workspace / IDE Skills
+.agents/
+skills-lock.json

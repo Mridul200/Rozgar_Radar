@@ -148,6 +148,7 @@ export default function JobsPage() {
       {/* Search Bar */}
       <div className="mb-6">
         <SearchBar
+          key={`${keyword}|${location}`}
           initialKeyword={keyword}
           initialLocation={location}
           onSearch={handleSearch}

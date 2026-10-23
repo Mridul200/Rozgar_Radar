@@ -1,6 +1,11 @@
+from datetime import datetime, timezone
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import settings
+
+def utc_now() -> datetime:
+    """Return current naive UTC datetime for SQLite compatibility and consistent timestamp defaults."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 # Adjust connection args for SQLite if needed (e.g. check_same_thread=False)
 connect_args = {}

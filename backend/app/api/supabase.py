@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Query
+from app.api.sync import verify_admin
 from typing import Dict, Any, List
 from app.config import settings
 from app.supabase import supabase_client
 
-router = APIRouter(prefix="/supabase", tags=["Supabase"])
+router = APIRouter(prefix="/supabase", tags=["Supabase"], dependencies=[Depends(verify_admin)])
 
 
 @router.get("/status")
@@ -48,7 +49,7 @@ async def get_table_count(table_name: str) -> Dict[str, Any]:
 
 @router.get("/tables/{table_name}/rows")
 async def get_table_rows(
-    table_name: str, limit: int = 20, offset: int = 0
+    table_name: str, limit: int = Query(20, ge=1, le=100), offset: int = Query(0, ge=0)
 ) -> Dict[str, Any]:
     """Fetch rows from a Supabase table."""
     rows = await supabase_client.get_records(table_name, limit=limit, offset=offset)

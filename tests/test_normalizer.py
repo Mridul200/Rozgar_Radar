@@ -46,3 +46,14 @@ def test_parse_salary():
     assert min_inr is not None
     assert curr_inr == "INR"
     assert period_inr == "yearly"
+
+    min_lpa, max_lpa, curr_lpa, period_lpa = Normalizer.parse_salary("15 - 25 LPA")
+    assert min_lpa == 1500000.0
+    assert max_lpa == 2500000.0
+    assert curr_lpa == "INR"
+    assert period_lpa == "yearly"
+
+    min_pa, max_pa, curr_pa, period_pa = Normalizer.parse_salary("$120,000 p.a.")
+    assert min_pa == 120000.0
+    assert curr_pa == "USD"
+    assert period_pa == "yearly"

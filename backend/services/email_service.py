@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+import html as _html
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timezone
 
@@ -145,28 +146,33 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
 
         reasons_html = ""
         for r in j.get("match_reasons", [])[:3]:
-            reasons_html += f'<span style="display: inline-block; background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 500; border-radius: 4px; padding: 2px 8px; margin-right: 4px; margin-bottom: 4px;">✓ {r}</span>'
+            reasons_html += f'<span style="display: inline-block; background-color: #f1f5f9; color: #475569; font-size: 11px; font-weight: 500; border-radius: 4px; padding: 2px 8px; margin-right: 4px; margin-bottom: 4px;">✓ {_html.escape(str(r), quote=True)}</span>'
 
-        location_badge = j.get("location_raw") or j.get("city") or "India / Remote"
-        work_mode = j.get("work_mode", "").replace("_", " ").title()
+        # HTML escape fields
+        location_badge = _html.escape(str(j.get("location_raw") or j.get("city") or "India / Remote"), quote=True)
+        work_mode = _html.escape(str((j.get("work_mode") or "").replace("_", " ").title()), quote=True)
+        safe_title = _html.escape(str(j.get("title", "Job Opening")), quote=True)
+        safe_company = _html.escape(str(j.get("company_name", "Company")), quote=True)
+        raw_url = str(j.get("application_url", "#")).strip()
+        safe_url = _html.escape(raw_url, quote=True) if raw_url.startswith(("http://", "https://")) else "#"
 
         job_cards_html += f"""
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
-                <h3 style="margin: 0 0 4px 0; font-size: 16px; color: #0f172a; font-weight: 600;">{j.get('title', 'Job Opening')}</h3>
+                <h3 style="margin: 0 0 4px 0; font-size: 16px; color: #0f172a; font-weight: 600;">{safe_title}</h3>
                 <span style="background-color: {score_color}15; color: {score_color}; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 12px; border: 1px solid {score_color}30;">
                     {score}% Match
                 </span>
             </div>
             <p style="margin: 0 0 8px 0; font-size: 14px; color: #334155; font-weight: 500;">
-                🏢 {j.get('company_name', 'Company')} &nbsp;&bull;&nbsp; 📍 {location_badge}
+                🏢 {safe_company} &nbsp;&bull;&nbsp; 📍 {location_badge}
                 {f' &nbsp;&bull;&nbsp; 💼 {work_mode}' if work_mode else ''}
             </p>
             <div style="margin: 8px 0;">
                 {reasons_html}
             </div>
             <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed #f1f5f9;">
-                <a href="{j.get('application_url', '#')}" target="_blank" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 6px;">
+                <a href="{safe_url}" target="_blank" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; font-size: 13px; font-weight: 600; padding: 8px 16px; border-radius: 6px;">
                     View &amp; Apply &rarr;
                 </a>
             </div>
@@ -197,7 +203,7 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
             <div style="padding: 24px; background: #f8fafc;">
                 <div style="background: #eff6ff; border-left: 4px solid #2563eb; padding: 14px 16px; border-radius: 4px; margin-bottom: 20px;">
                     <p style="margin: 0; font-size: 14px; color: #1e3a8a;">
-                        Hello <strong>{user_name}</strong>! We discovered <strong>{total_count} fresh job openings</strong> matching your preferred roles and target skills.
+                        Hello <strong>{_html.escape(user_name)}</strong>! We discovered <strong>{total_count} fresh job openings</strong> matching your preferred roles and target skills.
                     </p>
                 </div>
 
@@ -220,6 +226,12 @@ def render_digest_template(user_name: str, jobs: List[Dict[str, Any]], date_str:
 def render_alert_template(user_name: str, job: Dict[str, Any]) -> str:
     """Renders a real-time instant job alert email."""
     score = job.get("match_score", 0)
+    safe_user = _html.escape(str(user_name), quote=True)
+    safe_title = _html.escape(str(job.get("title", "Job Opening")), quote=True)
+    safe_company = _html.escape(str(job.get("company_name", "Company")), quote=True)
+    safe_loc = _html.escape(str(job.get("location_raw", "India")), quote=True)
+    raw_url = str(job.get("application_url", "#")).strip()
+    safe_url = _html.escape(raw_url, quote=True) if raw_url.startswith(("http://", "https://")) else "#"
     return f"""
     <!DOCTYPE html>
     <html>
@@ -231,11 +243,11 @@ def render_alert_template(user_name: str, job: Dict[str, Any]) -> str:
                 <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">Rozgar Radar Instant Notification</p>
             </div>
             <div style="padding: 24px;">
-                <p style="font-size: 14px; color: #334155; margin-top: 0;">Hi {user_name}, a new high-priority job opening just matched your profile with a <strong>{score}% match score</strong>:</p>
+                <p style="font-size: 14px; color: #334155; margin-top: 0;">Hi {safe_user}, a new high-priority job opening just matched your profile with a <strong>{score}% match score</strong>:</p>
                 <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; background: #fdfdfd;">
-                    <h3 style="margin: 0 0 6px 0; color: #0f172a; font-size: 17px;">{job.get('title')}</h3>
-                    <p style="margin: 0 0 10px 0; color: #475569; font-size: 14px;"><strong>{job.get('company_name')}</strong> &bull; {job.get('location_raw', 'India')}</p>
-                    <a href="{job.get('application_url')}" target="_blank" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px;">
+                    <h3 style="margin: 0 0 6px 0; color: #0f172a; font-size: 17px;">{safe_title}</h3>
+                    <p style="margin: 0 0 10px 0; color: #475569; font-size: 14px;"><strong>{safe_company}</strong> &bull; {safe_loc}</p>
+                    <a href="{safe_url}" target="_blank" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 13px;">
                         Apply Now &rarr;
                     </a>
                 </div>

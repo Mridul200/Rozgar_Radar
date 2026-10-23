@@ -1,6 +1,7 @@
 import logging
 import json
 import asyncio
+import threading
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
@@ -20,6 +21,8 @@ logger = logging.getLogger("digest_scheduler")
 
 # Liveness state of the background digest worker in this process
 _WORKER_STATE = {"alive": False, "last_tick_at": None}
+_DIGEST_RUN_LOCK = threading.Lock()
+_CONFIG_LAST_ATTEMPT: dict = {}
 
 
 def get_scheduler_status() -> dict:
@@ -42,13 +45,17 @@ def run_all_due_daily_digests(force: bool = False, db: Session = None) -> dict:
         logger.warning("Email provider is not configured. Daily digests skipped.")
         return {"processed": 0, "emails_sent": 0, "status": "email_not_configured"}
 
+    if not _DIGEST_RUN_LOCK.acquire(blocking=False):
+        logger.info("Daily digest run already in progress. Skipping concurrent run.")
+        return {"processed": 0, "emails_sent": 0, "status": "already_running"}
+
     own_session = db is None
-    if own_session:
-        db = SessionLocal()
     processed_count = 0
     sent_count = 0
 
     try:
+        if own_session:
+            db = SessionLocal()
         active_configs = db.query(AutomationConfig).filter(AutomationConfig.is_active == True).all()
         now = datetime.now(timezone.utc)
 
@@ -63,6 +70,30 @@ def run_all_due_daily_digests(force: bool = False, db: Session = None) -> dict:
                 config.last_run_at, now, config.delivery_time, config.timezone, frequency
             ):
                 continue
+
+            # Enforce 15-minute retry backoff between attempts to prevent rapid failure spam
+            last_attempt = _CONFIG_LAST_ATTEMPT.get(config.id)
+            if not force and last_attempt:
+                attempt_dt = last_attempt.replace(tzinfo=timezone.utc) if last_attempt.tzinfo is None else last_attempt
+                if (now - attempt_dt).total_seconds() < 15 * 60:
+                    continue
+
+            # Multi-process & multi-worker distributed database claim (optimistic concurrency / CAS)
+            prev_last_run = config.last_run_at
+            if not force:
+                claim_count = db.query(AutomationConfig).filter(
+                    AutomationConfig.id == config.id,
+                    AutomationConfig.last_run_at == prev_last_run
+                ).update({"last_run_at": now}, synchronize_session=False)
+                db.commit()
+                if claim_count == 0:
+                    logger.info(f"Automation config {config.id} claimed by concurrent worker. Skipping duplicate dispatch.")
+                    continue
+            else:
+                config.last_run_at = now
+                db.commit()
+
+            _CONFIG_LAST_ATTEMPT[config.id] = now
 
             profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
 
@@ -160,20 +191,31 @@ def run_all_due_daily_digests(force: bool = False, db: Session = None) -> dict:
                 db.add(log)
                 config.last_run_at = now
                 config.next_run_at = next_run_at
+                _CONFIG_LAST_ATTEMPT.pop(config.id, None)
                 db.commit()
                 sent_count += 1
                 logger.info(f"Daily digest delivered to {user.email} ({len(top_jobs)} jobs)")
             except Exception as exc:
                 logger.error(f"Failed to deliver daily digest to {user.email}: {exc}")
+                try:
+                    db.rollback()
+                    if not force:
+                        # Restore previous last_run_at so the digest slot can be retried after the 15-minute backoff
+                        db.query(AutomationConfig).filter(
+                            AutomationConfig.id == config.id
+                        ).update({"last_run_at": prev_last_run}, synchronize_session=False)
+                except Exception:
+                    pass
                 log = AutomationLog(
                     user_id=user.id,
-                    jobs_found=len(matched_jobs),
+                    jobs_found=len(matched_jobs) if 'matched_jobs' in locals() else 0,
                     jobs_sent=0,
                     status="email_error",
                     sent_job_ids=json.dumps([]),
                     error_message=str(exc)
                 )
                 db.add(log)
+
                 db.commit()
 
         return {
@@ -182,7 +224,11 @@ def run_all_due_daily_digests(force: bool = False, db: Session = None) -> dict:
             "timestamp": now.isoformat()
         }
     finally:
-        if own_session:
+        try:
+            _DIGEST_RUN_LOCK.release()
+        except RuntimeError:
+            pass
+        if own_session and db is not None:
             db.close()
 
 
@@ -201,7 +247,7 @@ async def periodic_daily_digest_worker():
             try:
                 _WORKER_STATE["last_tick_at"] = datetime.now(timezone.utc)
                 logger.info("Checking for scheduled daily job digests...")
-                run_all_due_daily_digests(force=False)
+                await asyncio.to_thread(run_all_due_daily_digests, force=False)
             except Exception as exc:
                 logger.error(f"Error in periodic daily digest worker run: {exc}")
             await asyncio.sleep(CHECK_INTERVAL)

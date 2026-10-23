@@ -10,13 +10,14 @@ if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
 from app.database import engine, Base, SessionLocal
 from app.api import api_router
+from app.api.auth_deps import verify_admin
 import json
 from datetime import datetime
 from app.models.job import JobListing
@@ -165,13 +166,26 @@ app = FastAPI(
 )
 
 # Open CORS configuration enabling any external website or mobile app to consume jobs
+_cors_origins = [origin.strip() for origin in os.getenv("CORS_ORIGINS", "*").split(",") if origin.strip()]
+_allow_credentials = False if _cors_origins == ["*"] else True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=_allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Prevent stale caching of API responses across browsers, proxies, and client router
+@app.middleware("http")
+async def add_no_cache_headers(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/api/") or request.url.path in ("/health", "/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
 
 # Static file serving for embeddable JavaScript widget
 static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
@@ -209,7 +223,7 @@ from fastapi.responses import FileResponse
 def health_check():
     return {"status": "healthy"}
 
-@app.get("/download/db", tags=["Download"])
+@app.get("/download/db", tags=["Download"], dependencies=[Depends(verify_admin)])
 def download_sqlite_db():
     """Direct one-click download for the SQLite jobs.db file."""
     db_path = os.path.join(root_dir, "database", "jobs.db")
