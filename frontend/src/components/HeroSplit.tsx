@@ -181,7 +181,7 @@ export function HeroSplit({ totalJobs = 1885 }: HeroSplitProps) {
             {/* Seamless Light Mode Photographic Hero (Zero Dark Card Box, Clean Mint Aura, White Floating Badges) */}
             <div className="block dark:hidden relative w-full max-w-[540px]">
               <Image
-                src="/hero-career-light.png"
+                src="/hero-career-light.png?v=2.1.0"
                 alt="Rozgar Radar — Verified Jobs and AI Career Assistant"
                 width={960}
                 height={560}
@@ -195,7 +195,7 @@ export function HeroSplit({ totalJobs = 1885 }: HeroSplitProps) {
             {/* Seamless Dark Mode Photographic Hero (Zero Rectangular Border, Emerald Glow, Dark Floating Badges) */}
             <div className="hidden dark:block relative w-full max-w-[540px]">
               <Image
-                src="/hero-career-dark.png"
+                src="/hero-career-dark.png?v=2.1.0"
                 alt="Rozgar Radar — Verified Jobs and AI Career Assistant"
                 width={960}
                 height={560}

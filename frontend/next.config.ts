@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  // Ensure dynamic routes never stay stale in client router cache
+  // Disable Next.js client-side router cache for dynamic routes
   experimental: {
     staleTimes: {
       dynamic: 0,
@@ -19,8 +19,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Match all routes except static hashed assets (_next/static, favicon, etc.)
-        source: "/((?!_next/static|_next/image|favicon.ico).*)",
+        // Enforce live, un-cached delivery across all routes, pages, and images
+        source: "/((?!_next/static|favicon.ico).*)",
         headers: [
           {
             key: "Cache-Control",
@@ -44,7 +44,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Clear-Site-Data",
-            value: "\"cache\"",
+            value: "\"cache\", \"storage\"",
           },
         ],
       },
