@@ -22,6 +22,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
+      const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      const themeParam = urlParams?.get("theme");
+      if (themeParam === "light" || themeParam === "dark") {
+        setThemeState(themeParam);
+        applyTheme(themeParam);
+        localStorage.setItem("rozgar_radar_theme", themeParam);
+        setMounted(true);
+        return;
+      }
+
       const saved = localStorage.getItem("rozgar_radar_theme") as Theme | null;
       if (saved === "light" || saved === "dark") {
         setThemeState(saved);
