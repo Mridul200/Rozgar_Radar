@@ -173,62 +173,23 @@ export function HeroSplit({ totalJobs = 1885 }: HeroSplitProps) {
             </div>
           </div>
 
-          {/* Right Column (Visual Photo with Floating Career Badges) */}
+          {/* Right Column (High-Res Hero Visual Graphic from Designer) */}
           <div className="lg:col-span-5 relative flex items-center justify-center">
             {/* Ambient Background Glow */}
-            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/15 via-teal-500/5 to-transparent rounded-3xl blur-2xl -z-10" />
+            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/20 via-teal-500/10 to-transparent rounded-3xl blur-2xl -z-10" />
 
-            {/* Organic Hero Photo Frame */}
-            <div className="relative w-full max-w-[480px] aspect-[4/3] rounded-[2.5rem] overflow-hidden border border-border shadow-xl bg-card">
+            {/* Crisp High-Res Hero Graphic */}
+            <div className="relative w-full max-w-[560px] rounded-2xl sm:rounded-3xl overflow-hidden border border-border/80 shadow-2xl bg-card">
               <Image
-                src="/hero-career.png"
-                alt="Young professional working happily on laptop"
-                fill
+                src="/hero-career.jpg"
+                alt="Rozgar Radar — AI Career Companion"
+                width={1024}
+                height={682}
                 priority
-                sizes="(max-width: 768px) 100vw, 480px"
-                className="object-cover object-center"
+                quality={95}
+                sizes="(max-width: 768px) 100vw, 560px"
+                className="w-full h-auto object-contain block select-none"
               />
-
-              {/* Soft overlay gradient at the bottom */}
-              <div className="absolute inset-0 bg-gradient-to-t from-background/30 via-transparent to-transparent pointer-events-none" />
-            </div>
-
-            {/* Floating Card 1: Profile Complete (Top Right) */}
-            <div className="absolute -top-3 sm:-top-5 right-2 sm:right-0 glass-panel rounded-2xl p-3 sm:p-3.5 border border-border/80 shadow-lg bg-card/95 backdrop-blur-md flex flex-col gap-1.5 min-w-[170px] sm:min-w-[190px] animate-in">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-5 h-5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-xs font-bold text-foreground">Profile Complete</span>
-                </div>
-                <span className="text-xs font-extrabold text-[#087F68] dark:text-[#21A67A]">85%</span>
-              </div>
-              {/* Progress bar */}
-              <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full bg-gradient-to-r from-[#087F68] to-[#21A67A] rounded-full w-[85%]" />
-              </div>
-            </div>
-
-            {/* Floating Card 2: Your Skills (Middle/Bottom Right) */}
-            <div className="absolute -bottom-4 sm:-bottom-6 right-2 sm:right-2 glass-panel rounded-2xl p-3 sm:p-4 border border-border/80 shadow-lg bg-card/95 backdrop-blur-md flex flex-col gap-2 max-w-[240px] sm:max-w-[270px] animate-in">
-              <span className="text-[11px] font-bold text-foreground uppercase tracking-wider">Your Skills</span>
-              <div className="flex flex-wrap gap-1.5">
-                {["Python", "JavaScript", "React", "SQL", "Communication", "+3"].map((skill) => (
-                  <span
-                    key={skill}
-                    className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-muted text-foreground/80 border border-border"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* Whimsical Handwritten Style Badge */}
-            <div className="absolute -bottom-8 left-4 sm:left-6 hidden sm:flex items-center gap-1.5 text-xs font-bold text-[#087F68] dark:text-[#21A67A] select-none rotate-[-4deg]">
-              <span className="italic tracking-wide font-serif">Your Career, Our Mission</span>
-              <span className="text-sm">➔</span>
             </div>
           </div>
         </div>

@@ -148,3 +148,4 @@ async function testAllRoutes() {
 }
 
 testAllRoutes().catch(console.error);
+

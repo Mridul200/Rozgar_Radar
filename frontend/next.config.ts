@@ -42,6 +42,10 @@ const nextConfig: NextConfig = {
             key: "Expires",
             value: "0",
           },
+          {
+            key: "Clear-Site-Data",
+            value: "\"cache\"",
+          },
         ],
       },
     ];
