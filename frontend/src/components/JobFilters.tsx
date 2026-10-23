@@ -46,28 +46,28 @@ export function JobFilters({
     selectedEmploymentType ||
     selectedSourceId ||
     selectedLocationCategory ||
-    indiaFeedOnly ||
+    !indiaFeedOnly ||
     (selectedSortBy && selectedSortBy !== "verified")
   );
 
   return (
-    <div className="w-full bg-card p-4 rounded-xl border border-border shadow-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div className="w-full bg-card p-4 rounded-2xl border border-border shadow-xs mb-6 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
       {/* Work Mode & India Feed Toggle Pills */}
-      <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+      <div className="flex items-center gap-2 flex-wrap">
         {/* India Feed Highlight Switch */}
         <button
           onClick={onToggleIndiaFeed}
-          className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+          className={`text-xs font-semibold px-3.5 py-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
             indiaFeedOnly
-              ? "bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400"
-              : "bg-muted border border-border text-foreground hover:border-emerald-500/50"
+              ? "bg-[#087F68] text-white shadow-xs"
+              : "bg-muted border border-border text-foreground hover:border-[#087F68]/40"
           }`}
           title="Filter for India Office, Remote India, and verified APAC/Worldwide feeds"
         >
           <span>🇮🇳</span>
           <span>India-Focused Feed</span>
           {filterOptions?.india_eligible_count !== undefined && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-black/20 text-white font-bold">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/20 text-white font-bold">
               {filterOptions.india_eligible_count}
             </span>
           )}
@@ -90,9 +90,9 @@ export function JobFilters({
             <button
               key={item.value}
               onClick={() => onWorkModeChange(item.value)}
-              className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+              className={`text-xs font-medium px-3.5 py-1.5 rounded-full transition-all cursor-pointer ${
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm font-semibold"
+                  ? "bg-primary text-white shadow-xs font-semibold"
                   : "bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground border border-border"
               }`}
             >
@@ -103,13 +103,13 @@ export function JobFilters({
       </div>
 
       {/* Dropdown Filters */}
-      <div className="flex items-center gap-2.5 flex-wrap w-full md:w-auto">
+      <div className="flex items-center gap-2 flex-wrap">
         {/* Company Dropdown */}
         <div className="relative">
           <select
             value={selectedCompany}
             onChange={(e) => onCompanyChange(e.target.value)}
-            className="text-xs bg-background border border-border text-foreground rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
+            className="text-xs bg-background border border-border text-foreground rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer font-medium"
           >
             <option value="">All Companies</option>
             {filterOptions?.companies.map((comp) => (
@@ -125,7 +125,7 @@ export function JobFilters({
           <select
             value={selectedEmploymentType}
             onChange={(e) => onEmploymentTypeChange(e.target.value)}
-            className="text-xs bg-background border border-border text-foreground rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
+            className="text-xs bg-background border border-border text-foreground rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer font-medium"
           >
             <option value="">All Types</option>
             <option value="full_time">Full-time</option>
@@ -140,9 +140,9 @@ export function JobFilters({
           <select
             value={selectedSourceId}
             onChange={(e) => onSourceChange(e.target.value)}
-            className="text-xs bg-background border border-border text-foreground rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
+            className="text-xs bg-background border border-border text-foreground rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer font-medium"
           >
-            <option value="">All Sources</option>
+            <option value="">All ATS Sources</option>
             {filterOptions?.sources.map((src) => (
               <option key={src.id} value={src.id}>
                 {src.name}
@@ -151,44 +151,28 @@ export function JobFilters({
           </select>
         </div>
 
-        {/* Location Scope Dropdown */}
-        <div className="relative">
-          <select
-            value={selectedLocationCategory}
-            onChange={(e) => onLocationCategoryChange(e.target.value)}
-            className="text-xs bg-background border border-border text-foreground rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
-          >
-            <option value="">All Locations</option>
-            <option value="india_office">🇮🇳 India Office</option>
-            <option value="remote_india">🇮🇳 Remote (India Eligible)</option>
-            <option value="apac_worldwide">🌏 APAC / Worldwide (Verified)</option>
-            <option value="international_only">🌍 International Only</option>
-          </select>
-        </div>
-
         {/* Sort By Dropdown */}
         <div className="relative">
           <select
             value={selectedSortBy}
             onChange={(e) => onSortByChange(e.target.value)}
-            className="text-xs bg-background border border-border text-foreground rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer"
+            className="text-xs bg-background border border-border text-foreground rounded-xl px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer font-medium"
           >
-            <option value="verified">Sort: ATS Verified First</option>
-            <option value="newest">Sort: Newest First</option>
-            <option value="salary_desc">Sort: Highest Salary</option>
-            <option value="company">Sort: Company (A-Z)</option>
-            <option value="title">Sort: Title (A-Z)</option>
+            <option value="verified">Verified Priority</option>
+            <option value="newest">Most Recent</option>
+            <option value="salary_desc">Highest Salary</option>
+            <option value="company">Company Name</option>
           </select>
         </div>
 
-        {/* Reset button */}
+        {/* Reset Button */}
         {hasActiveFilters && (
           <button
             onClick={onReset}
-            className="flex items-center gap-1 text-xs text-rose-500 hover:text-rose-600 font-medium px-2 py-1 transition-colors cursor-pointer"
-            title="Reset filters"
+            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-border hover:bg-muted transition-colors cursor-pointer"
+            title="Reset all filters"
           >
-            <RotateCcw className="w-3.5 h-3.5" />
+            <RotateCcw className="w-3 h-3" />
             <span>Reset</span>
           </button>
         )}
@@ -196,3 +180,5 @@ export function JobFilters({
     </div>
   );
 }
+
+export default JobFilters;

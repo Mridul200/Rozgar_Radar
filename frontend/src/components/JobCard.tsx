@@ -1,11 +1,26 @@
 "use client";
 
+import React, { useState } from "react";
 import { JobListing } from "@/types/job";
-import { MapPin, Building2, Calendar, ExternalLink, CheckCircle2, Clock, Banknote, Briefcase } from "lucide-react";
+import {
+  MapPin,
+  Building2,
+  Calendar,
+  ExternalLink,
+  CheckCircle2,
+  Clock,
+  Banknote,
+  Briefcase,
+  Bookmark,
+  BookmarkCheck,
+} from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { saveJob, removeSavedJob } from "@/lib/api";
 
 interface JobCardProps {
   job: JobListing;
   onSelect: (job: JobListing) => void;
+  isSavedInitial?: boolean;
 }
 
 // Platform color + label map (optimized for both Light and Dark modes)
@@ -22,7 +37,7 @@ const PLATFORM_CONFIG: Record<string, { label: string; color: string }> = {
 };
 
 const WORK_MODE_STYLES: Record<string, string> = {
-  remote:        "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+  remote:        "bg-emerald-500/10 text-[#087F68] dark:text-[#21A67A] border-emerald-500/30",
   hybrid:        "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
   on_site:       "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30",
   not_disclosed: "bg-muted text-muted-foreground border-border",
@@ -43,7 +58,33 @@ const EMP_TYPE_LABELS: Record<string, string> = {
   not_disclosed: "",
 };
 
-export function JobCard({ job, onSelect }: JobCardProps) {
+export function JobCard({ job, onSelect, isSavedInitial = false }: JobCardProps) {
+  const { user, token } = useAuth();
+  const [isSaved, setIsSaved] = useState(isSavedInitial);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleToggleSave = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!token) {
+      alert("Please sign in or create an account to save jobs to your tracker.");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      if (isSaved) {
+        await removeSavedJob(job.id, token);
+        setIsSaved(false);
+      } else {
+        await saveJob({ job_id: job.id }, token);
+        setIsSaved(true);
+      }
+    } catch (err) {
+      console.error("Failed to toggle saved job:", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const hasRealPubDate = !!job.publication_date;
   const firstDate = job.publication_date || job.first_seen_at;
   const firstDateFormatted = firstDate
@@ -72,7 +113,7 @@ export function JobCard({ job, onSelect }: JobCardProps) {
 
   const salaryDisplay = job.salary_display && job.salary_display !== "Not disclosed"
     ? job.salary_display
-    : "Competitive / Industry Standard";
+    : "Industry Standard";
 
   return (
     <div
@@ -85,7 +126,7 @@ export function JobCard({ job, onSelect }: JobCardProps) {
                       group-hover:via-primary/80 transition-all duration-300" />
 
       <div className="p-5 sm:p-6 flex flex-col gap-3.5">
-        {/* Top row: Platform badge + work mode badge + freshness */}
+        {/* Top row: Platform badge + work mode badge + Save Bookmark */}
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 flex-wrap">
             <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${platformCfg.color}`}>
@@ -119,9 +160,29 @@ export function JobCard({ job, onSelect }: JobCardProps) {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 shrink-0 font-semibold">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Verified</span>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleToggleSave}
+              disabled={isSaving}
+              aria-label={isSaved ? "Remove from saved" : "Save job"}
+              className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                isSaved
+                  ? "bg-primary/10 border-primary/30 text-primary"
+                  : "bg-muted/40 border-border text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+              title={isSaved ? "Saved in Tracker" : "Save to Tracker"}
+            >
+              {isSaved ? (
+                <BookmarkCheck className="w-4 h-4 text-primary fill-primary/20" />
+              ) : (
+                <Bookmark className="w-4 h-4" />
+              )}
+            </button>
+            <div className="flex items-center gap-1 text-[11px] text-[#087F68] dark:text-[#21A67A] shrink-0 font-semibold">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              <span>Verified</span>
+            </div>
           </div>
         </div>
 
@@ -148,8 +209,8 @@ export function JobCard({ job, onSelect }: JobCardProps) {
 
         {/* Salary chip */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10
-                        border border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold w-fit">
-          <Banknote className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        border border-emerald-500/20 text-[#087F68] dark:text-[#21A67A] text-xs font-semibold w-fit">
+          <Banknote className="w-3.5 h-3.5 shrink-0" />
           <span>{salaryDisplay}</span>
         </div>
 
@@ -157,7 +218,7 @@ export function JobCard({ job, onSelect }: JobCardProps) {
         {(firstDateFormatted || lastDateFormatted) && (
           <div className="pt-2 border-t border-border grid grid-cols-2 gap-2 text-[11px]">
             <div className="flex items-center gap-2 bg-muted/60 dark:bg-muted/30 px-2.5 py-1.5 rounded-lg border border-border">
-              <Calendar className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400 shrink-0" />
+              <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
               <div className="truncate">
                 <span className="text-[10px] text-muted-foreground block uppercase font-semibold tracking-wider">{firstDateLabel}</span>
                 <span className="font-bold text-foreground text-xs">{firstDateFormatted || "—"}</span>
@@ -179,7 +240,7 @@ export function JobCard({ job, onSelect }: JobCardProps) {
       {/* Card Footer */}
       <div className="px-5 sm:px-6 pb-4 sm:pb-5 pt-3 flex items-center justify-between gap-3 border-t border-border bg-muted/20 dark:bg-transparent">
         <div className="text-[11px] text-muted-foreground font-medium truncate">
-          Official ATS Posting
+          Official ATS Ingestion
         </div>
 
         <div className="flex items-center gap-2">
@@ -194,9 +255,9 @@ export function JobCard({ job, onSelect }: JobCardProps) {
             href={job.application_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-lg
-                       bg-primary hover:opacity-90 text-primary-foreground
-                       shadow-sm transition-all cursor-pointer whitespace-nowrap hover:scale-102"
+            className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-full
+                       bg-primary hover:bg-[--primary-hover] text-white
+                       shadow-xs transition-all cursor-pointer whitespace-nowrap hover:scale-102"
           >
             Apply
             <ExternalLink className="w-3 h-3" />
@@ -206,3 +267,5 @@ export function JobCard({ job, onSelect }: JobCardProps) {
     </div>
   );
 }
+
+export default JobCard;

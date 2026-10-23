@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, MapPin, X } from "lucide-react";
+import { Search, MapPin, X, ArrowRight } from "lucide-react";
 
 interface SearchBarProps {
   initialKeyword?: string;
@@ -27,46 +27,49 @@ export function SearchBar({ initialKeyword = "", initialLocation = "", onSearch 
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-full max-w-4xl mx-auto bg-card p-2 sm:p-2.5 rounded-2xl shadow-sm flex flex-col sm:flex-row items-center gap-2 border border-border"
+      className="w-full max-w-4xl mx-auto glass-panel p-2 sm:p-2.5 rounded-2xl sm:rounded-full shadow-md bg-card flex flex-col sm:flex-row items-stretch sm:items-center gap-2 border border-border"
     >
       {/* Keyword input */}
-      <div className="relative flex-1 w-full flex items-center">
-        <Search className="absolute left-3.5 w-5 h-5 text-muted-foreground pointer-events-none" />
+      <div className="relative flex-1 w-full flex items-center px-2">
+        <Search className="w-4 h-4 text-muted-foreground shrink-0 mr-2" />
         <input
           type="text"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          placeholder="Job title, keywords, or company (e.g. Engineer, Figma, Python)..."
-          className="w-full pl-11 pr-8 py-3 bg-muted/60 dark:bg-muted/30 border border-border rounded-xl text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
+          placeholder="Job title, skills, or company (e.g. Engineer, Python, Figma)..."
+          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none border-none font-medium pr-6"
         />
         {keyword && (
           <button
             type="button"
             onClick={() => setKeyword("")}
-            className="absolute right-3 p-1 text-muted-foreground hover:text-foreground"
+            className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
+      {/* Divider */}
+      <div className="hidden sm:block w-px h-8 bg-border" />
+
       {/* Location input */}
-      <div className="relative w-full sm:w-64 flex items-center">
-        <MapPin className="absolute left-3.5 w-5 h-5 text-muted-foreground pointer-events-none" />
+      <div className="relative w-full sm:w-64 flex items-center px-2">
+        <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mr-2" />
         <input
           type="text"
           value={location}
           onChange={(e) => setLocation(e.target.value)}
-          placeholder="City, India, or Remote..."
-          className="w-full pl-11 pr-8 py-3 bg-muted/60 dark:bg-muted/30 border border-border rounded-xl text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
+          placeholder="Location (e.g. Bengaluru, Remote)..."
+          className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none border-none font-medium pr-6"
         />
         {location && (
           <button
             type="button"
             onClick={() => setLocation("")}
-            className="absolute right-3 p-1 text-muted-foreground hover:text-foreground"
+            className="p-1 text-muted-foreground hover:text-foreground cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
@@ -74,9 +77,10 @@ export function SearchBar({ initialKeyword = "", initialLocation = "", onSearch 
       {/* Submit button */}
       <button
         type="submit"
-        className="w-full sm:w-auto px-6 py-3 bg-primary hover:opacity-90 text-primary-foreground font-semibold text-sm rounded-xl shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
+        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-6 py-3 bg-primary hover:bg-[--primary-hover] text-white font-semibold text-sm rounded-xl sm:rounded-full shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap shrink-0"
       >
-        Search Jobs
+        <span>Search Jobs</span>
+        <ArrowRight className="w-4 h-4" />
       </button>
 
       {(keyword || location) && (
@@ -91,3 +95,5 @@ export function SearchBar({ initialKeyword = "", initialLocation = "", onSearch 
     </form>
   );
 }
+
+export default SearchBar;

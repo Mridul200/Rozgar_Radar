@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useTheme } from "@/lib/theme-context";
+import { BrandLogo } from "@/components/ui/BrandLogo";
 import {
   Home,
   Compass,
@@ -19,6 +20,7 @@ import {
   Bell,
   Sun,
   Moon,
+  ShieldAlert,
 } from "lucide-react";
 
 interface AppSidebarLayoutProps {
@@ -69,35 +71,24 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
     <div className="flex min-h-screen w-full bg-background text-foreground transition-colors duration-200">
       {/* COLLAPSIBLE SIDEBAR */}
       <aside
-        className={`sticky top-0 h-screen shrink-0 border-r border-border bg-card backdrop-blur-xl transition-all duration-300 ease-in-out ${
+        className={`sticky top-0 h-screen shrink-0 border-r border-border bg-card transition-all duration-300 ease-in-out ${
           sidebarOpen ? "w-64" : "w-16"
-        } p-3 flex flex-col justify-between z-40 shadow-xl select-none`}
+        } p-3 flex flex-col justify-between z-40 select-none shadow-xs`}
       >
         <div>
           {/* Brand Header */}
           <div className="mb-6 border-b border-border pb-4">
-            <Link
-              href="/"
-              className="flex cursor-pointer items-center justify-between rounded-xl p-1.5 transition-colors hover:bg-accent"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <img
-                  src="/logo.jpg"
-                  alt="Rozgar Radar"
-                  className="size-9 shrink-0 rounded-lg object-contain bg-white border border-border p-0.5 shadow-sm"
-                />
-                {sidebarOpen && (
-                  <div className="transition-opacity duration-200 opacity-100 min-w-0">
-                    <span className="block text-sm font-extrabold text-foreground tracking-tight truncate">
-                      Rozgar Radar
-                    </span>
-                    <span className="block text-[10px] text-emerald-400 font-semibold truncate">
-                      Candidate Portal
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Link>
+            {sidebarOpen ? (
+              <BrandLogo size="md" href="/" showSubtitle />
+            ) : (
+              <Link href="/" className="grid size-10 place-content-center mx-auto rounded-xl bg-primary text-white">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
+                  <circle cx="12" cy="12" r="9" strokeOpacity="0.4" />
+                  <circle cx="12" cy="12" r="5" strokeOpacity="0.8" />
+                  <circle cx="12" cy="12" r="2" fill="currentColor" />
+                </svg>
+              </Link>
+            )}
           </div>
 
           {/* Navigation Links */}
@@ -114,7 +105,7 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
                   href={item.href}
                   className={`relative flex h-11 w-full items-center rounded-xl transition-all duration-200 ${
                     isSelected
-                      ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary font-semibold"
+                      ? "bg-primary/10 text-primary border-l-3 border-primary font-semibold"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                   title={!sidebarOpen ? item.title : undefined}
@@ -136,45 +127,45 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
           {/* Account & Profile */}
           {sidebarOpen && (
             <div className="border-t border-border pt-4 space-y-1">
-              <div className="px-3 py-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Settings
+              <div className="px-3 py-1 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Preferences
               </div>
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="flex h-10 w-full items-center justify-between rounded-xl px-2 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
+                className="flex h-9 w-full items-center justify-between rounded-xl px-2.5 text-xs font-medium text-muted-foreground hover:bg-accent hover:text-foreground transition-colors cursor-pointer"
               >
                 <div className="flex items-center">
                   {theme === "dark" ? (
-                    <Sun className="h-4 w-4 mr-3 text-muted-foreground" />
+                    <Sun className="h-4 w-4 mr-2.5 text-amber-400" />
                   ) : (
-                    <Moon className="h-4 w-4 mr-3 text-muted-foreground" />
+                    <Moon className="h-4 w-4 mr-2.5 text-slate-700" />
                   )}
                   <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
                 </div>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground uppercase">
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-muted text-foreground uppercase font-bold">
                   {theme}
                 </span>
               </button>
 
               <Link
                 href="/profile"
-                className={`flex h-10 w-full items-center rounded-xl px-2 text-xs font-medium transition-colors ${
+                className={`flex h-9 w-full items-center rounded-xl px-2.5 text-xs font-medium transition-colors ${
                   pathname === "/profile"
                     ? "bg-primary/10 text-primary font-semibold"
                     : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
-                <Settings className="h-4 w-4 mr-3 text-muted-foreground" />
-                <span>Account Profile</span>
+                <Settings className="h-4 w-4 mr-2.5 text-muted-foreground" />
+                <span>Profile & Skills</span>
               </Link>
               {user && (
                 <button
                   type="button"
                   onClick={logout}
-                  className="flex h-10 w-full items-center rounded-xl px-2 text-xs font-medium text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                  className="flex h-9 w-full items-center rounded-xl px-2.5 text-xs font-medium text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
                 >
-                  <LogOut className="h-4 w-4 mr-3" />
+                  <LogOut className="h-4 w-4 mr-2.5" />
                   <span>Sign Out</span>
                 </button>
               )}
@@ -182,91 +173,52 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
           )}
         </div>
 
-        {/* Bottom Collapse Toggle */}
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          className="w-full border-t border-border transition-colors hover:bg-accent rounded-xl mt-4 cursor-pointer"
-          title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-        >
-          <div className="flex items-center p-2.5">
-            <div className="grid size-8 place-content-center shrink-0 text-muted-foreground">
-              <ChevronsRight
-                className={`h-4 w-4 transition-transform duration-300 ${
-                  sidebarOpen ? "rotate-180" : ""
-                }`}
-              />
+        {/* Bottom Collapse Toggle & User Profile Card */}
+        <div>
+          {sidebarOpen && user && (
+            <div className="mb-2 p-2 rounded-xl bg-muted/60 border border-border flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-xs">
+                {user.full_name ? user.full_name.charAt(0) : "U"}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-foreground truncate">{user.full_name || "Job Seeker"}</p>
+                <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>
+              </div>
             </div>
-            {sidebarOpen && (
-              <span className="text-xs font-semibold text-muted-foreground transition-opacity duration-200">
-                Collapse Sidebar
-              </span>
-            )}
-          </div>
-        </button>
+          )}
+
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="w-full border-t border-border transition-colors hover:bg-accent rounded-xl mt-2 cursor-pointer"
+            title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            <div className="flex items-center p-2">
+              <div className="grid size-8 place-content-center shrink-0 text-muted-foreground">
+                <ChevronsRight
+                  className={`h-4 w-4 transition-transform duration-300 ${
+                    sidebarOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+              {sidebarOpen && (
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  Collapse Sidebar
+                </span>
+              )}
+            </div>
+          </button>
+        </div>
       </aside>
 
-      {/* MAIN CONTENT PANE */}
-      <div className="flex-1 min-w-0 flex flex-col overflow-y-auto">
-        {/* Minimal top status bar */}
-        <header className="h-14 shrink-0 border-b border-border bg-card/75 backdrop-blur-md px-6 flex items-center justify-between z-30 transition-colors duration-200">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              {pathname === "/dashboard"
-                ? "Dashboard"
-                : pathname === "/automation"
-                ? "Daily Automation & Alerts"
-                : pathname === "/jobs"
-                ? "Explore Verified Jobs"
-                : pathname === "/resume-builder"
-                ? "Resume Builder"
-                : pathname === "/ats-checker"
-                ? "ATS Scorer"
-                : pathname === "/saved-jobs"
-                ? "Application Tracker"
-                : pathname === "/profile"
-                ? "Candidate Preferences"
-                : "Portal"}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer border border-border"
-              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            >
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </button>
-
-            <Link
-              href="/automation"
-              className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              title="Daily Automation Alerts"
-            >
-              <Bell className="h-4 w-4" />
-            </Link>
-
-            <Link
-              href="/profile"
-              className="flex items-center gap-2 p-1 pl-2 pr-3 rounded-xl bg-accent border border-border hover:border-primary text-xs font-semibold text-foreground transition-colors"
-            >
-              <div className="size-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center font-bold text-[11px]">
-                {(user?.full_name || user?.email || "U")[0].toUpperCase()}
-              </div>
-              <span className="max-w-[120px] truncate">
-                {user?.full_name || user?.email?.split("@")[0] || "Candidate"}
-              </span>
-            </Link>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>
     </div>
   );
 }
+
+export default AppSidebarLayout;

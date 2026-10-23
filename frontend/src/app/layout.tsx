@@ -18,9 +18,9 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Rozgar Radar — Find Jobs. Build Your Future.",
+  title: "Rozgar Radar — Find the Right Job. Build a Better Future.",
   icons: {
-    icon: "/logo.jpg",
+    icon: "/favicon.ico",
   },
   description:
     "Discover verified jobs, receive daily automated email job alerts, build ATS-optimized resumes, and evaluate ATS readiness with India's premier AI career copilot.",
@@ -34,7 +34,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -42,15 +42,17 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                var theme = localStorage.getItem('rozgar_radar_theme') || 'dark';
-                if (theme === 'light') {
-                  document.documentElement.classList.remove('dark');
-                  document.documentElement.classList.add('light');
-                  document.documentElement.style.colorScheme = 'light';
-                } else {
+                var saved = localStorage.getItem('rozgar_radar_theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var theme = saved || (prefersDark ? 'dark' : 'light');
+                if (theme === 'dark') {
                   document.documentElement.classList.add('dark');
                   document.documentElement.classList.remove('light');
                   document.documentElement.style.colorScheme = 'dark';
+                } else {
+                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.add('light');
+                  document.documentElement.style.colorScheme = 'light';
                 }
               } catch (e) {}
             `,

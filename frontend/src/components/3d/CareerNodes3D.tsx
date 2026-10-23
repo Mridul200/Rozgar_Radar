@@ -206,7 +206,7 @@ export function CareerNodes3D() {
     return (
       <div className="w-full h-full flex items-center justify-center p-8 text-center text-slate-400 bg-slate-900/40 rounded-2xl border border-slate-800">
         <div className="max-w-xs">
-          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400 font-bold">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">
             AI
           </div>
           <p className="text-sm font-medium text-slate-300">Intelligent Career Constellation</p>
@@ -222,8 +222,8 @@ export function CareerNodes3D() {
       className="relative w-full h-[360px] sm:h-[460px] md:h-[520px] rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing"
       aria-label="3D Interactive Career Opportunity Constellation"
     >
-      <div className="absolute top-3 right-4 z-10 px-2.5 py-1 rounded-full bg-slate-950/70 border border-cyan-500/20 text-[11px] font-medium text-cyan-400 backdrop-blur-md flex items-center gap-1.5 shadow-sm">
-        <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+      <div className="absolute top-3 right-4 z-10 px-2.5 py-1 rounded-full bg-slate-950/70 border border-primary/20 text-[11px] font-medium text-primary backdrop-blur-md flex items-center gap-1.5 shadow-sm">
+        <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
         Live 3D Career Opportunity Graph
       </div>
     </div>

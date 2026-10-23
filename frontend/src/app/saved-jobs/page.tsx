@@ -14,21 +14,18 @@ import {
   ExternalLink,
   Trash2,
   Calendar,
-  AlertCircle,
   Loader2,
   Briefcase,
-  CheckCircle2,
-  Clock,
   Edit3,
-  Save
+  Save,
 } from "lucide-react";
 
 const STATUSES: { id: "saved" | "applied" | "interviewing" | "offered" | "rejected"; label: string; color: string }[] = [
-  { id: "saved", label: "Bookmarked", color: "bg-slate-800 text-slate-300 border-slate-700" },
-  { id: "applied", label: "Applied", color: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
-  { id: "interviewing", label: "Interviewing", color: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
-  { id: "offered", label: "Offer Received", color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" },
-  { id: "rejected", label: "Archived", color: "bg-rose-500/15 text-rose-300 border-rose-500/30" },
+  { id: "saved", label: "Bookmarked", color: "bg-muted text-foreground border-border" },
+  { id: "applied", label: "Applied", color: "bg-primary/15 text-primary border-primary/30" },
+  { id: "interviewing", label: "Interviewing", color: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30" },
+  { id: "offered", label: "Offer Received", color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
+  { id: "rejected", label: "Archived", color: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30" },
 ];
 
 export default function SavedJobsPage() {
@@ -96,7 +93,7 @@ export default function SavedJobsPage() {
   if (loading || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
-        <Loader2 className="w-8 h-8 animate-spin text-cyan-400" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -107,21 +104,21 @@ export default function SavedJobsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs font-semibold text-cyan-400 mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-xs font-semibold text-primary mb-2">
               <BookmarkCheck className="w-3.5 h-3.5" />
               Application Tracker & Pipeline
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
               Saved Jobs & Applications
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Track hiring stages, interview notes, and application dates for your target opportunities.
             </p>
           </div>
 
           <Link
             href="/jobs"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 shadow-md shadow-cyan-500/25 transition-all self-start"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full text-xs sm:text-sm font-semibold text-white bg-primary hover:bg-[--primary-hover] shadow-sm transition-all self-start"
           >
             <Briefcase className="w-4 h-4" />
             Discover More Jobs
@@ -132,10 +129,10 @@ export default function SavedJobsPage() {
         <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 no-scrollbar">
           <button
             onClick={() => setActiveFilter("all")}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
               activeFilter === "all"
-                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+                ? "bg-primary text-white border border-primary shadow-xs"
+                : "bg-card border border-border text-muted-foreground hover:text-foreground"
             }`}
           >
             All Items ({savedJobs.length})
@@ -144,10 +141,10 @@ export default function SavedJobsPage() {
             <button
               key={st.id}
               onClick={() => setActiveFilter(st.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                 activeFilter === st.id
-                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                  : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+                  ? "bg-primary text-white border border-primary shadow-xs"
+                  : "bg-card border border-border text-muted-foreground hover:text-foreground"
               }`}
             >
               {st.label}
@@ -157,15 +154,15 @@ export default function SavedJobsPage() {
 
         {/* List of Tracked Jobs */}
         {savedJobs.length === 0 ? (
-          <div className="glass-card rounded-2xl p-12 border border-slate-800 text-center max-w-md mx-auto my-12">
-            <BookmarkCheck className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <h3 className="font-bold text-base text-white">No jobs in this column</h3>
-            <p className="text-xs text-slate-400 mt-1 mb-5">
+          <div className="rounded-2xl p-12 border border-border bg-card text-center max-w-md mx-auto my-12 shadow-xs">
+            <BookmarkCheck className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
+            <h3 className="font-bold text-base text-foreground">No jobs in this column</h3>
+            <p className="text-xs text-muted-foreground mt-1 mb-5">
               Browse through verified listings and bookmark jobs you want to apply or track.
             </p>
             <Link
               href="/jobs"
-              className="px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-500 transition-colors shadow-md shadow-cyan-600/30"
+              className="px-5 py-2.5 rounded-full text-xs font-semibold text-white bg-primary hover:bg-[--primary-hover] transition-colors shadow-sm"
             >
               Browse Openings
             </Link>
@@ -179,7 +176,7 @@ export default function SavedJobsPage() {
               return (
                 <div
                   key={item.id}
-                  className="glass-card rounded-2xl p-5 sm:p-6 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  className="rounded-2xl p-5 sm:p-6 border border-border bg-card hover:border-primary/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
                 >
                   <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -187,33 +184,33 @@ export default function SavedJobsPage() {
                         {statusCfg.label}
                       </span>
                       {item.is_india_eligible && (
-                        <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
                           India Verified
                         </span>
                       )}
                       {item.applied_at && (
-                        <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           Applied {new Date(item.applied_at).toLocaleDateString()}
                         </span>
                       )}
                     </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-white hover:text-cyan-400 transition-colors">
+                    <h3 className="text-base sm:text-lg font-bold text-foreground hover:text-primary transition-colors">
                       {item.job_title}
                     </h3>
 
-                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-400">
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Building2 className="w-3.5 h-3.5 text-slate-500" />
+                        <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
                         {item.company_name}
                       </span>
                       <span className="flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                        <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
                         {item.location_raw || "Not specified"}
                       </span>
                       {item.work_mode && (
-                        <span className="capitalize px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[11px]">
+                        <span className="capitalize px-2 py-0.5 rounded-md bg-muted border border-border text-[11px]">
                           {item.work_mode}
                         </span>
                       )}
@@ -226,7 +223,7 @@ export default function SavedJobsPage() {
                           <select
                             value={editStatus}
                             onChange={(e) => setEditStatus(e.target.value)}
-                            className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white"
+                            className="px-3 py-1.5 rounded-xl bg-card border border-border text-xs text-foreground outline-none"
                           >
                             {STATUSES.map((s) => (
                               <option key={s.id} value={s.id}>{s.label}</option>
@@ -238,38 +235,38 @@ export default function SavedJobsPage() {
                           value={editNotes}
                           onChange={(e) => setEditNotes(e.target.value)}
                           placeholder="Interview dates, recruiter notes, salary discussed..."
-                          className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-white focus:outline-none focus:border-cyan-500"
+                          className="w-full p-2.5 rounded-xl bg-card border border-border text-xs text-foreground focus:outline-none focus:border-primary"
                         />
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleUpdate(item.id)}
                             disabled={savingAction}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white flex items-center gap-1"
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-primary hover:bg-[--primary-hover] text-white flex items-center gap-1 shadow-xs cursor-pointer"
                           >
                             <Save className="w-3 h-3" /> Save
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300"
+                            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-muted hover:bg-muted/80 text-foreground border border-border cursor-pointer"
                           >
                             Cancel
                           </button>
                         </div>
                       </div>
                     ) : item.notes ? (
-                      <div className="pt-1 text-xs text-slate-400 bg-slate-900/50 p-2.5 rounded-xl border border-slate-800/80 max-w-xl">
-                        <span className="text-[10px] text-slate-500 uppercase font-semibold block mb-0.5">Notes</span>
+                      <div className="pt-1 text-xs text-muted-foreground bg-muted/50 p-2.5 rounded-xl border border-border max-w-xl">
+                        <span className="text-[10px] text-muted-foreground uppercase font-semibold block mb-0.5">Notes</span>
                         {item.notes}
                       </div>
                     ) : null}
                   </div>
 
                   {/* Right Actions */}
-                  <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800 shrink-0">
+                  <div className="flex items-center gap-2 pt-2 md:pt-0 border-t md:border-t-0 border-border shrink-0">
                     {!isEditing && (
                       <button
                         onClick={() => startEdit(item)}
-                        className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-colors"
+                        className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted border border-transparent hover:border-border transition-colors cursor-pointer"
                         title="Edit notes & status"
                       >
                         <Edit3 className="w-4 h-4" />
@@ -277,7 +274,7 @@ export default function SavedJobsPage() {
                     )}
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-colors"
+                      className="p-2 rounded-xl text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 transition-colors cursor-pointer"
                       title="Remove from saved"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -287,7 +284,7 @@ export default function SavedJobsPage() {
                         href={item.application_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-sm shadow-indigo-700/30 transition-all"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary hover:bg-[--primary-hover] text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
                       >
                         Official Apply
                         <ExternalLink className="w-3.5 h-3.5" />

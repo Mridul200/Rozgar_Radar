@@ -22,60 +22,58 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-teal-500: #14b8a6;
-  --color-violet-500: #8b5cf6;
+  --color-forest: #087F68;
+  --color-emerald-accent: #21A67A;
 }
 
 :root {
-  /* Premium Crisp Light Theme (Stripe/Linear Inspired) */
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --card-border: #e2e8f0;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #0284c7;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #1e293b;
-  --muted: #f1f5f9;
-  --muted-foreground: #475569;
-  --accent: #f8fafc;
-  --accent-foreground: #0f172a;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #ffffff;
-  --ring: #0284c7;
-  --color-violet-500: #7c3aed;
-  --color-teal-500: #0d9488;
+  /* Professional Warm Light Theme (Deep Forest Green & Crisp Off-White) */
+  --background: #F7F9F7;
+  --foreground: #172B36;
+  --card: #FFFFFF;
+  --card-foreground: #172B36;
+  --card-border: #E2EBE5;
+  --popover: #FFFFFF;
+  --popover-foreground: #172B36;
+  --primary: #087F68;
+  --primary-hover: #066955;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EBF4F0;
+  --secondary-foreground: #087F68;
+  --muted: #EDF2EE;
+  --muted-foreground: #657580;
+  --accent: #EBF7F2;
+  --accent-foreground: #087F68;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #E2EBE5;
+  --input: #FFFFFF;
+  --ring: #087F68;
 }
 
 .dark {
-  /* True Deep Black Neutral Dark Theme */
-  --background: #000000;
-  --foreground: #f4f4f5;
-  --card: #08080a;
-  --card-foreground: #f4f4f5;
-  --card-border: #18181b;
-  --popover: #08080a;
-  --popover-foreground: #f4f4f5;
-  --primary: #06b6d4;
-  --primary-foreground: #000000;
-  --secondary: #121214;
-  --secondary-foreground: #a1a1aa;
-  --muted: #121214;
-  --muted-foreground: #a1a1aa;
-  --accent: #18181b;
-  --accent-foreground: #f4f4f5;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #18181b;
-  --input: #121214;
-  --ring: #06b6d4;
-  --color-violet-500: #8b5cf6;
-  --color-teal-500: #14b8a6;
+  /* Sophisticated Charcoal Forest Green Dark Theme */
+  --background: #0B1110;
+  --foreground: #F0FDF8;
+  --card: #131D1B;
+  --card-foreground: #F0FDF8;
+  --card-border: #1E2E2A;
+  --popover: #131D1B;
+  --popover-foreground: #F0FDF8;
+  --primary: #0D8B70;
+  --primary-hover: #109D7F;
+  --primary-foreground: #FFFFFF;
+  --secondary: #172622;
+  --secondary-foreground: #34D399;
+  --muted: #162420;
+  --muted-foreground: #8E9F99;
+  --accent: #192925;
+  --accent-foreground: #34D399;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #1E2E2A;
+  --input: #0F1715;
+  --ring: #21A67A;
 }
 
 * {
@@ -86,7 +84,7 @@
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-geist-sans), "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   overflow-x: hidden;
 }
 
@@ -96,7 +94,7 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
 
-/* Glassmorphism & Card helpers */
+/* Clean UI Cards */
 .glass-panel {
   background: var(--card);
   border: 1px solid var(--border);
@@ -111,17 +109,17 @@ body {
 
 .glass-card:hover {
   border-color: var(--primary);
-  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.07), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+  box-shadow: 0 8px 20px -4px rgb(8 127 104 / 0.12), 0 4px 6px -2px rgb(0 0 0 / 0.04);
   transform: translateY(-2px);
 }
 
 .dark .glass-card {
-  box-shadow: none;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.3);
 }
 
 .dark .glass-card:hover {
   border-color: var(--primary);
-  box-shadow: 0 8px 30px -10px rgba(6, 182, 212, 0.18);
+  box-shadow: 0 8px 24px -6px rgba(13, 139, 112, 0.25);
 }
 
 /* Prose overrides for job descriptions */
@@ -140,7 +138,7 @@ body {
 }
 
 .animate-marquee {
-  animation: marquee 20s linear infinite;
+  animation: marquee 25s linear infinite;
 }
 
 /* Skeleton loading shimmer */
@@ -157,8 +155,8 @@ body {
 
 /* Fade-in animation for page loads */
 @keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-.animate-in { animation: fade-in-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-in { animation: fade-in-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both; }

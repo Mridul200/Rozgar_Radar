@@ -73,9 +73,9 @@ export default function SourcesAdminPage() {
       case "restricted":
         return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">Restricted</span>;
       case "not_reviewed":
-        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300 border border-slate-600">Not Reviewed</span>;
+        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-muted-foreground border border-slate-600">Not Reviewed</span>;
       default:
-        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">{status}</span>;
+        return <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground border border-border">{status}</span>;
     }
   };
 
@@ -88,12 +88,12 @@ export default function SourcesAdminPage() {
       case "running":
         return <span className="flex items-center gap-1 text-xs text-indigo-400 animate-pulse"><RefreshCw className="w-3.5 h-3.5 animate-spin" /> In Progress</span>;
       default:
-        return <span className="flex items-center gap-1 text-xs text-slate-400"><Clock className="w-3.5 h-3.5" /> Idle</span>;
+        return <span className="flex items-center gap-1 text-xs text-muted-foreground"><Clock className="w-3.5 h-3.5" /> Idle</span>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-muted text-slate-100 flex flex-col">
       <Header onOpenEmbed={() => setIsEmbedOpen(true)} />
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -101,7 +101,7 @@ export default function SourcesAdminPage() {
           <div>
             <Link
               href="/"
-              className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-white mb-2 transition-colors"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-white mb-2 transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Job Board</span>
@@ -110,15 +110,15 @@ export default function SourcesAdminPage() {
               <Database className="w-7 h-7 text-sky-400" />
               <span>Job Source Registry & Ingestion Health</span>
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Inspection of ATS platforms, permission compliance, rate-limit policies, and live sync execution.
             </p>
           </div>
 
           {/* Sync Trigger Controls */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5">
-              <KeyRound className="w-4 h-4 text-slate-500" />
+            <div className="flex items-center gap-1.5 bg-card border border-border rounded-xl px-3 py-1.5">
+              <KeyRound className="w-4 h-4 text-muted-foreground" />
               <input
                 type="password"
                 value={adminKey}
@@ -142,13 +142,13 @@ export default function SourcesAdminPage() {
         {syncMessage && (
           <div className="mb-6 p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs text-indigo-300 flex items-center justify-between">
             <span>{syncMessage}</span>
-            <button onClick={() => setSyncMessage(null)} className="text-slate-400 hover:text-white">✕</button>
+            <button onClick={() => setSyncMessage(null)} className="text-muted-foreground hover:text-white">✕</button>
           </div>
         )}
 
         {/* Source Registry Table */}
-        <div className="glass-panel rounded-2xl border border-slate-800/80 overflow-hidden mb-10 shadow-xl">
-          <div className="p-4 border-b border-slate-800 flex items-center justify-between flex-wrap gap-3">
+        <div className="glass-panel rounded-2xl border border-border overflow-hidden mb-10 shadow-xl">
+          <div className="p-4 border-b border-border flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <h3 className="font-bold text-sm text-white flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
@@ -156,13 +156,13 @@ export default function SourcesAdminPage() {
               </h3>
 
               {/* Tabs for Live Fetched vs All Cataloged */}
-              <div className="flex rounded-lg bg-slate-900 border border-slate-800 p-0.5 text-xs">
+              <div className="flex rounded-lg bg-card border border-border p-0.5 text-xs">
                 <button
                   onClick={() => setSourceFilter("live")}
                   className={`px-3 py-1 rounded-md font-semibold transition-all cursor-pointer ${
                     sourceFilter === "live"
                       ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-white"
+                      : "text-muted-foreground hover:text-white"
                   }`}
                 >
                   🟢 Live Fetched ({sources.filter(s => s.is_active || s.total_jobs > 0).length})
@@ -171,8 +171,8 @@ export default function SourcesAdminPage() {
                   onClick={() => setSourceFilter("all")}
                   className={`px-3 py-1 rounded-md font-semibold transition-all cursor-pointer ${
                     sourceFilter === "all"
-                      ? "bg-slate-800 text-white shadow-sm"
-                      : "text-slate-400 hover:text-white"
+                      ? "bg-muted text-white shadow-sm"
+                      : "text-muted-foreground hover:text-white"
                   }`}
                 >
                   All Tracked ({sources.length})
@@ -193,8 +193,8 @@ export default function SourcesAdminPage() {
           )}
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 uppercase tracking-wider text-[11px]">
+            <table className="w-full text-left text-xs text-muted-foreground">
+              <thead className="bg-card text-muted-foreground border-b border-border uppercase tracking-wider text-[11px]">
                 <tr>
                   <th className="py-3 px-4">Source Name</th>
                   <th className="py-3 px-4">Type / ATS</th>
@@ -209,7 +209,7 @@ export default function SourcesAdminPage() {
               <tbody className="divide-y divide-slate-800/60 font-sans">
                 {loading ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-12 text-slate-500">
+                    <td colSpan={8} className="text-center py-12 text-muted-foreground">
                       <Loader2 className="w-6 h-6 animate-spin mx-auto text-indigo-500 mb-2" />
                       Loading source registry...
                     </td>
@@ -217,13 +217,13 @@ export default function SourcesAdminPage() {
                 ) : sources
                     .filter((src) => sourceFilter === "all" ? true : (src.is_active || src.total_jobs > 0))
                     .map((src) => (
-                  <tr key={src.id} className="hover:bg-slate-900/40 transition-colors">
+                  <tr key={src.id} className="hover:bg-card transition-colors">
                     <td className="py-3.5 px-4 font-semibold text-white">
                       <div>{src.name}</div>
-                      <span className="text-[10px] text-slate-500 font-mono">{src.id}</span>
+                      <span className="text-[10px] text-muted-foreground font-mono">{src.id}</span>
                     </td>
                     <td className="py-3.5 px-4 capitalize">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px]">
+                      <span className="px-2 py-0.5 rounded bg-muted text-muted-foreground text-[10px]">
                         {src.ats_platform || src.source_type}
                       </span>
                     </td>
@@ -234,17 +234,17 @@ export default function SourcesAdminPage() {
                           <span>🇮🇳</span> {src.india_jobs}
                         </span>
                       ) : (
-                        <span className="text-slate-500">0</span>
+                        <span className="text-muted-foreground">0</span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 font-medium text-slate-300">
+                    <td className="py-3.5 px-4 font-medium text-muted-foreground">
                       {src.total_jobs > 0 ? (
                         <span>{src.total_jobs}</span>
                       ) : (
-                        <span className="text-slate-500">0</span>
+                        <span className="text-muted-foreground">0</span>
                       )}
                     </td>
-                    <td className="py-3.5 px-4 text-slate-400">
+                    <td className="py-3.5 px-4 text-muted-foreground">
                       {src.last_sync_at ? new Date(src.last_sync_at).toLocaleString() : "Never"}
                     </td>
                     <td className="py-3.5 px-4">
@@ -260,12 +260,12 @@ export default function SourcesAdminPage() {
                         <button
                           onClick={() => handleTriggerSync(src.id)}
                           disabled={syncing}
-                          className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 transition-colors cursor-pointer"
+                          className="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-muted hover:bg-muted/80 text-indigo-300 border border-border transition-colors cursor-pointer"
                         >
                           Sync Now
                         </button>
                       ) : (
-                        <span className="text-[10px] text-slate-500 italic">
+                        <span className="text-[10px] text-muted-foreground italic">
                           {src.permission_status === "permission_required" ? "Gated (Auth Req)" : "Unapproved"}
                         </span>
                       )}
@@ -278,7 +278,7 @@ export default function SourcesAdminPage() {
         </div>
 
         {/* Ingestion Logs */}
-        <div className="glass-panel rounded-2xl border border-slate-800/80 p-5 shadow-xl">
+        <div className="glass-panel rounded-2xl border border-border p-5 shadow-xl">
           <h3 className="font-bold text-sm text-white mb-4 flex items-center gap-2">
             <Clock className="w-4 h-4 text-indigo-400" />
             <span>Recent Synchronization Audit Trail (Last 20 Runs)</span>
@@ -286,16 +286,16 @@ export default function SourcesAdminPage() {
 
           <div className="space-y-2">
             {logs.length === 0 ? (
-              <div className="text-xs text-slate-500 py-4 text-center">No synchronization logs recorded yet.</div>
+              <div className="text-xs text-muted-foreground py-4 text-center">No synchronization logs recorded yet.</div>
             ) : (
               logs.map((log) => (
                 <div
                   key={log.id}
-                  className="p-3 rounded-xl bg-slate-900/70 border border-slate-800/80 flex items-center justify-between text-xs gap-4 flex-wrap"
+                  className="p-3 rounded-xl bg-card border border-border flex items-center justify-between text-xs gap-4 flex-wrap"
                 >
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-white font-mono">{log.source_id}</span>
-                    <span className="text-slate-400">
+                    <span className="text-muted-foreground">
                       {new Date(log.started_at).toLocaleTimeString()}
                     </span>
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
@@ -305,7 +305,7 @@ export default function SourcesAdminPage() {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-4 text-slate-400 text-[11px]">
+                  <div className="flex items-center gap-4 text-muted-foreground text-[11px]">
                     <span>Fetched: <strong>{log.jobs_fetched}</strong></span>
                     <span>Created: <strong className="text-emerald-400">{log.jobs_created}</strong></span>
                     <span>Updated: <strong className="text-sky-400">{log.jobs_updated}</strong></span>
