@@ -128,11 +128,25 @@ async def periodic_12h_sync():
 async def lifespan(app: FastAPI):
     # Initialize database tables
     Base.metadata.create_all(bind=engine)
-    # Ensure migration for notification_email column
+    # Ensure migration for notification_email column and email verification columns
     from sqlalchemy import text
     try:
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE user_profiles ADD COLUMN notification_email VARCHAR(255)"))
+            conn.commit()
+    except Exception:
+        pass
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1"))
+            conn.commit()
+    except Exception:
+        pass
+
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE users ADD COLUMN email_verified_at DATETIME"))
             conn.commit()
     except Exception:
         pass

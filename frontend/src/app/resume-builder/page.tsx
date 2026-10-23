@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { isValidEmail, EMAIL_ERROR_MESSAGE } from "@/lib/email-validation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -177,6 +178,7 @@ function getAllSkills(data: ResumeData): string[] {
 }
 
 function ResumeBuilderContent() {
+  const [resumeEmailError, setResumeEmailError] = useState<string | null>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, token, isLoading: authLoading } = useAuth();
@@ -1174,10 +1176,29 @@ function ResumeBuilderContent() {
                         <input
                           type="email"
                           value={resumeData.email}
-                          onChange={(e) => updateField("email", e.target.value)}
+                          onChange={(e) => {
+                            updateField("email", e.target.value);
+                            if (resumeEmailError && isValidEmail(e.target.value)) {
+                              setResumeEmailError(null);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (e.target.value.trim() && !isValidEmail(e.target.value)) {
+                              setResumeEmailError(EMAIL_ERROR_MESSAGE);
+                            } else {
+                              setResumeEmailError(null);
+                            }
+                          }}
                           placeholder="aarav@example.com"
-                          className="w-full px-3 py-2 rounded-lg bg-background border border-border focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-foreground"
+                          className={`w-full px-3 py-2 rounded-lg bg-background border ${
+                            resumeEmailError ? "border-destructive focus:ring-destructive/20 focus:border-destructive" : "border-border focus:ring-primary/20 focus:border-primary"
+                          } outline-none text-foreground transition-colors`}
                         />
+                        {resumeEmailError && (
+                          <p className="text-[11px] font-medium text-destructive mt-1 flex items-center gap-1">
+                            <span>{resumeEmailError}</span>
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-1.5">

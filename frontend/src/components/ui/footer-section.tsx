@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/utils";
 
 import * as React from "react";
 import Link from "next/link";
@@ -49,17 +50,39 @@ function LinkedinIcon({ className }: { className?: string }) {
   );
 }
 
+import { isValidEmail, EMAIL_ERROR_MESSAGE } from "@/lib/email-validation";
+
 function Footerdemo() {
   const { theme, setTheme } = useTheme();
   const router = useRouter();
   const isDarkMode = theme === "dark";
   const [emailInput, setEmailInput] = React.useState("");
+  const [emailError, setEmailError] = React.useState<string | null>(null);
+
+  const handleBlur = () => {
+    if (emailInput.trim() && !isValidEmail(emailInput)) {
+      setEmailError(EMAIL_ERROR_MESSAGE);
+    } else {
+      setEmailError(null);
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmailInput(e.target.value);
+    if (emailError && isValidEmail(e.target.value)) {
+      setEmailError(null);
+    }
+  };
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
-    if (emailInput.trim()) {
-      router.push(`/auth/register?email=${encodeURIComponent(emailInput.trim())}`);
+    const clean = emailInput.trim();
+    if (!clean || !isValidEmail(clean)) {
+      setEmailError(EMAIL_ERROR_MESSAGE);
+      return;
     }
+    setEmailError(null);
+    router.push(`/auth/register?email=${encodeURIComponent(clean)}`);
   };
 
   return (
@@ -77,9 +100,13 @@ function Footerdemo() {
               <Input
                 type="email"
                 value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
+                onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Enter email to get job alerts"
-                className="pr-12 bg-background border-border text-foreground placeholder:text-muted-foreground rounded-full text-xs"
+                className={cn(
+                  "pr-12 bg-background border-border text-foreground placeholder:text-muted-foreground rounded-full text-xs transition-colors",
+                  emailError && "border-destructive focus-visible:ring-destructive"
+                )}
                 required
               />
               <Button
@@ -90,6 +117,11 @@ function Footerdemo() {
                 <Send className="h-3.5 w-3.5" />
                 <span className="sr-only">Get Started</span>
               </Button>
+              {emailError && (
+                <p className="text-[11px] font-medium text-destructive mt-1.5 px-3">
+                  {emailError}
+                </p>
+              )}
             </form>
           </div>
 

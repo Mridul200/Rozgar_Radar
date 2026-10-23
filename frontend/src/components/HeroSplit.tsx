@@ -176,19 +176,33 @@ export function HeroSplit({ totalJobs = 1885 }: HeroSplitProps) {
           {/* Right Column (Seamless Integrated Career Composition) */}
           <div className="lg:col-span-5 relative flex items-center justify-center">
             {/* Ambient Organic Aura / Mint Backdrop */}
-            <div className="absolute -inset-4 sm:-inset-8 bg-gradient-to-tr from-emerald-500/15 via-teal-500/10 to-transparent dark:from-emerald-500/20 dark:via-teal-500/5 dark:to-transparent rounded-[3rem] blur-2xl -z-10 pointer-events-none" />
+            <div className="absolute -inset-4 sm:-inset-8 bg-gradient-to-tr from-emerald-500/10 via-teal-500/5 to-transparent dark:from-emerald-500/20 dark:via-teal-500/5 dark:to-transparent rounded-[3rem] blur-2xl -z-10 pointer-events-none" />
 
-            {/* Seamless Photographic Hero Composition (Zero Box, Zero Hard Borders) */}
-            <div className="relative w-full max-w-[540px] flex items-center justify-center">
+            {/* Seamless Light Mode Photographic Hero (Zero Dark Card Box, Clean Mint Aura, White Floating Badges) */}
+            <div className="block dark:hidden relative w-full max-w-[540px]">
               <Image
-                src="/hero-career-seamless.png"
+                src="/hero-career-light.png"
                 alt="Rozgar Radar — Verified Jobs and AI Career Assistant"
-                width={1024}
-                height={682}
+                width={960}
+                height={560}
                 priority
                 quality={100}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 540px"
-                className="w-full h-auto object-contain select-none drop-shadow-xl transition-all"
+                className="w-full h-auto object-contain select-none transition-all drop-shadow-sm"
+              />
+            </div>
+
+            {/* Seamless Dark Mode Photographic Hero (Zero Rectangular Border, Emerald Glow, Dark Floating Badges) */}
+            <div className="hidden dark:block relative w-full max-w-[540px]">
+              <Image
+                src="/hero-career-dark.png"
+                alt="Rozgar Radar — Verified Jobs and AI Career Assistant"
+                width={960}
+                height={560}
+                priority
+                quality={100}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 540px"
+                className="w-full h-auto object-contain select-none transition-all drop-shadow-xl"
               />
             </div>
           </div>

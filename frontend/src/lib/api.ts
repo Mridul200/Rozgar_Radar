@@ -109,6 +109,61 @@ export async function fetchJobById(id: string): Promise<JobListing> {
    AUTHENTICATION & USER
    =========================== */
 
+export interface OTPStatusResponse {
+  status: string;
+  message: string;
+  email: string;
+  cooldown_seconds: number;
+}
+
+export async function sendRegisterOTP(data: {
+  email: string;
+  full_name?: string;
+  password?: string;
+}): Promise<OTPStatusResponse> {
+  const res = await fetch(`${API_BASE}/auth/send-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to send verification code");
+  }
+  return res.json();
+}
+
+export async function verifyRegisterOTP(data: {
+  email: string;
+  otp: string;
+}): Promise<{ access_token: string; user: User }> {
+  const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Verification failed");
+  }
+  return res.json();
+}
+
+export async function resendRegisterOTP(data: {
+  email: string;
+}): Promise<OTPStatusResponse> {
+  const res = await fetch(`${API_BASE}/auth/resend-otp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to resend verification code");
+  }
+  return res.json();
+}
+
 export async function registerUser(data: { email: string; password: string; full_name: string }): Promise<{ access_token: string; user: User }> {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",

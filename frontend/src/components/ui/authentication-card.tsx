@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
 import { EyeIcon, EyeOffIcon, AlertCircle, Loader2 } from "lucide-react";
+import { isValidEmail, EMAIL_ERROR_MESSAGE } from "@/lib/email-validation";
 
 export interface AuthenticationCardProps {
   mode?: "login" | "register";
@@ -54,7 +55,42 @@ export const AuthenticationCard = ({
   footerLink,
 }: AuthenticationCardProps) => {
   const [isVisible, setIsVisible] = useState<boolean>(false);
+  const [emailTouched, setEmailTouched] = useState<boolean>(false);
+  const [emailValidationError, setEmailValidationError] = useState<string | null>(null);
   const toggleVisibility = () => setIsVisible((prevState) => !prevState);
+
+  const handleEmailBlur = () => {
+    setEmailTouched(true);
+    if (!email || !email.trim()) {
+      setEmailValidationError(EMAIL_ERROR_MESSAGE);
+    } else if (!isValidEmail(email)) {
+      setEmailValidationError(EMAIL_ERROR_MESSAGE);
+    } else {
+      setEmailValidationError(null);
+    }
+  };
+
+  const handleEmailChange = (val: string) => {
+    if (setEmail) setEmail(val);
+    if (emailTouched) {
+      if (isValidEmail(val)) {
+        setEmailValidationError(null);
+      }
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setEmailTouched(true);
+    if (!isValidEmail(email)) {
+      setEmailValidationError(EMAIL_ERROR_MESSAGE);
+      return;
+    }
+    setEmailValidationError(null);
+    if (onSubmit) {
+      onSubmit(e);
+    }
+  };
 
   const defaultTitle = mode === "login" ? "Sign in to your account" : "Create an account";
   const defaultDesc =
@@ -87,12 +123,14 @@ export const AuthenticationCard = ({
           </div>
         )}
 
-        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+        <form onSubmit={handleFormSubmit} className="flex flex-col gap-4">
           {mode === "register" && setFullName && (
             <div className="flex flex-col gap-2">
               <Label htmlFor="fullName" className="text-xs font-semibold text-foreground">Full Name</Label>
               <Input
                 id="fullName"
+                name="name"
+                autoComplete="name"
                 placeholder="Aarav Sharma"
                 className="rounded-xl bg-background border-border text-foreground"
                 value={fullName}
@@ -102,17 +140,29 @@ export const AuthenticationCard = ({
             </div>
           )}
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1.5">
             <Label htmlFor="email" className="text-xs font-semibold text-foreground">Email Address</Label>
             <Input
               id="email"
+              name="email"
               type="email"
+              autoComplete="email"
               placeholder="candidate@example.com"
-              className="rounded-xl bg-background border-border text-foreground"
+              className={cn(
+                "rounded-xl bg-background border-border text-foreground transition-colors",
+                emailValidationError && "border-destructive focus-visible:ring-destructive"
+              )}
               value={email}
-              onChange={(e) => setEmail && setEmail(e.target.value)}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              onBlur={handleEmailBlur}
               required
             />
+            {emailValidationError && (
+              <p className="text-[11px] font-medium text-destructive mt-0.5 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3 shrink-0" />
+                <span>{emailValidationError}</span>
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">

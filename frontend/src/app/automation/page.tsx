@@ -12,6 +12,7 @@ import {
   sendAutomationTestEmail
 } from "@/lib/api";
 import { AutomationConfig, AutomationLogItem } from "@/types/user";
+import { isValidEmail, EMAIL_ERROR_MESSAGE } from "@/lib/email-validation";
 import { AppSidebarLayout } from "@/components/layout/AppSidebarLayout";
 import {
   Clock,
@@ -53,6 +54,8 @@ export default function AutomationPage() {
   const [emailModalOpen, setEmailModalOpen] = useState(false);
   const [modalEmail, setModalEmail] = useState("");
   const [modalAction, setModalAction] = useState<"digest" | "test">("digest");
+  const [deliveryEmailError, setDeliveryEmailError] = useState<string | null>(null);
+  const [modalEmailError, setModalEmailError] = useState<string | null>(null);
 
   const [preferredTitles, setPreferredTitles] = useState<string[]>([]);
   const [titleInput, setTitleInput] = useState("");
@@ -160,6 +163,12 @@ export default function AutomationPage() {
   }, [authLoading, user, token, router]);
 
   const handleSave = async () => {
+    if (deliveryEmail.trim() && !isValidEmail(deliveryEmail.trim())) {
+      setDeliveryEmailError(EMAIL_ERROR_MESSAGE);
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
+    setDeliveryEmailError(null);
     setSaving(true);
     setSuccessMsg(null);
     setErrorMsg(null);

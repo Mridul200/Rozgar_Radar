@@ -1,20 +1,101 @@
 from typing import Optional, List, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+import re
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$")
+
+def validate_email_format(email: str) -> str:
+    if not email or not isinstance(email, str):
+        raise ValueError("Please enter a valid email address.")
+    trimmed = email.strip()
+    if len(trimmed) == 0 or len(trimmed) > 254:
+        raise ValueError("Please enter a valid email address.")
+    if "@" not in trimmed:
+        raise ValueError("Please enter a valid email address.")
+    parts = trimmed.split("@")
+    if len(parts) != 2:
+        raise ValueError("Please enter a valid email address.")
+    local_part, domain_part = parts
+    if not local_part or not domain_part:
+        raise ValueError("Please enter a valid email address.")
+    if "." not in domain_part:
+        raise ValueError("Please enter a valid email address.")
+    domain_parts = domain_part.split(".")
+    tld = domain_parts[-1]
+    if len(tld) < 2:
+        raise ValueError("Please enter a valid email address.")
+    if not EMAIL_REGEX.match(trimmed):
+        raise ValueError("Please enter a valid email address.")
+    return trimmed.lower()
 
 class UserRegisterRequest(BaseModel):
-    email: EmailStr
+    email: str
+    password: str = Field(..., min_length=6)
+    full_name: str = Field(..., min_length=2)
+    otp: Optional[str] = None
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        return validate_email_format(v)
+
+class UserLoginRequest(BaseModel):
+    email: str
+    password: str
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        return validate_email_format(v)
+
+class SendOTPRequest(BaseModel):
+    email: str
     password: str = Field(..., min_length=6)
     full_name: str = Field(..., min_length=2)
 
-class UserLoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        return validate_email_format(v)
+
+class VerifyOTPRequest(BaseModel):
+    email: str
+    otp: str = Field(..., min_length=6, max_length=6)
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        return validate_email_format(v)
+
+    @field_validator("otp")
+    @classmethod
+    def check_otp(cls, v: str) -> str:
+        trimmed = v.strip()
+        if not re.match(r"^\d{6}$", trimmed):
+            raise ValueError("OTP must be exactly 6 digits.")
+        return trimmed
+
+class ResendOTPRequest(BaseModel):
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: str) -> str:
+        return validate_email_format(v)
+
+class OTPStatusResponse(BaseModel):
+    status: str
+    message: str
+    email: str
+    cooldown_seconds: int = 60
 
 class UserResponse(BaseModel):
     id: str
     email: str
     full_name: str
+    is_verified: bool = True
+    email_verified_at: Optional[datetime] = None
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

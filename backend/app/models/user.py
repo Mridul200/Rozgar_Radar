@@ -11,6 +11,8 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
+    is_verified = Column(Boolean, default=False, nullable=False)
+    email_verified_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=utc_now, nullable=False)
     updated_at = Column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
@@ -159,3 +161,23 @@ class ATSAnalysis(Base):
 
     user = relationship("User", back_populates="ats_analyses")
     resume = relationship("Resume")
+
+
+class EmailVerificationOTP(Base):
+    __tablename__ = "email_verification_otps"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String(255), nullable=False, index=True)
+    otp_hash = Column(String(255), nullable=False)
+    full_name = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
+    attempts = Column(Integer, default=0, nullable=False)
+    max_attempts = Column(Integer, default=5, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=utc_now, nullable=False)
+    verified_at = Column(DateTime, nullable=True)
+    is_used = Column(Boolean, default=False, nullable=False)
+
+    __table_args__ = (
+        Index("idx_otp_email_active", "email", "is_used", "expires_at"),
+    )
