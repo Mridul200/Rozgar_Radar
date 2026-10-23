@@ -95,9 +95,17 @@ export function Navbar() {
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className="flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-border bg-card text-sm font-medium text-foreground hover:bg-accent transition-all shadow-xs cursor-pointer"
               >
-                <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold uppercase shadow-xs">
-                  {user.full_name ? user.full_name.charAt(0) : "U"}
-                </div>
+                {user.profile_photo_url ? (
+                  <img
+                    src={user.profile_photo_url}
+                    alt={user.full_name || "Profile"}
+                    className="w-7 h-7 rounded-full object-cover border border-primary/30 shrink-0"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold uppercase shadow-xs shrink-0">
+                    {user.full_name ? user.full_name.charAt(0) : "U"}
+                  </div>
+                )}
                 <span className="max-w-[120px] truncate text-xs font-semibold">{user.full_name || user.email}</span>
                 <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
               </button>

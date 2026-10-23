@@ -106,6 +106,11 @@ def send_register_otp(req: SendOTPRequest, db: Session = Depends(get_db)):
         otp_hash=otp_hash,
         full_name=req.full_name.strip(),
         password_hash=pwd_hash,
+        mobile_number=getattr(req, "mobile_number", None),
+        work_status=getattr(req, "work_status", "fresher"),
+        current_city=getattr(req, "current_city", None),
+        resume_filename=getattr(req, "resume_filename", None),
+        resume_text=getattr(req, "resume_text", None),
         expires_at=expires_at,
         created_at=now,
         attempts=0,
@@ -223,9 +228,15 @@ def verify_register_otp(req: VerifyOTPRequest, db: Session = Depends(get_db)):
         db.add(user)
         db.flush()
 
-        # Create associated profile
+        # Create associated profile with Step 1 registration details
         profile = UserProfile(
             user_id=user.id,
+            current_city=otp_record.current_city,
+            mobile_number=otp_record.mobile_number,
+            work_status=otp_record.work_status or "fresher",
+            resume_filename=otp_record.resume_filename,
+            resume_text=otp_record.resume_text,
+            profile_completion_pct=25 if (otp_record.current_city and otp_record.mobile_number) else 15,
             email_alerts_enabled=True,
             onboarding_completed=False
         )
@@ -388,7 +399,17 @@ def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
         db.add(user)
         db.flush()
 
-        profile = UserProfile(user_id=user.id, email_alerts_enabled=True, onboarding_completed=False)
+        profile = UserProfile(
+            user_id=user.id,
+            mobile_number=req.mobile_number,
+            work_status=req.work_status or "fresher",
+            current_city=req.current_city,
+            resume_filename=req.resume_filename,
+            resume_text=req.resume_text,
+            profile_completion_pct=25 if (req.current_city and req.mobile_number) else 20,
+            email_alerts_enabled=True,
+            onboarding_completed=False
+        )
         db.add(profile)
         automation = AutomationConfig(user_id=user.id, is_active=True, delivery_frequency="daily", delivery_time="09:00", timezone="Asia/Kolkata", min_match_score=60)
         db.add(automation)
@@ -450,5 +471,9 @@ def get_me(user: User = Depends(get_current_user), db: Session = Depends(get_db)
         "full_name": user.full_name,
         "is_verified": getattr(user, "is_verified", True),
         "created_at": user.created_at,
-        "onboarding_completed": profile.onboarding_completed if profile else False
+        "onboarding_completed": profile.onboarding_completed if profile else False,
+        "profile_photo_url": profile.profile_photo_url if profile else None,
+        "work_status": profile.work_status if profile else "fresher",
+        "current_city": profile.current_city if profile else None,
+        "mobile_number": profile.mobile_number if profile else None
     }

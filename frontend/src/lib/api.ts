@@ -120,6 +120,11 @@ export async function sendRegisterOTP(data: {
   email: string;
   full_name?: string;
   password?: string;
+  mobile_number?: string;
+  work_status?: string;
+  current_city?: string;
+  resume_filename?: string;
+  resume_text?: string;
 }): Promise<OTPStatusResponse> {
   const res = await fetch(`${API_BASE}/auth/send-otp`, {
     method: "POST",
@@ -228,6 +233,56 @@ export async function updateUserProfile(data: Partial<UserProfile>, token?: stri
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to update profile");
+  }
+  return res.json();
+}
+
+export async function uploadProfilePhoto(
+  file: File,
+  token?: string | null
+): Promise<{ success: boolean; photo_url: string; completion_pct: number }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_BASE}/profile/upload-photo`, {
+    method: "POST",
+    headers: { ...getAuthHeader(token) },
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to upload profile photo");
+  }
+  return res.json();
+}
+
+export async function deleteProfilePhoto(
+  token?: string | null
+): Promise<{ success: boolean; photo_url: null }> {
+  const res = await fetch(`${API_BASE}/profile/photo`, {
+    method: "DELETE",
+    headers: { ...getAuthHeader(token) },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to remove profile photo");
+  }
+  return res.json();
+}
+
+export async function uploadProfileResume(
+  file: File,
+  token?: string | null
+): Promise<{ success: boolean; message: string; warnings: string[]; profile: UserProfile }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API_BASE}/profile/upload-resume`, {
+    method: "POST",
+    headers: { ...getAuthHeader(token) },
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to parse and upload resume");
   }
   return res.json();
 }

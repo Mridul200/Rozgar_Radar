@@ -177,9 +177,17 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
         <div>
           {sidebarOpen && user && (
             <div className="mb-2 p-2 rounded-xl bg-muted/60 border border-border flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-xs">
-                {user.full_name ? user.full_name.charAt(0) : "U"}
-              </div>
+              {user.profile_photo_url ? (
+                <img
+                  src={user.profile_photo_url}
+                  alt={user.full_name || "Profile"}
+                  className="w-8 h-8 rounded-full object-cover border border-primary/30 shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-xs uppercase shrink-0 shadow-xs">
+                  {user.full_name ? user.full_name.charAt(0) : "U"}
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-bold text-foreground truncate">{user.full_name || "Job Seeker"}</p>
                 <p className="text-[10px] text-muted-foreground truncate">{user.email}</p>

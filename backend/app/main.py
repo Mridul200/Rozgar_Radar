@@ -151,6 +151,41 @@ async def lifespan(app: FastAPI):
     except Exception:
         pass
 
+    # Ensure migrations for extended profile and registration OTP fields
+    profile_cols = [
+        ("mobile_number", "VARCHAR(32)"),
+        ("work_status", "VARCHAR(32) DEFAULT 'fresher'"),
+        ("profile_photo_url", "TEXT"),
+        ("education_details", "TEXT"),
+        ("employment_history", "TEXT"),
+        ("career_preferences", "TEXT"),
+        ("optional_details", "TEXT"),
+        ("resume_filename", "VARCHAR(255)"),
+        ("profile_completion_pct", "INTEGER DEFAULT 20"),
+    ]
+    for col_name, col_type in profile_cols:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(f"ALTER TABLE user_profiles ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+        except Exception:
+            pass
+
+    otp_cols = [
+        ("mobile_number", "VARCHAR(32)"),
+        ("work_status", "VARCHAR(32)"),
+        ("current_city", "VARCHAR(128)"),
+        ("resume_filename", "VARCHAR(255)"),
+        ("resume_text", "TEXT"),
+    ]
+    for col_name, col_type in otp_cols:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(f"ALTER TABLE email_verification_otps ADD COLUMN {col_name} {col_type}"))
+                conn.commit()
+        except Exception:
+            pass
+
     # Seed source registry and initial jobs if database is empty
     db = SessionLocal()
     try:

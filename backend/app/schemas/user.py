@@ -29,11 +29,35 @@ def validate_email_format(email: str) -> str:
         raise ValueError("Please enter a valid email address.")
     return trimmed.lower()
 
+INDIAN_MOBILE_REGEX = re.compile(r"^[6-9]\d{9}$")
+
+def validate_mobile_format(mobile: Optional[str]) -> Optional[str]:
+    if not mobile:
+        return None
+    cleaned = re.sub(r"[\s\-\(\)\+]", "", str(mobile).strip())
+    if cleaned.startswith("91") and len(cleaned) == 12:
+        cleaned = cleaned[2:]
+    elif cleaned.startswith("0") and len(cleaned) == 11:
+        cleaned = cleaned[1:]
+    if not INDIAN_MOBILE_REGEX.match(cleaned):
+        raise ValueError("Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.")
+    return cleaned
+
 class UserRegisterRequest(BaseModel):
     email: str
     password: str = Field(..., min_length=6)
     full_name: str = Field(..., min_length=2)
+    mobile_number: Optional[str] = None
+    work_status: Optional[str] = "fresher"
+    current_city: Optional[str] = None
+    resume_filename: Optional[str] = None
+    resume_text: Optional[str] = None
     otp: Optional[str] = None
+
+    @field_validator("mobile_number")
+    @classmethod
+    def check_mobile(cls, v: Optional[str]) -> Optional[str]:
+        return validate_mobile_format(v)
 
     @field_validator("email")
     @classmethod
@@ -53,6 +77,16 @@ class SendOTPRequest(BaseModel):
     email: str
     password: str = Field(..., min_length=6)
     full_name: str = Field(..., min_length=2)
+    mobile_number: Optional[str] = None
+    work_status: Optional[str] = "fresher"
+    current_city: Optional[str] = None
+    resume_filename: Optional[str] = None
+    resume_text: Optional[str] = None
+
+    @field_validator("mobile_number")
+    @classmethod
+    def check_mobile(cls, v: Optional[str]) -> Optional[str]:
+        return validate_mobile_format(v)
 
     @field_validator("email")
     @classmethod
@@ -97,6 +131,7 @@ class UserResponse(BaseModel):
     is_verified: bool = True
     email_verified_at: Optional[datetime] = None
     created_at: datetime
+    profile_photo_url: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -108,6 +143,15 @@ class AuthResponse(BaseModel):
 class UserProfileRequest(BaseModel):
     current_city: Optional[str] = None
     current_state: Optional[str] = None
+    mobile_number: Optional[str] = None
+    work_status: Optional[str] = None
+    profile_photo_url: Optional[str] = None
+    education_details: Optional[Dict[str, Any]] = None
+    employment_history: Optional[List[Dict[str, Any]]] = None
+    career_preferences: Optional[Dict[str, Any]] = None
+    optional_details: Optional[Dict[str, Any]] = None
+    resume_filename: Optional[str] = None
+    profile_completion_pct: Optional[int] = None
     preferred_locations: Optional[List[str]] = None
     preferred_roles: Optional[List[str]] = None
     skills: Optional[List[str]] = None
@@ -128,6 +172,15 @@ class UserProfileResponse(BaseModel):
     user_id: str
     current_city: Optional[str] = None
     current_state: Optional[str] = None
+    mobile_number: Optional[str] = None
+    work_status: Optional[str] = "fresher"
+    profile_photo_url: Optional[str] = None
+    education_details: Optional[Dict[str, Any]] = None
+    employment_history: List[Dict[str, Any]] = []
+    career_preferences: Optional[Dict[str, Any]] = None
+    optional_details: Optional[Dict[str, Any]] = None
+    resume_filename: Optional[str] = None
+    profile_completion_pct: int = 20
     preferred_locations: List[str] = []
     preferred_roles: List[str] = []
     skills: List[str] = []

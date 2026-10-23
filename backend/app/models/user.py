@@ -33,6 +33,15 @@ class UserProfile(Base):
 
     current_city = Column(String(128), nullable=True)
     current_state = Column(String(128), nullable=True)
+    mobile_number = Column(String(32), nullable=True)
+    work_status = Column(String(32), default="fresher", nullable=True)
+    profile_photo_url = Column(Text, nullable=True)
+    education_details = Column(Text, nullable=True)
+    employment_history = Column(Text, nullable=True)
+    career_preferences = Column(Text, nullable=True)
+    optional_details = Column(Text, nullable=True)
+    resume_filename = Column(String(255), nullable=True)
+    profile_completion_pct = Column(Integer, default=20, nullable=False)
     preferred_locations = Column(Text, nullable=True)  # JSON list
     preferred_roles = Column(Text, nullable=True)      # JSON list
     skills = Column(Text, nullable=True)               # JSON list
@@ -171,6 +180,11 @@ class EmailVerificationOTP(Base):
     otp_hash = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=True)
     password_hash = Column(String(255), nullable=True)
+    mobile_number = Column(String(32), nullable=True)
+    work_status = Column(String(32), nullable=True)
+    current_city = Column(String(128), nullable=True)
+    resume_filename = Column(String(255), nullable=True)
+    resume_text = Column(Text, nullable=True)
     attempts = Column(Integer, default=0, nullable=False)
     max_attempts = Column(Integer, default=5, nullable=False)
     expires_at = Column(DateTime, nullable=False)

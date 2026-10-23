@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { JobListing } from "@/types/job";
 import { SavedJobItem } from "@/types/user";
-import { X, ExternalLink, MapPin, ShieldCheck, Banknote, Clock, Briefcase, Globe, Calendar, Bookmark, BookmarkCheck, Check, Loader2, RefreshCw } from "lucide-react";
+import { X, ExternalLink, MapPin, ShieldCheck, Banknote, Clock, Briefcase, Globe, Calendar, Bookmark, BookmarkCheck, Check, Loader2, RefreshCw, AlertCircle, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { saveJob, removeSavedJob, checkJobSaved } from "@/lib/api";
 
@@ -52,6 +52,15 @@ export function JobModal({ job, onClose }: JobModalProps) {
   const [lookupState, setLookupState] = useState<"idle" | "loading" | "loaded" | "error">(token ? "loading" : "idle");
   const [lookupRetryCount, setLookupRetryCount] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [showIncompletePrompt, setShowIncompletePrompt] = useState(false);
+
+  const handleApplyClick = (e: React.MouseEvent) => {
+    if (user && (!user.mobile_number || !user.current_city)) {
+      e.preventDefault();
+      setShowIncompletePrompt(true);
+      return;
+    }
+  };
 
   useEffect(() => {
     if (!job || !token) {
@@ -360,6 +369,7 @@ export function JobModal({ job, onClose }: JobModalProps) {
               href={job.application_url}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleApplyClick}
               className="flex items-center gap-1.5 px-5 py-2.5 bg-primary hover:opacity-90
                          text-primary-foreground font-bold text-xs rounded-xl shadow-md
                          transition-all cursor-pointer hover:scale-102"
@@ -371,6 +381,38 @@ export function JobModal({ job, onClose }: JobModalProps) {
           </div>
         </div>
       </div>
+
+      {showIncompletePrompt && (
+        <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-card border border-border rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-foreground">Complete Your Candidate Profile</h3>
+              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
+                To submit verified job applications and ensure recruiters can contact you, please complete your mandatory profile details (Mobile Number, Current City, and Education/Skills).
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowIncompletePrompt(false)}
+                className="px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground rounded-lg cursor-pointer"
+              >
+                Dismiss
+              </button>
+              <a
+                href="/profile"
+                className="px-5 py-2 text-xs font-bold bg-primary text-white rounded-xl hover:opacity-90 flex items-center gap-1.5 shadow-xs cursor-pointer"
+              >
+                Complete Profile Now
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

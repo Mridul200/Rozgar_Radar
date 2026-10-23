@@ -4,6 +4,10 @@ export interface User {
   full_name: string;
   created_at: string;
   onboarding_completed?: boolean;
+  profile_photo_url?: string;
+  work_status?: string;
+  current_city?: string;
+  mobile_number?: string;
 }
 
 export interface AuthState {
@@ -12,11 +16,70 @@ export interface AuthState {
   isLoading: boolean;
 }
 
+export interface EducationDetails {
+  highest_qualification?: string;
+  degree?: string;
+  specialization?: string;
+  college?: string;
+  passing_year?: string;
+  course_type?: "Full-time" | "Part-time" | "Distance Learning";
+}
+
+export interface EmploymentItem {
+  id?: string;
+  company: string;
+  designation: string;
+  joining_date: string;
+  last_working_date?: string;
+  current_employment_status?: string;
+  notice_period?: string;
+  current_salary?: string;
+  hide_salary_publicly?: boolean;
+}
+
+export interface CareerPreferences {
+  industry?: string;
+  department?: string;
+  role_category?: string;
+  desired_job_type?: string;
+  employment_type?: string;
+  preferred_locations?: string[];
+  expected_salary?: string;
+  preferred_shift?: string;
+}
+
+export interface OptionalProfileDetails {
+  summary?: string;
+  headline?: string;
+  it_skills?: Array<{ name: string; version?: string; experience?: string }>;
+  projects?: Array<{ id?: string; name: string; description?: string; technologies?: string; link?: string }>;
+  internships?: Array<{ id?: string; company: string; role?: string; duration?: string }>;
+  certifications?: Array<{ id?: string; name: string; issuer?: string; year?: string }>;
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
+  dob?: string;
+  gender?: string;
+  permanent_address?: string;
+  languages?: string[];
+  differently_abled?: string;
+  work_permit?: string;
+}
+
 export interface UserProfile {
   id?: string;
   user_id?: string;
   current_city?: string;
   current_state?: string;
+  mobile_number?: string;
+  work_status?: "fresher" | "experienced" | string;
+  profile_photo_url?: string;
+  education_details?: EducationDetails;
+  employment_history?: EmploymentItem[];
+  career_preferences?: CareerPreferences;
+  optional_details?: OptionalProfileDetails;
+  resume_filename?: string;
+  profile_completion_pct?: number;
   preferred_locations: string[];
   preferred_roles: string[];
   skills: string[];
