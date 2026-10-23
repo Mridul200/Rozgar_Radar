@@ -115,3 +115,56 @@ class JobFilterOptionsResponse(BaseModel):
     location_categories: List[str] = ["india_office", "remote_india", "apac_worldwide", "international_only"]
     india_eligible_count: int = 0
     total_active_jobs: int = 0
+
+
+class JobRecommendationItem(BaseModel):
+    job_id: str
+    title: str
+    normalized_title: str
+    company_name: str
+    city: Optional[str] = None
+    work_mode: str = "not_disclosed"
+    employment_type: str = "not_disclosed"
+    department: Optional[str] = None
+    salary_min: Optional[float] = None
+    salary_max: Optional[float] = None
+    salary_currency: Optional[str] = None
+    salary_pay_period: Optional[str] = None
+    application_url: str
+    location_category: str = "international_only"
+    publication_date: Optional[str] = None
+    first_seen_at: Optional[str] = None
+    match_score: float
+    match_score_pct: int
+    matched_skills: List[str] = []
+    missing_skills: List[str] = []
+    reasons: List[str] = []
+    sub_scores: dict = {}
+    incomplete_profile: bool = False
+
+    @computed_field
+    @property
+    def salary_display(self) -> str:
+        if self.salary_min is None:
+            return "Competitive / Industry Standard"
+        curr_symbols = {"USD": "$", "INR": "₹", "EUR": "€", "GBP": "£"}
+        curr_code = (self.salary_currency or "INR").upper()
+        curr = curr_symbols.get(curr_code, curr_code + " ")
+        if curr_code == "INR" and self.salary_min < 200:
+            if self.salary_max and self.salary_max <= 200:
+                return f"₹{self.salary_min:.1f} – ₹{self.salary_max:.1f} LPA"
+            return f"₹{self.salary_min:.1f} LPA"
+        period = f"/{self.salary_pay_period}" if self.salary_pay_period else "/yr"
+        if self.salary_max is not None and self.salary_max > self.salary_min:
+            return f"{curr}{self.salary_min:,.0f} – {curr}{self.salary_max:,.0f} {period}".strip()
+        return f"{curr}{self.salary_min:,.0f}+ {period}".strip()
+
+
+class JobRecommendationResponse(BaseModel):
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+    results: List[JobRecommendationItem]
+    profile_complete: bool
+    profile_completion_pct: int

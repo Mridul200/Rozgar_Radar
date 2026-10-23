@@ -88,3 +88,48 @@ export interface SyncLogItem {
   started_at: string;
   completed_at?: string;
 }
+
+
+export interface RecommendedJobItem {
+  job_id: string;
+  title: string;
+  normalized_title: string;
+  company_name: string;
+  city?: string;
+  work_mode: "remote" | "hybrid" | "on_site" | "not_disclosed" | string;
+  employment_type: "full_time" | "part_time" | "contract" | "internship" | "not_disclosed" | string;
+  department?: string;
+  salary_min?: number;
+  salary_max?: number;
+  salary_currency?: string;
+  salary_pay_period?: string;
+  salary_display: string;
+  application_url: string;
+  location_category: string;
+  publication_date?: string;
+  first_seen_at?: string;
+  match_score: number;
+  match_score_pct: number;
+  matched_skills: string[];
+  missing_skills: string[];
+  reasons: string[];
+  sub_scores: {
+    skills?: number;
+    role?: number;
+    experience?: number;
+    location?: number;
+    salary?: number;
+    education?: number;
+  };
+  incomplete_profile: boolean;
+}
+
+export interface RecommendedJobsResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  results: RecommendedJobItem[];
+  profile_complete: boolean;
+  profile_completion_pct: number;
+}

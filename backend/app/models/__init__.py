@@ -12,6 +12,13 @@ from app.models.user import (
     ATSAnalysis,
     EmailVerificationOTP,
 )
+from app.models.matching import (
+    CanonicalSkill,
+    SkillAlias,
+    JobSkill,
+    MatchingConfig,
+    MatchCache,
+)
 
 __all__ = [
     "JobSource",
@@ -26,4 +33,9 @@ __all__ = [
     "EmailNotificationLog",
     "ATSAnalysis",
     "EmailVerificationOTP",
+    "CanonicalSkill",
+    "SkillAlias",
+    "JobSkill",
+    "MatchingConfig",
+    "MatchCache",
 ]

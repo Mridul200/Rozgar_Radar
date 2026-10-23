@@ -186,20 +186,74 @@ async def lifespan(app: FastAPI):
         except Exception:
             pass
 
-    # Seed source registry and initial jobs if database is empty
+    # ─── Matching system: create tables + indexes (idempotent) ─────────
+    from app.models import matching as _m  # ensure models registered
+    _matching_ddls = [
+        "CREATE TABLE IF NOT EXISTS canonical_skills (id VARCHAR(36) PRIMARY KEY, name VARCHAR(128) NOT NULL UNIQUE, slug VARCHAR(128) NOT NULL UNIQUE, category VARCHAR(64), created_at DATETIME NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS skill_aliases (id VARCHAR(36) PRIMARY KEY, canonical_skill_id VARCHAR(36) NOT NULL REFERENCES canonical_skills(id) ON DELETE CASCADE, alias VARCHAR(128) NOT NULL, normalized_alias VARCHAR(128) NOT NULL UNIQUE, created_at DATETIME NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS job_skills (id VARCHAR(36) PRIMARY KEY, job_id VARCHAR(64) NOT NULL REFERENCES job_listings(id) ON DELETE CASCADE, canonical_skill_id VARCHAR(36) NOT NULL REFERENCES canonical_skills(id) ON DELETE CASCADE, is_required BOOLEAN NOT NULL DEFAULT 1, weight NUMERIC(3,2) NOT NULL DEFAULT 1.0, created_at DATETIME NOT NULL, UNIQUE(job_id, canonical_skill_id))",
+        "CREATE TABLE IF NOT EXISTS matching_config (id INTEGER PRIMARY KEY, version INTEGER NOT NULL DEFAULT 1, weights_json TEXT NOT NULL, tolerances_json TEXT NOT NULL, bonus_json TEXT NOT NULL, created_at DATETIME NOT NULL, updated_at DATETIME NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS match_cache (id VARCHAR(36) PRIMARY KEY, user_id VARCHAR(36) NOT NULL, job_id VARCHAR(64) NOT NULL, score NUMERIC(5,4) NOT NULL, matched_skills_json TEXT, missing_skills_json TEXT, reasons_json TEXT, sub_scores_json TEXT, profile_version VARCHAR(32) NOT NULL, config_version INTEGER NOT NULL, computed_at DATETIME NOT NULL, expires_at DATETIME NOT NULL, UNIQUE(user_id, job_id))",
+    ]
+    for _ddl in _matching_ddls:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(_ddl))
+                conn.commit()
+        except Exception:
+            pass
+    for _idx in [
+        "CREATE INDEX IF NOT EXISTS idx_canonical_skill_slug ON canonical_skills(slug)",
+        "CREATE INDEX IF NOT EXISTS idx_skill_alias_normalized ON skill_aliases(normalized_alias)",
+        "CREATE INDEX IF NOT EXISTS idx_job_skill_job ON job_skills(job_id)",
+        "CREATE INDEX IF NOT EXISTS idx_job_skill_canonical ON job_skills(canonical_skill_id)",
+        "CREATE INDEX IF NOT EXISTS idx_match_cache_user ON match_cache(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_match_cache_expires ON match_cache(expires_at)",
+    ]:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text(_idx))
+                conn.commit()
+        except Exception:
+            pass
+
+    # Seed source registry, initial jobs, skill taxonomy, and default config
     db = SessionLocal()
     try:
         seed_source_registry(db)
         seed_jobs_from_backup(db)
+        from app.services.skill_taxonomy import seed_skill_taxonomy
+        from app.services.matching_service import seed_default_config
+        seed_skill_taxonomy(db)
+        seed_default_config(db)
     finally:
         db.close()
 
     # Launch background workers
     sync_task = asyncio.create_task(periodic_12h_sync())
     digest_task = asyncio.create_task(periodic_daily_digest_worker())
+
+    async def _bg_extract():
+        try:
+            from app.services.job_skill_extractor import bulk_extract_all_jobs
+            _s = SessionLocal()
+            try:
+                stats = await asyncio.to_thread(bulk_extract_all_jobs, _s)
+                logger.info(f"Job skill extraction: {stats}")
+            finally:
+                _s.close()
+        except Exception as exc:
+            logger.warning(f"Job skill extraction (non-fatal): {exc}")
+
+    extract_task = None
+    if os.getenv("ENVIRONMENT") != "test":
+        extract_task = asyncio.create_task(_bg_extract())
+
     yield
     sync_task.cancel()
     digest_task.cancel()
+    if extract_task:
+        extract_task.cancel()
 
 
 app = FastAPI(

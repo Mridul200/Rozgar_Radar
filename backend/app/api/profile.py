@@ -12,6 +12,7 @@ from app.models.user import User, UserProfile
 from app.schemas.user import UserProfileRequest, UserProfileResponse
 from app.api.auth_deps import get_current_user
 from app.services.resume_parser import parse_resume_file
+from app.services.matching_service import invalidate_user_cache
 
 router = APIRouter(prefix="/profile", tags=["User Profile"])
 
@@ -237,6 +238,10 @@ def update_user_profile(req: UserProfileRequest, user: User = Depends(get_curren
 
     db.commit()
     db.refresh(profile)
+    try:
+        invalidate_user_cache(db, user.id)
+    except Exception:
+        pass
 
     return _to_profile_response(profile, user)
 
@@ -439,6 +444,10 @@ async def upload_profile_resume(
 
     db.commit()
     db.refresh(profile)
+    try:
+        invalidate_user_cache(db, user.id)
+    except Exception:
+        pass
 
     return {
         "success": True,

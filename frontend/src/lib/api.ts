@@ -3,7 +3,9 @@ import {
   JobFilterOptions,
   JobListing,
   SourceStatusSummary,
-  SyncLogItem
+  SyncLogItem,
+  RecommendedJobsResponse,
+  RecommendedJobItem,
 } from "@/types/job";
 import {
   User,
@@ -101,6 +103,41 @@ export async function fetchJobById(id: string): Promise<JobListing> {
   const res = await fetch(`${API_BASE}/jobs/${id}`, { cache: "no-store", headers: { "Cache-Control": "no-cache, no-store, must-revalidate", Pragma: "no-cache" } });
   if (!res.ok) {
     throw new Error(`Job not found: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export interface FetchRecommendedJobsParams {
+  page?: number;
+  page_size?: number;
+  min_score?: number;
+}
+
+export async function fetchRecommendedJobs(
+  params: FetchRecommendedJobsParams = {},
+  token?: string | null
+): Promise<RecommendedJobsResponse> {
+  const query = new URLSearchParams();
+  if (params.page) query.set("page", params.page.toString());
+  if (params.page_size) query.set("page_size", params.page_size.toString());
+  if (params.min_score !== undefined && params.min_score > 0) {
+    query.set("min_score", params.min_score.toString());
+  }
+
+  const res = await fetch(`${API_BASE}/jobs/recommended?${query.toString()}`, {
+    cache: "no-store",
+    headers: {
+      ...getAuthHeader(token),
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    if (res.status === 401) {
+      throw new Error("Authentication required to view recommended jobs");
+    }
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `Failed to fetch recommended jobs: ${res.statusText}`);
   }
   return res.json();
 }

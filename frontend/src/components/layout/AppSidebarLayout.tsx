@@ -9,6 +9,7 @@ import { BrandLogo } from "@/components/ui/BrandLogo";
 import {
   Home,
   Compass,
+  Sparkles,
   Zap,
   FileText,
   CheckCircle2,
@@ -61,6 +62,7 @@ export function AppSidebarLayout({ children }: AppSidebarLayoutProps) {
   const navLinks = [
     { title: "Dashboard", href: "/dashboard", Icon: Home },
     { title: "Explore Jobs", href: "/jobs", Icon: Compass },
+    { title: "For You", href: "/recommended", Icon: Sparkles },
     { title: "Daily Automation", href: "/automation", Icon: Zap },
     { title: "Resume Builder", href: "/resume-builder", Icon: FileText },
     { title: "ATS Scorer", href: "/ats-checker", Icon: CheckCircle2 },

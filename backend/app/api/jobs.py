@@ -12,7 +12,11 @@ from app.schemas.job import (
     JobDetailResponse,
     JobListResponse,
     JobFilterOptionsResponse,
+    JobRecommendationResponse,
 )
+from app.models.user import User, UserProfile
+from app.api.auth_deps import get_current_user
+from app.services.matching_service import get_recommendations
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
@@ -296,6 +300,35 @@ def get_filter_options(db: Session = Depends(get_db)):
         india_eligible_count=india_count,
         total_active_jobs=total_active
     )
+
+@router.get("/recommended", response_model=JobRecommendationResponse)
+def list_recommended_jobs(
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Items per page"),
+    min_score: float = Query(0.0, ge=0.0, le=1.0, description="Minimum match score threshold (0.0 to 1.0)"),
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns personalized, scored, and explained job recommendations for the authenticated candidate.
+    Uses structured candidate profile data matched against active, verified jobs.
+    """
+    profile = db.query(UserProfile).filter(UserProfile.user_id == user.id).first()
+    if not profile:
+        profile = UserProfile(user_id=user.id, profile_completion_pct=20)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+
+    return get_recommendations(
+        db=db,
+        user=user,
+        profile=profile,
+        page=page,
+        page_size=page_size,
+        min_score=min_score,
+    )
+
 
 @router.get("/{job_id}", response_model=JobDetailResponse)
 def get_job(job_id: str, db: Session = Depends(get_db)):

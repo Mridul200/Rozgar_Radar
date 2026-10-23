@@ -22,6 +22,7 @@ import {
   Moon,
   ArrowRight,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 export function Navbar() {
@@ -34,6 +35,7 @@ export function Navbar() {
   const navLinks = [
     { label: "Home", href: "/" },
     { label: "Jobs", href: "/jobs" },
+    { label: "For You", href: "/recommended" },
     { label: "Resume Builder", href: "/resume-builder" },
     { label: "ATS Checker", href: "/ats-checker" },
     { label: "Daily Automation", href: "/automation" },
@@ -129,6 +131,15 @@ export function Navbar() {
                     >
                       <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
                       Dashboard Overview
+                    </Link>
+
+                    <Link
+                      href="/recommended"
+                      onClick={() => setUserDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:bg-accent transition-colors"
+                    >
+                      <Sparkles className="w-4 h-4 text-emerald-500" />
+                      Recommended For You
                     </Link>
 
                     <Link
