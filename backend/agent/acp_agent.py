@@ -154,15 +154,33 @@ def create_agent(
 
         ctx.logger.info(f"📨 [ACP Received from {sender}]: {user_text}")
 
-        # 3. Execute multi-step reasoning & tool execution via orchestrator
+        # 3. Execute multi-step reasoning & tool execution via orchestrator with non-blocking threadpool & timeout
+        req_id = uuid.uuid4().hex[:8]
+        start_t = time.perf_counter()
+        ctx.logger.info(f"📨 [{req_id}] [ACP Received from {sender}]: {user_text}")
+
         try:
-            agent_response = await orchestrator.execute(user_text, context={"sender": sender})
+            agent_response = await asyncio.wait_for(
+                asyncio.to_thread(orchestrator.execute_sync, user_text, {"sender": sender, "request_id": req_id}),
+                timeout=25.0
+            )
+        except asyncio.TimeoutError:
+            ctx.logger.warning(f"⚠️ [{req_id}] Agent orchestrator timed out after 25s for input: {user_text[:80]}")
+            agent_response = (
+                "⏱️ **Rozgar Radar Notice:** Your request took longer than expected to process.\n\n"
+                "Here are direct actions you can take right now:\n"
+                "• Ask: *\"Find Python developer jobs in Bengaluru\"*\n"
+                "• Ask: *\"Show remote software engineer jobs\"*\n"
+                "• Ask: *\"Check my eligibility for Python developer\"*\n"
+            )
         except Exception as exc:
-            ctx.logger.error(f"Error executing agent orchestrator: {exc}", exc_info=True)
+            ctx.logger.error(f"❌ [{req_id}] Error executing agent orchestrator: {exc}", exc_info=True)
             agent_response = (
                 f"⚠️ **Rozgar Radar Agent Notice:** Encountered an error processing your request: {str(exc)}\n"
-                f"Please try again or refine your query."
+                f"Please try again or refine your query with specific skills or locations."
             )
+        elapsed_ms = (time.perf_counter() - start_t) * 1000
+        ctx.logger.info(f"⏱️ [{req_id}] Orchestrator processed in {elapsed_ms:.1f}ms")
 
         # 4. Construct and deliver ACP ChatMessage response
         response_msg = ChatMessage(
@@ -187,31 +205,51 @@ def create_agent(
     @agent.on_rest_get("/healthz", AgentHealthResponse)
     async def handle_healthz(ctx: Context) -> AgentHealthResponse:
         """Returns 200 OK for Render HTTP health probes and uptime monitoring."""
-        from app.database import ensure_database_initialized, engine
-        diag = ensure_database_initialized(engine)
+        try:
+            from app.database import ensure_database_initialized, engine
+            diag = ensure_database_initialized(engine)
+            sanitized_url = diag.get("sanitized_url", "unknown")
+            job_count = diag.get("job_count", 0)
+            status_val = "healthy"
+        except Exception as exc:
+            ctx.logger.warning(f"Healthz probe notice: {exc}")
+            sanitized_url = "unavailable"
+            job_count = 0
+            status_val = "degraded"
+
         return AgentHealthResponse(
-            status="healthy",
+            status=status_val,
             agent_name=agent.name,
             agent_address=agent.address,
             protocol=f"Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})",
             version="0.3.0",
-            database=diag.get("sanitized_url", "unknown"),
-            job_count=diag.get("job_count", 0),
+            database=sanitized_url,
+            job_count=job_count,
         )
 
     @agent.on_rest_get("/", AgentHealthResponse)
     async def handle_root(ctx: Context) -> AgentHealthResponse:
         """Root endpoint returning agent health status for default Render port scans."""
-        from app.database import ensure_database_initialized, engine
-        diag = ensure_database_initialized(engine)
+        try:
+            from app.database import ensure_database_initialized, engine
+            diag = ensure_database_initialized(engine)
+            sanitized_url = diag.get("sanitized_url", "unknown")
+            job_count = diag.get("job_count", 0)
+            status_val = "healthy"
+        except Exception as exc:
+            ctx.logger.warning(f"Healthz probe notice: {exc}")
+            sanitized_url = "unavailable"
+            job_count = 0
+            status_val = "degraded"
+
         return AgentHealthResponse(
-            status="healthy",
+            status=status_val,
             agent_name=agent.name,
             agent_address=agent.address,
             protocol=f"Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})",
             version="0.3.0",
-            database=diag.get("sanitized_url", "unknown"),
-            job_count=diag.get("job_count", 0),
+            database=sanitized_url,
+            job_count=job_count,
         )
 
     @agent.on_event("startup")

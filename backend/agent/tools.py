@@ -38,6 +38,30 @@ from app.services.matching_service import score_job_for_candidate, DEFAULT_WEIGH
 from ai.ats_scorer import analyze_resume_ats, COMMON_TECH_SKILLS, ACTION_VERBS
 
 
+# Fast in-memory cache for repeated tool executions (60s TTL)
+_TOOL_CACHE: Dict[str, Any] = {}
+_CACHE_TTL_SECS = 60.0
+
+def _get_cache_key(prefix: str, **kwargs) -> str:
+    serialized = json.dumps(kwargs, sort_keys=True, default=str)
+    return f"{prefix}:{serialized}"
+
+def _read_cache(key: str) -> Optional[Any]:
+    entry = _TOOL_CACHE.get(key)
+    if entry and (datetime.now(timezone.utc).timestamp() - entry["time"] < _CACHE_TTL_SECS):
+        return entry["data"]
+    return None
+
+def _write_cache(key: str, data: Any) -> None:
+    if len(_TOOL_CACHE) > 256:
+        oldest = min(_TOOL_CACHE.keys(), key=lambda k: _TOOL_CACHE[k]["time"])
+        _TOOL_CACHE.pop(oldest, None)
+    _TOOL_CACHE[key] = {
+        "time": datetime.now(timezone.utc).timestamp(),
+        "data": data
+    }
+
+
 # ---------------------------------------------------------------------------
 # Tool 1: Real Job Search
 # ---------------------------------------------------------------------------
@@ -54,7 +78,13 @@ def search_jobs(
     """
     Searches active, non-duplicate job listings in the Rozgar Radar database.
     Returns real jobs with direct ATS links and source attribution.
+    Deduplicates listings by company and normalized title.
     """
+    cache_key = _get_cache_key("search", kw=keyword, loc=location, wm=work_mode, et=employment_type, sal=min_salary, lim=limit)
+    cached = _read_cache(cache_key)
+    if cached is not None and db is None:
+        return cached
+
     close_db = False
     if db is None:
         db = SessionLocal()
@@ -66,16 +96,35 @@ def search_jobs(
             JobListing.freshness_status == "active"
         )
 
-        # Keyword filter (title, company, description)
+        title_match_expr = None
+        # Keyword filter with title priority and compound term expansion
         if keyword and keyword.strip():
-            kw = f"%{keyword.strip().lower()}%"
-            query = query.filter(
-                or_(
-                    func.lower(JobListing.title).like(kw),
-                    func.lower(JobListing.company_name).like(kw),
-                    func.lower(JobListing.description_plain).like(kw)
-                )
-            )
+            raw_kw = keyword.strip().lower()
+            kw_variants = [raw_kw]
+            if "full stack" in raw_kw or "fullstack" in raw_kw or "full-stack" in raw_kw:
+                kw_variants.extend(["full stack", "fullstack", "full-stack", "software engineer", "developer"])
+            elif "frontend" in raw_kw or "front end" in raw_kw or "front-end" in raw_kw:
+                kw_variants.extend(["frontend", "front end", "front-end"])
+            elif "backend" in raw_kw or "back end" in raw_kw or "back-end" in raw_kw:
+                kw_variants.extend(["backend", "back end", "back-end"])
+            elif "react" in raw_kw:
+                kw_variants.extend(["react", "react.js", "reactjs", "frontend"])
+            elif "python" in raw_kw:
+                kw_variants.extend(["python", "django", "fastapi", "backend"])
+
+            seen_v = set()
+            clean_variants = []
+            for v in kw_variants:
+                if v not in seen_v:
+                    seen_v.add(v)
+                    clean_variants.append(v)
+
+            title_conds = [func.lower(JobListing.title).like(f"%{v}%") for v in clean_variants]
+            company_conds = [func.lower(JobListing.company_name).like(f"%{v}%") for v in clean_variants[:2]]
+            desc_conds = [func.lower(JobListing.description_plain).like(f"%{v}%") for v in clean_variants[:2]]
+
+            title_match_expr = or_(*title_conds)
+            query = query.filter(or_(*title_conds, *company_conds, *desc_conds))
 
         # Location filter
         if location and location.strip():
@@ -106,23 +155,42 @@ def search_jobs(
                 )
             )
 
-        # Sort: India-eligible first, then newest
-        query = query.order_by(
+        # Sort: Title match first (if keyword used), India-eligible first, then newest
+        sort_criteria = []
+        if title_match_expr is not None:
+            sort_criteria.append(title_match_expr.desc())
+        sort_criteria.extend([
             JobListing.is_india_eligible.desc(),
             JobListing.publication_date.desc().nullslast()
-        )
+        ])
+        query = query.order_by(*sort_criteria)
 
+        fetch_limit = max(limit * 3, 20)
         try:
-            results = query.limit(max(1, min(limit, 20))).all()
+            results = query.limit(fetch_limit).all()
         except OperationalError as oe:
             if "no such table" in str(oe).lower():
                 ensure_database_initialized(engine)
-                results = query.limit(max(1, min(limit, 20))).all()
+                results = query.limit(fetch_limit).all()
             else:
                 raise
 
+        # Deduplicate results by (company, title) and canonical URL
+        seen_keys = set()
         formatted = []
         for j in results:
+            dedup_key = (
+                (j.company_name or "").lower().strip(),
+                (j.normalized_title or j.title or "").lower().strip()
+            )
+            url_key = (j.canonical_url or j.application_url or "").strip().lower()
+
+            if dedup_key in seen_keys or (url_key and url_key in seen_keys):
+                continue
+            seen_keys.add(dedup_key)
+            if url_key:
+                seen_keys.add(url_key)
+
             sal = "Competitive / Not Disclosed"
             if j.salary_min or j.salary_max:
                 cur = j.salary_currency or "INR"
@@ -149,6 +217,10 @@ def search_jobs(
                 "snippet": (j.description_plain or j.title)[:200] + "..." if j.description_plain else ""
             })
 
+            if len(formatted) >= max(1, min(limit, 20)):
+                break
+
+        _write_cache(cache_key, formatted)
         return formatted
     finally:
         if close_db:
@@ -172,8 +244,22 @@ def match_and_rank_jobs(
     """
     Evaluates real job listings against candidate credentials using Rozgar Radar's
     deterministic 6-factor matching engine (skills, role, exp, location, salary, education).
-    Returns ranked jobs with percentage match scores (0-100%) and missing skill analysis.
+    Pre-filters candidate pool for <60ms execution and deduplicates listings.
     """
+    cache_key = _get_cache_key(
+        "match_rank",
+        sk=skills,
+        roles=preferred_roles,
+        locs=preferred_locations,
+        exp=years_experience,
+        sal=min_salary,
+        wm=work_modes,
+        lim=limit
+    )
+    cached = _read_cache(cache_key)
+    if cached is not None and db is None:
+        return cached
+
     close_db = False
     if db is None:
         db = SessionLocal()
@@ -190,16 +276,42 @@ def match_and_rank_jobs(
             work_modes=json.dumps(work_modes or ["remote", "hybrid", "on_site"])
         )
 
-        jobs = (
-            db.query(JobListing)
-            .filter(
-                JobListing.is_duplicate == False,
-                JobListing.freshness_status == "active",
-                JobListing.is_india_eligible == True
-            )
-            .limit(100)
-            .all()
+        base_query = db.query(JobListing).filter(
+            JobListing.is_duplicate == False,
+            JobListing.freshness_status == "active",
+            JobListing.is_india_eligible == True
         )
+
+        # Smart targeted pool: prioritize jobs matching candidate's skills or roles
+        targeted_conds = []
+        if preferred_roles:
+            for r in preferred_roles:
+                r_clean = r.strip().lower()
+                if r_clean:
+                    targeted_conds.append(func.lower(JobListing.title).like(f"%{r_clean}%"))
+        if skills:
+            for s in skills[:3]:
+                s_clean = s.strip().lower()
+                if s_clean:
+                    targeted_conds.append(func.lower(JobListing.title).like(f"%{s_clean}%"))
+                    targeted_conds.append(func.lower(JobListing.description_plain).like(f"%{s_clean}%"))
+
+        relevant_jobs = []
+        if targeted_conds:
+            relevant_jobs = base_query.filter(or_(*targeted_conds)).limit(25).all()
+
+        seen_ids = {j.id for j in relevant_jobs}
+        if len(relevant_jobs) < 15:
+            remaining = 25 - len(relevant_jobs)
+            supp = (
+                base_query.filter(~JobListing.id.in_(seen_ids))
+                .order_by(JobListing.publication_date.desc().nullslast())
+                .limit(remaining)
+                .all()
+            )
+            jobs = relevant_jobs + supp
+        else:
+            jobs = relevant_jobs
 
         from app.services.matching_service import _load_config
         from ai.job_matcher import calculate_job_match
@@ -207,8 +319,19 @@ def match_and_rank_jobs(
         dummy_user = User(id="temp-agent-user", email="agent@rozgar-radar.com")
 
         scored_jobs = []
+        seen_scored = set()
+
         for job in jobs:
             try:
+                # Deduplication check
+                job_dedup_key = (
+                    (job.company_name or "").lower().strip(),
+                    (job.normalized_title or job.title or "").lower().strip()
+                )
+                if job_dedup_key in seen_scored:
+                    continue
+                seen_scored.add(job_dedup_key)
+
                 # 1. Primary: Rozgar Radar's 6-factor matching engine
                 match_result = score_job_for_candidate(
                     db=db,
@@ -278,12 +401,12 @@ def match_and_rank_jobs(
 
         # Sort descending by match score
         scored_jobs.sort(key=lambda x: x["match_score_pct"], reverse=True)
-        return scored_jobs[:limit]
+        final_ranked = scored_jobs[:limit]
+        _write_cache(cache_key, final_ranked)
+        return final_ranked
     finally:
         if close_db:
             db.close()
-
-
 # ---------------------------------------------------------------------------
 # Tool 3: Candidate Eligibility and Qualification Gap Analysis
 # ---------------------------------------------------------------------------

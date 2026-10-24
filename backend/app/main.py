@@ -461,6 +461,10 @@ from fastapi.responses import FileResponse
 def health_check():
     return {"status": "healthy"}
 
+@app.get("/healthz", tags=["Health"])
+def healthz_check():
+    return {"status": "healthy"}
+
 @app.get("/download/db", tags=["Download"], dependencies=[Depends(verify_admin)])
 def download_sqlite_db():
     """Direct one-click download for the SQLite jobs.db file."""

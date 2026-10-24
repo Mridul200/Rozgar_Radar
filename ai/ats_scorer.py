@@ -8,7 +8,9 @@ COMMON_TECH_SKILLS = [
     "ci/cd", "rest api", "graphql", "html", "css", "tailwind", "linux", "agile",
     "scrum", "data structures", "algorithms", "machine learning", "deep learning",
     "nlp", "pytorch", "tensorflow", "pandas", "numpy", "java", "c++", "c#", "go", "rust",
-    "microservices", "kafka", "rabbitmq", "unit testing", "jest", "pytest", "terraform"
+    "microservices", "kafka", "rabbitmq", "unit testing", "jest", "pytest", "terraform",
+    "full stack", "fullstack", "frontend", "backend", "web development", "software engineering",
+    "system design", "distributed systems", "api design", "react native", "flutter", "cloud architecture", "cloud computing"
 ]
 
 SOFT_SKILLS = [
@@ -40,7 +42,20 @@ SYNONYM_MAP: Dict[str, str] = {
     "machine learning": "ml",
     "deep learning": "dl",
     "artificial intelligence": "ai",
-    "ci/cd": "continuous integration"
+    "ci/cd": "continuous integration",
+    "devlopment": "development",
+    "devloper": "developer",
+    "pyhton": "python",
+    "recat": "react",
+    "javascrip": "javascript",
+    "frotend": "frontend",
+    "bakend": "backend",
+    "full-stack": "full stack",
+    "fullstack": "full stack",
+    "front-end": "frontend",
+    "back-end": "backend",
+    "web dev": "web development",
+    "full stack dev": "full stack developer",
 }
 
 def normalize_term(term: str) -> str:

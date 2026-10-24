@@ -48,6 +48,7 @@ private_keys.json
 *.key
 
 # Databases & local logs
+*.zip
 *.db
 *.sqlite
 *.sqlite3

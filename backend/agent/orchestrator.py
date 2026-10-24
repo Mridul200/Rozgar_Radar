@@ -9,6 +9,10 @@ import os
 import sys
 import re
 import json
+import time
+import uuid
+import asyncio
+import logging
 from typing import Dict, List, Any, Optional
 
 # Ensure project root & backend on sys.path
@@ -29,6 +33,23 @@ from backend.agent.tools import (
 )
 from ai.ats_scorer import COMMON_TECH_SKILLS
 
+logger = logging.getLogger("rozgar_radar_orchestrator")
+
+# Common typos mapping for real-world user queries
+TYPO_MAP = {
+    "devlopment": "development",
+    "devloper": "developer",
+    "devlopers": "developers",
+    "pyhton": "python",
+    "recat": "react",
+    "javascrip": "javascript",
+    "frotend": "frontend",
+    "fontend": "frontend",
+    "bakend": "backend",
+    "fluter": "flutter",
+    "kubernets": "kubernetes",
+    "postgre": "postgresql",
+}
 
 # Recognized Indian Cities for Entity Extraction
 INDIAN_CITIES = [
@@ -37,9 +58,12 @@ INDIAN_CITIES = [
 ]
 
 COMMON_ROLES = [
-    "full stack", "fullstack", "frontend", "backend", "software engineer",
-    "python developer", "react developer", "data scientist", "data engineer",
-    "devops", "cloud engineer", "machine learning", "ai engineer", "intern"
+    "full stack developer", "full stack engineer", "full stack", "fullstack",
+    "frontend developer", "frontend engineer", "frontend",
+    "backend developer", "backend engineer", "backend",
+    "software engineer", "software developer", "python developer", "react developer",
+    "data scientist", "data engineer", "devops engineer", "devops", "cloud engineer",
+    "machine learning engineer", "ai engineer", "intern", "solution architect", "architect"
 ]
 
 
@@ -55,6 +79,10 @@ class RozgarAgentOrchestrator:
     def extract_entities(self, text: str) -> Dict[str, Any]:
         """Extracts skills, locations, roles, experience, and job IDs from natural language."""
         text_lower = text.lower()
+        # Correct common typing mistakes before entity extraction
+        for typo, fix in TYPO_MAP.items():
+            text_lower = re.sub(r"\b" + re.escape(typo) + r"\b", fix, text_lower)
+
         entities: Dict[str, Any] = {
             "skills": [],
             "roles": [],
@@ -67,10 +95,15 @@ class RozgarAgentOrchestrator:
 
         # 1. Extract Skills
         for skill in COMMON_TECH_SKILLS:
-            # Match whole words or boundary
             pattern = r"\b" + re.escape(skill) + r"\b"
             if re.search(pattern, text_lower):
-                entities["skills"].append(skill.title())
+                normalized = skill.title()
+                if normalized not in entities["skills"]:
+                    entities["skills"].append(normalized)
+
+        # Ensure Full Stack captured if mentioned
+        if ("full stack" in text_lower or "fullstack" in text_lower) and "Full Stack" not in entities["skills"]:
+            entities["skills"].append("Full Stack")
 
         # 2. Extract Locations
         for city in INDIAN_CITIES:
@@ -82,7 +115,15 @@ class RozgarAgentOrchestrator:
         # 3. Extract Roles
         for role in COMMON_ROLES:
             if role in text_lower:
-                entities["roles"].append(role.title())
+                role_norm = role.title()
+                if role in ["full stack", "fullstack"]:
+                    role_norm = "Full Stack Developer"
+                elif role in ["frontend"]:
+                    role_norm = "Frontend Developer"
+                elif role in ["backend"]:
+                    role_norm = "Backend Developer"
+                if role_norm not in entities["roles"]:
+                    entities["roles"].append(role_norm)
 
         # 4. Extract Experience
         exp_match = re.search(r"(\d+(?:\.\d+)?)\s*(?:\+|\s*-\s*\d+)?\s*(?:years?|yrs?)", text_lower)
@@ -106,7 +147,7 @@ class RozgarAgentOrchestrator:
         elif "on-site" in text_lower or "onsite" in text_lower or "office" in text_lower:
             entities["work_mode"] = "on_site"
 
-        # 6. Extract Job ID (UUID or specific ID format)
+        # 6. Extract Job ID (UUID, job_ prefix, or ordinal numbers like job #1)
         id_match = re.search(r"\b([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})\b", text_lower)
         if id_match:
             entities["job_id"] = id_match.group(1)
@@ -146,10 +187,14 @@ class RozgarAgentOrchestrator:
         if any(w in t for w in ["eligible", "eligibility", "qualify", "qualified", "missing skills", "can i apply"]):
             return "ELIGIBILITY_CHECK"
 
+        # Profile / Core skill statements (e.g. "my core skill is full stack development")
+        if any(w in t for w in ["my skill", "core skill", "primary skill", "my tech stack", "profile is", "experience in", "skilled in"]):
+            return "JOB_MATCHING"
+
         # Matching / Ranking
         if any(w in t for w in ["match", "ranking", "ranked", "recommend", "recommended", "compatibility"]) or (
             len(entities["skills"]) >= 2 and entities["experience_years"] > 0
-        ):
+        ) or (len(entities["skills"]) >= 1 and len(entities["roles"]) >= 1):
             return "JOB_MATCHING"
 
         # Search / Find Jobs
@@ -163,18 +208,32 @@ class RozgarAgentOrchestrator:
         # Default fallback: Search
         return "JOB_SEARCH"
 
-    async def execute(self, user_text: str, context: Optional[Dict[str, Any]] = None) -> str:
+    def execute_sync(self, user_text: str, context: Optional[Dict[str, Any]] = None) -> str:
         """
-        Main entry point: processes input, executes backend tools, and synthesizes output.
+        Synchronous execution entrypoint: processes input, executes backend tools, and synthesizes output.
+        Threadpool-safe, unblocks uAgents event loop.
         """
+        start_time = time.perf_counter()
+        req_id = (context or {}).get("request_id") or uuid.uuid4().hex[:8]
+
         entities = self.extract_entities(user_text)
         intent = self.detect_intent(user_text, entities)
 
-        # Context retention (remember last searched/matched job)
         sender = (context or {}).get("sender", "default")
+        recent_jobs = self.context_memory.get(f"{sender}_recent_job_ids", [])
         last_job_id = self.context_memory.get(f"{sender}_last_job_id")
-        if not entities["job_id"] and last_job_id:
+
+        # Resolve ordinal job references (e.g. "job #1", "job 1", "first job")
+        if entities["job_id"]:
+            clean_num = str(entities["job_id"]).lstrip("#").strip()
+            if clean_num.isdigit():
+                idx = int(clean_num) - 1
+                if 0 <= idx < len(recent_jobs):
+                    entities["job_id"] = recent_jobs[idx]
+        elif not entities["job_id"] and last_job_id:
             entities["job_id"] = last_job_id
+
+        logger.info(f"[{req_id}] Start execution intent={intent} for sender={sender} (skills={entities['skills']}, roles={entities['roles']})")
 
         # -----------------------------------------------------------------------
         # Branch 1: FULL PIPELINE (Search -> Match -> Eligibility -> Tailor -> Apply)
@@ -194,7 +253,6 @@ class RozgarAgentOrchestrator:
             )
 
             if not ranked:
-                # Fallback to direct search
                 search_res = search_jobs(keyword=skills[0] if skills else None, limit=3)
                 if not search_res:
                     return (
@@ -206,6 +264,7 @@ class RozgarAgentOrchestrator:
 
             top_id = top_job.get("job_id")
             self.context_memory[f"{sender}_last_job_id"] = top_id
+            self.context_memory[f"{sender}_recent_job_ids"] = [j.get("job_id") for j in (ranked or [top_job])]
 
             # Step 2: Check Eligibility
             elig = check_candidate_eligibility(
@@ -240,7 +299,6 @@ class RozgarAgentOrchestrator:
             else:
                 missing_pipe_display = "None (All listed skill requirements met)"
 
-            # Synthesize Response
             lines = [
                 f"# 🎯 Rozgar Radar Action Report: From Intent to Application",
                 f"",
@@ -263,7 +321,7 @@ class RozgarAgentOrchestrator:
                 f"### 3. 📄 Tailored Resume & ATS Optimization",
                 f"• **Projected ATS Score:** **{resume_data.get('tailored_ats_score', 88)}%** ({resume_data.get('score_increase', '+30 points')})",
                 f"• **Tailored Professional Summary:**",
-                f"> *\"{resume_data.get('tailored_summary')}\"*",
+                f"> *{resume_data.get('tailored_summary')}*",
                 f"• **Key Tailored Bullet Points:**",
             ]
             for b in resume_data.get("highlighted_bullets", [])[:2]:
@@ -282,6 +340,7 @@ class RozgarAgentOrchestrator:
                 f"",
                 f"*Source: Verified through {top_job.get('source', 'Company ATS')} via Rozgar Radar.*"
             ])
+            logger.info(f"[{req_id}] Full pipeline completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
             return "\n".join(lines)
 
         # -----------------------------------------------------------------------
@@ -290,7 +349,6 @@ class RozgarAgentOrchestrator:
         if intent == "RESUME_TAILORING":
             job_id = entities["job_id"]
             if not job_id:
-                # Find a top matching job first
                 skills = entities["skills"] or ["Python", "JavaScript"]
                 found = search_jobs(keyword=skills[0] if skills else "Software", limit=1)
                 if found:
@@ -336,6 +394,7 @@ class RozgarAgentOrchestrator:
                 f"",
                 f"👉 **[Apply to this Job]({res.get('application_url')})**"
             ])
+            logger.info(f"[{req_id}] Resume tailoring completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
             return "\n".join(lines)
 
         # -----------------------------------------------------------------------
@@ -382,6 +441,7 @@ class RozgarAgentOrchestrator:
                 f"",
                 f"*Source: {draft.get('source_platform')} via Rozgar Radar.*"
             ]
+            logger.info(f"[{req_id}] Application draft completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
             return "\n".join(lines)
 
         # -----------------------------------------------------------------------
@@ -461,42 +521,56 @@ class RozgarAgentOrchestrator:
                 f"",
                 f"👉 **[View Job & Apply]({elig.get('application_url')})**"
             ])
+            logger.info(f"[{req_id}] Eligibility check completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
             return "\n".join(lines)
 
         # -----------------------------------------------------------------------
         # Branch 5: MATCHING & RANKING
         # -----------------------------------------------------------------------
-        if intent == "JOB_MATCHING" and entities["skills"]:
+        if intent == "JOB_MATCHING" and (entities["skills"] or entities["roles"]):
+            active_skills = entities["skills"] or ["Full Stack", "Software Engineering"]
             ranked = match_and_rank_jobs(
-                skills=entities["skills"],
-                preferred_roles=entities["roles"],
+                skills=active_skills,
+                preferred_roles=entities["roles"] or ["Software Engineer"],
                 preferred_locations=entities["locations"],
                 years_experience=entities["experience_years"],
                 limit=5
             )
 
             if not ranked:
+                # Fallback to direct search if no strict rank
+                ranked = search_jobs(
+                    keyword=entities["roles"][0] if entities["roles"] else active_skills[0],
+                    location=entities["locations"][0] if entities["locations"] else None,
+                    limit=5
+                )
+
+            if not ranked:
                 return "🔍 **No ranked opportunities found matching this exact combination.** Try broadening your skills or location."
 
             self.context_memory[f"{sender}_last_job_id"] = ranked[0]["job_id"]
+            self.context_memory[f"{sender}_recent_job_ids"] = [r["job_id"] for r in ranked]
 
+            profile_desc = ", ".join(entities["skills"]) if entities["skills"] else ", ".join(entities["roles"])
             lines = [
-                f"# 🎯 Top Ranked Job Recommendations",
-                f"Matched against: **Skills:** {', '.join(entities['skills'])} | **Exp:** {entities['experience_years']} yrs | **Location:** {', '.join(entities['locations']) or 'All India'}",
+                f"# 🎯 Top Matched Opportunities for {profile_desc}",
+                f"Matched against: **Skills:** {', '.join(active_skills)} | **Exp:** {entities['experience_years']} yrs | **Location:** {', '.join(entities['locations']) or 'India & Remote'}",
                 f""
             ]
 
             for i, r in enumerate(ranked, 1):
+                match_display = f"(Match: **{r['match_score_pct']}%**)" if "match_score_pct" in r else ""
                 lines.extend([
-                    f"### {i}. {r['title']} — {r['company']} (Match: **{r['match_score_pct']}%**)",
-                    f"• **Location:** {r['location']} ({r['work_mode'].title()}) | **Salary:** {r['salary']}",
-                    f"• **Matched Skills:** {', '.join(r.get('matched_skills', [])[:4]) or 'General profile match'}",
-                    f"• **Missing Skills:** {', '.join(r.get('missing_skills', [])[:3]) or 'None'}",
+                    f"### {i}. {r['title']} — {r['company']} {match_display}",
+                    f"• **Location:** {r['location']} ({r.get('work_mode', 'remote').title()}) | **Salary:** {r['salary']}",
+                    f"• **Matched Skills:** {', '.join(r.get('matched_skills', active_skills[:3])) or 'Direct profile match'}",
+                    f"• **Missing Skills:** {', '.join(r.get('missing_skills', [])[:3]) or 'None identified'}",
                     f"• 👉 **[Apply on {r['company']} Portal]({r['application_url']})**",
                     f""
                 ])
 
-            lines.append("*Want to tailor your resume for any of these? Just say 'Tailor my resume for Job #1'.*")
+            lines.append("💡 *Next steps: Tell me 'Tailor my resume for Job #1' or 'Check my eligibility for Job #2'!*")
+            logger.info(f"[{req_id}] Job matching completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
             return "\n".join(lines)
 
         # -----------------------------------------------------------------------
@@ -524,6 +598,7 @@ class RozgarAgentOrchestrator:
                 )
 
             self.context_memory[f"{sender}_last_job_id"] = jobs[0]["job_id"]
+            self.context_memory[f"{sender}_recent_job_ids"] = [j["job_id"] for j in jobs]
 
             lines = [
                 f"# 🔎 Verified Job Opportunities on Rozgar Radar",
@@ -541,11 +616,13 @@ class RozgarAgentOrchestrator:
                 ])
 
             lines.append("💡 *Tip: Tell me your skills and experience to rank these or generate a tailored cover letter!*")
+            logger.info(f"[{req_id}] Job search completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
             return "\n".join(lines)
 
         # -----------------------------------------------------------------------
         # Branch 7: GREETINGS & CAPABILITY OVERVIEW
         # -----------------------------------------------------------------------
+        logger.info(f"[{req_id}] Greeting completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
         return (
             f"# 🇮🇳 Rozgar Radar Career Copilot (ASI:One Agent)\n\n"
             f"Hello! I am your autonomous AI Career Copilot powered by **Rozgar Radar** and the **Fetch.ai Agent Chat Protocol (ACP)**.\n\n"
@@ -561,3 +638,11 @@ class RozgarAgentOrchestrator:
             f"• *\"Check my eligibility for a Senior Full Stack Engineer role with 3 years experience.\"*\n"
             f"• *\"Tailor my resume and draft a cover letter for the top Python job.\"*\n"
         )
+
+    async def execute(self, user_text: str, context: Optional[Dict[str, Any]] = None) -> str:
+        """
+        Asynchronous wrapper around execute_sync.
+        Executes CPU- and DB-bound tool invocations in a separate threadpool worker,
+        keeping the main event loop and WebSocket heartbeat completely responsive.
+        """
+        return await asyncio.to_thread(self.execute_sync, user_text, context)
