@@ -297,13 +297,11 @@ def check_candidate_eligibility(
     db: Optional[Session] = None
 ) -> Dict[str, Any]:
     """
-    Checks if a candidate qualifies for a specific job.
-    Provides a transparent breakdown of:
-    - Matched qualifications
-    - Missing required skills
-    - Experience fit
-    - Work location eligibility
-    - Actionable recommendations to bridge qualification gaps
+    Checks if a candidate qualifies for a specific job with verified evidence:
+    - Verified matching skills vs missing skills vs unverified/unspecified skills
+    - Explicit mathematical experience gap calculation (e.g. 5+ target vs 2 yrs = 3 yr gap)
+    - Fact-checked work location and visa authorization based on listing evidence only
+    - Transparent score breakdown distinguishing skill match vs overall role eligibility
     """
     close_db = False
     if db is None:
@@ -324,83 +322,207 @@ def check_candidate_eligibility(
                 "is_eligible": False
             }
 
-        # 1. Skill evaluation
-        cand_skills_lower = {s.lower().strip() for s in candidate_skills if s}
-        job_text = f"{job.title} {job.description_plain or ''} {job.required_qualifications or ''}".lower()
+        # -------------------------------------------------------------------
+        # 1. Experience Requirements & Gap Analysis
+        # -------------------------------------------------------------------
+        cand_exp = float(candidate_exp or 0.0)
+        title_lower = (job.title or "").lower()
+        desc_text = (job.description_plain or "").lower()
+        req_quals_text = (job.required_qualifications or "").lower()
+        full_text = f"{title_lower} {req_quals_text} {desc_text}"
 
-        # Extract required skills from JobSkill or common taxonomy
+        # Determine target minimum experience
+        exp_match = re.search(
+            r"(\d{1,2})\+?\s*(?:to|-)?\s*(?:\d{1,2})?\s*(?:years?|yrs?|jahre?n?)(?:\s+(?:of\s+)?(?:relevant\s+|professional\s+|work\s+)?experience)?",
+            f"{req_quals_text} {desc_text}"
+        )
+
+        if exp_match:
+            try:
+                target_min_exp = float(exp_match.group(1))
+                target_exp_label = f"{target_min_exp:g}+ years (Specified in job description)"
+            except ValueError:
+                target_min_exp = 3.0
+                target_exp_label = "3+ years (Industry standard)"
+        elif any(role_word in title_lower for role_word in ["architect", "principal", "director", "vp", "head of", "staff"]):
+            target_min_exp = 5.0
+            target_exp_label = "5+ years (Architect / Senior Leadership role)"
+        elif any(role_word in title_lower for role_word in ["senior", "lead", "sr."]):
+            target_min_exp = 5.0
+            target_exp_label = "5+ years (Senior Engineering role)"
+        elif any(role_word in title_lower for role_word in ["mid", "intermediate", "software engineer", "developer", "engineer"]):
+            target_min_exp = 2.0
+            target_exp_label = "2-4 years (Mid-level role)"
+        elif any(role_word in title_lower for role_word in ["intern", "fresher", "junior", "entry", "associate", "trainee"]):
+            target_min_exp = 0.0
+            target_exp_label = "0-2 years (Entry / Junior role)"
+        else:
+            target_min_exp = 2.0
+            target_exp_label = "2+ years (Standard professional role)"
+
+        exp_gap = max(0.0, target_min_exp - cand_exp)
+        if target_min_exp == 0.0:
+            exp_score = 100.0
+            exp_status = f"Fully Qualified ({cand_exp:.1f} yrs experience meets entry criteria)"
+        elif cand_exp >= target_min_exp:
+            exp_score = 100.0
+            exp_status = f"Fully Qualified ({cand_exp:.1f} yrs experience meets target {target_exp_label})"
+        else:
+            exp_score = round((cand_exp / target_min_exp) * 100.0, 1)
+            exp_status = f"Experience Gap of {exp_gap:.1f} years (Target: {target_exp_label}, Candidate: {cand_exp:.1f} years)"
+
+        # -------------------------------------------------------------------
+        # 2. Skill Requirements: Verified vs Missing vs Unspecified
+        # -------------------------------------------------------------------
+        cand_skills_normalized = {s.lower().strip() for s in candidate_skills if s and s.strip()}
+
+        # A. Check structured JobSkill table
         required_skills = []
         js_rows = db.query(JobSkill).filter(JobSkill.job_id == job.id).all()
         for js in js_rows:
             canon = db.query(CanonicalSkill).filter(CanonicalSkill.id == js.canonical_skill_id).first()
-            if canon:
+            if canon and canon.name not in required_skills:
                 required_skills.append(canon.name)
 
+        # B. Check word-boundary tech skills in title & description
         if not required_skills:
-            # Fallback extraction from common skills
             for s in COMMON_TECH_SKILLS:
-                if s in job_text:
-                    required_skills.append(s.title())
+                pat = r"\b" + re.escape(s) + r"\b"
+                if re.search(pat, full_text):
+                    skill_name = s.title()
+                    if skill_name not in required_skills:
+                        required_skills.append(skill_name)
 
         matched_skills = []
         missing_skills = []
-        for req in required_skills:
-            if req.lower() in cand_skills_lower or any(c in req.lower() for c in cand_skills_lower):
-                matched_skills.append(req)
-            else:
-                missing_skills.append(req)
+        skills_status = "verified" if required_skills else "unspecified"
 
-        # 2. Location & Mode Fit
-        loc_fit = "Eligible"
-        if not job.is_india_eligible:
-            loc_fit = "International only (Candidate may need relocation visa)"
-        elif job.work_mode == "remote":
-            loc_fit = "Fully Remote — 100% Eligible from any Indian location"
-        elif candidate_location and job.city:
-            if candidate_location.lower().strip() in job.city.lower() or job.city.lower() in candidate_location.lower().strip():
-                loc_fit = f"Exact Location Match ({job.city})"
-            else:
-                loc_fit = f"Job is on-site in {job.city}. Relocation needed from {candidate_location}"
-
-        # 3. Experience Fit
-        # Assume junior: 0-2 yrs, mid: 2-5 yrs, senior: 5+ yrs
-        title_lower = job.title.lower()
-        required_exp_str = "1-3 years"
-        if "senior" in title_lower or "lead" in title_lower or "architect" in title_lower:
-            required_exp_str = "5+ years"
-            exp_status = "Good Fit" if candidate_exp >= 4.0 else f"Experience Gap (Target {required_exp_str}, Candidate {candidate_exp} yrs)"
-        elif "intern" in title_lower or "fresher" in title_lower or "junior" in title_lower:
-            required_exp_str = "0-2 years"
-            exp_status = "Excellent Fit"
+        if required_skills:
+            for req in required_skills:
+                req_lower = req.lower()
+                if req_lower in cand_skills_normalized or any(c in req_lower for c in cand_skills_normalized):
+                    matched_skills.append(req)
+                else:
+                    missing_skills.append(req)
+            skill_score = round((len(matched_skills) / len(required_skills)) * 100.0, 1)
         else:
-            exp_status = "Good Fit" if candidate_exp >= 1.0 else f"Slight Gap (Target {required_exp_str}, Candidate {candidate_exp} yrs)"
+            skill_score = None  # None indicates skills evidence is unavailable / unitemized
 
-        # Overall Eligibility
-        skill_pct = (len(matched_skills) / max(1, len(required_skills))) * 100 if required_skills else 80.0
-        is_eligible = bool(skill_pct >= 50.0 and job.is_india_eligible)
+        # -------------------------------------------------------------------
+        # 3. Location & Work Authorization Evidence Check
+        # -------------------------------------------------------------------
+        city_display = job.city or job.location_raw or "Unspecified Location"
+        desc_lower = (job.description_plain or "").lower()
 
-        # Actionable advice
+        visa_positive_pats = [
+            "visa sponsorship", "visa support", "sponsorship available",
+            "work permit provided", "relocation assistance", "relocation package",
+            "visa is provided", "sponsorship is offered"
+        ]
+        visa_negative_pats = [
+            "no visa sponsorship", "must be authorized to work", "unable to sponsor",
+            "without sponsorship", "valid work authorization required",
+            "must have the right to work", "no relocation"
+        ]
+
+        has_visa_support = any(p in desc_lower for p in visa_positive_pats)
+        no_visa_support = any(p in desc_lower for p in visa_negative_pats)
+
+        if job.work_mode == "remote" and job.is_india_eligible:
+            loc_score = 100.0
+            loc_fit = "Fully Remote — 100% Eligible from anywhere in India"
+        elif job.work_mode == "remote" and not job.is_india_eligible:
+            loc_score = 40.0
+            loc_fit = f"Remote (International boundary: {city_display}. Listing may restrict regional residency)."
+        elif job.is_india_eligible:
+            if candidate_location and candidate_location.lower().strip() in city_display.lower():
+                loc_score = 100.0
+                loc_fit = f"Exact Location Match ({city_display})"
+            else:
+                loc_score = 60.0
+                loc_fit = f"On-site in {city_display}. Domestic relocation or local commute required."
+        else:
+            # International On-site or Hybrid
+            if has_visa_support:
+                loc_score = 40.0
+                loc_fit = f"On-site in {city_display}. International location — listing indicates visa/relocation support is available."
+            elif no_visa_support:
+                loc_score = 0.0
+                loc_fit = f"On-site in {city_display}. International location — listing explicitly requires existing local work authorization (no sponsorship)."
+            else:
+                loc_score = 0.0
+                loc_fit = f"On-site in {city_display}. International location — posting does not state visa sponsorship or work permit assistance."
+
+        # -------------------------------------------------------------------
+        # 4. Transparent Multi-Factor Score Calculation
+        # -------------------------------------------------------------------
+        if skill_score is not None:
+            # All 3 factors known: Skills 50%, Experience 30%, Location 20%
+            overall_score = round(0.50 * skill_score + 0.30 * exp_score + 0.20 * loc_score, 1)
+            breakdown_explanation = (
+                f"Overall Role Eligibility: {overall_score}% "
+                f"[Breakdown: Skills Match: {skill_score}% (50% weight), "
+                f"Experience Fit: {exp_score}% (30% weight), "
+                f"Location/Authorization: {loc_score}% (20% weight)]"
+            )
+        else:
+            # Skills unspecified in posting: Redistribute weights to Experience 60%, Location 40%
+            overall_score = round(0.60 * exp_score + 0.40 * loc_score, 1)
+            breakdown_explanation = (
+                f"Overall Role Eligibility: {overall_score}% "
+                f"[Breakdown: Skills: Unspecified in posting (N/A), "
+                f"Experience Fit: {exp_score}% (60% weight), "
+                f"Location/Authorization: {loc_score}% (40% weight)]"
+            )
+
+        # Candidate is strictly eligible only if overall score >= 60, experience gap <= 1.0, and location fits
+        is_eligible = bool(overall_score >= 60.0 and exp_gap <= 1.0 and (job.is_india_eligible or loc_score >= 40.0))
+
+        # -------------------------------------------------------------------
+        # 5. Actionable Advice
+        # -------------------------------------------------------------------
         action_plan = []
+        if exp_gap > 0:
+            action_plan.append(
+                f"Experience Gap: You have a {exp_gap:.1f}-year gap for this {target_exp_label}. "
+                "Emphasize high-complexity architectural ownership or advanced production deliverables to offset years."
+            )
         if missing_skills:
-            action_plan.append(f"Add experience or projects demonstrating: {', '.join(missing_skills[:4])}")
-        if "Gap" in exp_status:
-            action_plan.append("Highlight production complexity or open-source contributions to offset experience requirements.")
-        if "Relocation" in loc_fit:
-            action_plan.append(f"State in your cover letter that you are open to relocating to {job.city}.")
+            action_plan.append(f"Missing Key Technical Skills: Demonstrate verifiable experience with {', '.join(missing_skills[:5])}.")
+        elif skills_status == "unspecified":
+            action_plan.append("Skills Unspecified: The listing lacks itemized tech requirements; review the full text for specialized domain expectations.")
+
+        if not job.is_india_eligible:
+            if not has_visa_support:
+                action_plan.append(
+                    f"International Work Authorization: This role is based in {city_display} without specified visa sponsorship. "
+                    "Confirm your legal eligibility to work in this jurisdiction before applying."
+                )
+
         if not action_plan:
-            action_plan.append("Your profile is a strong match! Submit your application immediately.")
+            action_plan.append("Your profile strongly satisfies the listed criteria. Submit your application!")
 
         return {
             "job_id": job.id,
             "title": job.title,
             "company": job.company_name,
-            "location": job.city or job.location_raw,
+            "location": city_display,
             "work_mode": job.work_mode,
             "is_eligible": is_eligible,
-            "qualification_score": round(skill_pct, 1),
+            "qualification_score": overall_score,
+            "overall_score": overall_score,
+            "skill_match_score": skill_score,
+            "experience_score": exp_score,
+            "location_score": loc_score,
+            "score_breakdown_explanation": breakdown_explanation,
             "matched_skills": matched_skills,
             "missing_required_skills": missing_skills,
+            "required_skills": required_skills,
+            "skills_status": skills_status,
             "experience_fit": exp_status,
+            "experience_gap_years": exp_gap,
+            "target_min_experience": target_min_exp,
+            "candidate_experience": cand_exp,
             "location_fit": loc_fit,
             "application_url": job.application_url or job.canonical_url,
             "actionable_advice": action_plan
@@ -408,7 +530,6 @@ def check_candidate_eligibility(
     finally:
         if close_db:
             db.close()
-
 
 # ---------------------------------------------------------------------------
 # Tool 4: Tailored Resume Generation & ATS Scorer

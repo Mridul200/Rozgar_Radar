@@ -111,10 +111,16 @@ class RozgarAgentOrchestrator:
         if id_match:
             entities["job_id"] = id_match.group(1)
         else:
-            # Check for job_id=XYZ or job XYZ
-            alt_id = re.search(r"\bjob\s*(?:id|#)?\s*[:=]?\s*([a-zA-Z0-9_\-]+)", text_lower)
-            if alt_id and alt_id.group(1) not in ["search", "post", "listing", "listings", "opening", "openings"]:
-                entities["job_id"] = alt_id.group(1)
+            job_prefix_match = re.search(r"\b(job_[a-zA-Z0-9_\-]+)\b", text_lower)
+            if job_prefix_match:
+                entities["job_id"] = job_prefix_match.group(1)
+            else:
+                alt_id = re.search(r"\bjob\s*(?:id|#)?\s*[:=]?\s*([a-zA-Z0-9_\-]+)", text_lower)
+                if alt_id and alt_id.group(1) not in ["search", "post", "listing", "listings", "opening", "openings"]:
+                    raw_id = alt_id.group(1)
+                    if raw_id.startswith("_"):
+                        raw_id = f"job{raw_id}"
+                    entities["job_id"] = raw_id
 
         return entities
 
@@ -225,6 +231,15 @@ class RozgarAgentOrchestrator:
                 candidate_exp=exp
             )
 
+            missing_skills = elig.get("missing_required_skills", [])
+            skills_status = elig.get("skills_status", "verified")
+            if missing_skills:
+                missing_pipe_display = ", ".join(missing_skills)
+            elif skills_status == "unspecified":
+                missing_pipe_display = "Technical skills unitemized in posting"
+            else:
+                missing_pipe_display = "None (All listed skill requirements met)"
+
             # Synthesize Response
             lines = [
                 f"# 🎯 Rozgar Radar Action Report: From Intent to Application",
@@ -238,10 +253,12 @@ class RozgarAgentOrchestrator:
                 f"• **Salary:** {top_job.get('salary', 'Competitive')}",
                 f"",
                 f"### 2. 📋 Eligibility & Gap Analysis",
-                f"• **Status:** {'✅ Fully Eligible' if elig.get('is_eligible') else '⚠️ Partially Qualified'}",
+                f"• **Status:** {'✅ Fully Eligible' if elig.get('is_eligible') else '⚠️ Qualification Gap Detected'}",
+                f"• **Overall Role Eligibility:** **{elig.get('qualification_score', 0)}%**",
+                f"• **Score Breakdown:** {elig.get('score_breakdown_explanation', '')}",
                 f"• **Experience Fit:** {elig.get('experience_fit', 'Good Fit')}",
                 f"• **Location Fit:** {elig.get('location_fit', 'Eligible')}",
-                f"• **Missing Skills to Highlight:** {', '.join(elig.get('missing_required_skills', ['None'])) or 'None'}",
+                f"• **Missing Skills to Address:** {missing_pipe_display}",
                 f"",
                 f"### 3. 📄 Tailored Resume & ATS Optimization",
                 f"• **Projected ATS Score:** **{resume_data.get('tailored_ats_score', 88)}%** ({resume_data.get('score_increase', '+30 points')})",
@@ -327,7 +344,14 @@ class RozgarAgentOrchestrator:
         if intent == "APPLICATION_DRAFT":
             job_id = entities["job_id"]
             if not job_id:
-                found = search_jobs(keyword=entities["skills"][0] if entities["skills"] else "Software", limit=1)
+                search_term = None
+                if entities["roles"]:
+                    search_term = entities["roles"][0]
+                elif entities["skills"]:
+                    search_term = entities["skills"][0]
+                else:
+                    search_term = "Software"
+                found = search_jobs(keyword=search_term, limit=1)
                 if found:
                     job_id = found[0]["job_id"]
                 else:
@@ -366,7 +390,14 @@ class RozgarAgentOrchestrator:
         if intent == "ELIGIBILITY_CHECK":
             job_id = entities["job_id"]
             if not job_id:
-                found = search_jobs(keyword=entities["skills"][0] if entities["skills"] else "Software", limit=1)
+                search_term = None
+                if entities["roles"]:
+                    search_term = entities["roles"][0]
+                elif entities["skills"]:
+                    search_term = entities["skills"][0]
+                else:
+                    search_term = "Software"
+                found = search_jobs(keyword=search_term, limit=1)
                 if found:
                     job_id = found[0]["job_id"]
                 else:
@@ -383,20 +414,43 @@ class RozgarAgentOrchestrator:
             if "error" in elig:
                 return f"❌ {elig['error']}"
 
+            matched_skills = elig.get("matched_skills", [])
+            missing_skills = elig.get("missing_required_skills", [])
+            skills_status = elig.get("skills_status", "verified")
+
+            if matched_skills:
+                matched_display = ", ".join(matched_skills)
+            elif skills_status == "unspecified":
+                matched_display = "No specific technical skills itemized in listing to match against."
+            else:
+                matched_display = "None matched against required skills"
+
+            if missing_skills:
+                missing_display = ", ".join(missing_skills)
+            elif skills_status == "unspecified":
+                missing_display = "Technical skills are not explicitly itemized in this listing (Evidence: Unspecified / General)."
+            else:
+                missing_display = "All listed technical skill requirements are satisfied by your profile."
+
+            breakdown_str = elig.get("score_breakdown_explanation") or (
+                f"Overall Role Eligibility: {elig.get('qualification_score')}%"
+            )
+
             lines = [
                 f"# 📋 Eligibility & Qualifications Assessment",
                 f"Position: **{elig.get('title')}** at **{elig.get('company')}**",
                 f"",
                 f"• **Overall Verdict:** {'✅ **QUALIFIED & ELIGIBLE**' if elig.get('is_eligible') else '⚠️ **QUALIFICATION GAP DETECTED**'}",
-                f"• **Qualification Score:** **{elig.get('qualification_score')}%**",
+                f"• **Overall Role Eligibility Score:** **{elig.get('qualification_score')}%**",
+                f"• **Transparent Breakdown:** {breakdown_str}",
                 f"• **Experience Fit:** {elig.get('experience_fit')}",
                 f"• **Location / Mode:** {elig.get('location_fit')}",
                 f"",
-                f"### ✅ Your Matching Skills",
-                f"{', '.join(elig.get('matched_skills', [])) or 'None matched yet'}",
+                f"### ✅ Verified Matching Skills",
+                f"{matched_display}",
                 f"",
                 f"### ⚠️ Missing Required Qualifications",
-                f"{', '.join(elig.get('missing_required_skills', [])) or 'None! You meet all listed skill requirements.'}",
+                f"{missing_display}",
                 f"",
                 f"### 💡 Actionable Strategy to Qualify",
             ]

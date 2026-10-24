@@ -303,3 +303,78 @@ def test_ensure_database_initialized_in_memory_auto_heals():
     diag = ensure_database_initialized(mem_engine, seed_if_empty=True)
     assert diag["job_listings_exists"] is True
     assert diag["job_count"] > 0
+
+
+# ---------------------------------------------------------------------------
+# 6. Eligibility Assessment & Evidence Discrepancy Regression Tests
+# ---------------------------------------------------------------------------
+
+def test_eligibility_solution_architect_no_hardcoded_80():
+    """Regression test: verifies that Solution Architect roles do not use hardcoded 80% fallback,
+    explicitly compute the 3+ year experience gap for a 2-year candidate, and do not invent
+    unsupported visa requirements."""
+    from backend.agent.tools import check_candidate_eligibility
+    res = check_candidate_eligibility(
+        job_id="job_0baf2c70af20",
+        candidate_skills=["Python", "Javascript", "Html", "Css"],
+        candidate_exp=2.0
+    )
+    assert res["job_id"] == "job_0baf2c70af20"
+    # 1. Score is not hardcoded 80.0
+    assert res["qualification_score"] != 80.0
+    assert res["qualification_score"] == 12.0
+    # 2. Candidate experience 2.0 vs target 5.0 gives exact 3.0-year gap
+    assert res["target_min_experience"] == 5.0
+    assert res["experience_gap_years"] == 3.0
+    assert "3.0 years" in res["experience_fit"]
+    assert res["is_eligible"] is False
+    # 3. Location fit fact-checked against job posting (no invented visa requirements)
+    assert "Heidelberg" in res["location_fit"]
+    assert "does not state visa sponsorship" in res["location_fit"]
+    assert "candidate may need relocation visa" not in res["location_fit"].lower()
+    # 4. Transparent breakdown explanation
+    assert "Breakdown:" in res["score_breakdown_explanation"]
+    assert "Skills Match: 0.0%" in res["score_breakdown_explanation"]
+    assert "Experience Fit: 40.0%" in res["score_breakdown_explanation"]
+
+
+def test_eligibility_unspecified_skills_does_not_claim_all_met():
+    """Regression test: verifies that when technical skills are unitemized in a job posting,
+    the system marks skills_status='unspecified', redistributes weights transparently,
+    and never outputs 'None! You meet all listed skill requirements.'"""
+    import asyncio
+    from backend.agent.tools import check_candidate_eligibility
+    from backend.agent.orchestrator import RozgarAgentOrchestrator
+
+    res = check_candidate_eligibility(
+        job_id="job_e28178152181",
+        candidate_skills=["Python"],
+        candidate_exp=2.0
+    )
+    assert res["skills_status"] == "unspecified"
+    assert res["skill_match_score"] is None
+    assert res["qualification_score"] != 80.0
+    assert "Unspecified in posting" in res["score_breakdown_explanation"]
+
+    orch = RozgarAgentOrchestrator()
+    resp = asyncio.run(orch.execute("Am I eligible for job_e28178152181?"))
+    assert "None! You meet all listed skill requirements." not in resp
+    assert "Technical skills are not explicitly itemized in this listing" in resp
+
+
+def test_orchestrator_eligibility_execution_transparent_breakdown():
+    """Regression test: verifies full orchestrator response for Solution Architect
+    contains transparent breakdown, explicit experience gap, and actionable advice."""
+    import asyncio
+    from backend.agent.orchestrator import RozgarAgentOrchestrator
+
+    orch = RozgarAgentOrchestrator()
+    resp = asyncio.run(orch.execute(
+        "Am I eligible for job_0baf2c70af20? My skills are Python, Javascript, Html, Css and I have 2 years experience."
+    ))
+    assert "QUALIFICATION GAP DETECTED" in resp
+    assert "**Overall Role Eligibility Score:** **12.0%**" in resp
+    assert "Transparent Breakdown:" in resp
+    assert "Experience Gap of 3.0 years" in resp
+    assert "Aws" in resp
+    assert "None! You meet all listed skill requirements." not in resp
