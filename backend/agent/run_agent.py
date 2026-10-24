@@ -34,6 +34,13 @@ def main():
     print("Fetch-A-Thon 3.0: 'From Intent to Action'")
     print("=" * 65)
     
+    from app.database import ensure_database_initialized, engine
+    db_diag = ensure_database_initialized(engine)
+    print("\n[Database Connection Diagnostic]")
+    print(f"• Engine:    {db_diag['dialect'].upper()}")
+    print(f"• Location:  {db_diag['sanitized_url']}")
+    print(f"• Status:    Table 'job_listings' verified ({db_diag['job_count']:,} jobs available)")
+
     agent = create_agent()
     print(f"\n[Agent Initialized]")
     print(f"• Name:    {agent.name}")

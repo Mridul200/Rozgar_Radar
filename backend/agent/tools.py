@@ -28,8 +28,9 @@ for p in [_root_dir, _backend_dir]:
 
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
+from sqlalchemy.exc import OperationalError
 
-from app.database import SessionLocal
+from app.database import SessionLocal, ensure_database_initialized, engine
 from app.models.job import JobListing
 from app.models.matching import JobSkill, CanonicalSkill
 from app.models.user import UserProfile, User
@@ -111,7 +112,14 @@ def search_jobs(
             JobListing.publication_date.desc().nullslast()
         )
 
-        results = query.limit(max(1, min(limit, 20))).all()
+        try:
+            results = query.limit(max(1, min(limit, 20))).all()
+        except OperationalError as oe:
+            if "no such table" in str(oe).lower():
+                ensure_database_initialized(engine)
+                results = query.limit(max(1, min(limit, 20))).all()
+            else:
+                raise
 
         formatted = []
         for j in results:

@@ -173,11 +173,14 @@ def create_agent(
 
     @agent.on_event("startup")
     async def on_startup(ctx: Context):
+        from app.database import ensure_database_initialized, engine
+        db_diag = ensure_database_initialized(engine, log=ctx.logger)
         ctx.logger.info("=" * 60)
         ctx.logger.info("🚀 Rozgar Radar ASI:One Career Copilot Agent Online!")
-        ctx.logger.info(f"• Name:    {agent.name}")
-        ctx.logger.info(f"• Address: {agent.address}")
+        ctx.logger.info(f"• Name:     {agent.name}")
+        ctx.logger.info(f"• Address:  {agent.address}")
         ctx.logger.info(f"• Protocol: Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})")
+        ctx.logger.info(f"• Database: {db_diag['sanitized_url']} ({db_diag['job_count']:,} active jobs)")
         if use_mailbox:
             ctx.logger.info("• Mode:     Agentverse Mailbox (WebSocket)")
             ctx.logger.info(f"• Inspector: https://agentverse.ai/inspect/?uri=http%3A//127.0.0.1%3A{agent_port}&address={agent.address}")

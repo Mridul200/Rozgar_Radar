@@ -235,3 +235,71 @@ def test_fastapi_agent_tool_search_endpoint():
     })
     assert resp.status_code == 200
     assert isinstance(resp.json(), list)
+
+
+# ---------------------------------------------------------------------------
+# 5. Database Canonicalization & Robustness Regression Tests
+# ---------------------------------------------------------------------------
+
+def test_database_url_normalization_relative_paths():
+    """Verifies that all relative SQLite URL variants resolve to the canonical database/jobs.db."""
+    from app.database import normalize_database_url
+    for variant in [
+        "sqlite:///jobs.db",
+        "sqlite:///./jobs.db",
+        "sqlite:///database/jobs.db",
+        "sqlite:///./database/jobs.db",
+    ]:
+        normalized = normalize_database_url(variant)
+        assert "database/jobs.db" in normalized or "database\\jobs.db" in normalized
+        assert normalized.startswith("sqlite:///")
+
+
+def test_database_safe_sanitization():
+    """Verifies that credentials are masked and clean paths are displayed for diagnostics."""
+    from app.database import get_sanitized_database_url
+    secret_url = "postgresql://postgres:mysecretpassword123@db.supabase.co:5432/postgres"
+    sanitized = get_sanitized_database_url(secret_url)
+    assert "mysecretpassword123" not in sanitized
+    assert ":***@" in sanitized
+
+    sqlite_url = "sqlite:///P:/JOB_HUNTING/database/jobs.db"
+    assert get_sanitized_database_url(sqlite_url) == "sqlite:///database/jobs.db"
+
+
+def test_ensure_database_initialized_diagnostic():
+    """Verifies that ensure_database_initialized returns healthy status and verified job_listings."""
+    from app.database import ensure_database_initialized, engine
+    diag = ensure_database_initialized(engine)
+    assert diag["status"] == "healthy"
+    assert diag["job_listings_exists"] is True
+    assert diag["job_count"] > 1000
+    assert diag["dialect"] == "sqlite"
+
+
+def test_search_jobs_with_different_working_directory():
+    """Regression test: verifies that search_jobs succeeds without 'no such table: job_listings'
+    even when executed from a different working directory (e.g. backend/)."""
+    import os
+    from backend.agent.tools import search_jobs
+    original_cwd = os.getcwd()
+    try:
+        os.chdir(os.path.join(original_cwd, "backend"))
+        jobs = search_jobs(limit=2)
+        assert isinstance(jobs, list)
+        assert len(jobs) >= 1
+        assert "job_id" in jobs[0]
+        assert "title" in jobs[0]
+    finally:
+        os.chdir(original_cwd)
+
+
+def test_ensure_database_initialized_in_memory_auto_heals():
+    """Verifies that if an empty database is encountered, ensure_database_initialized auto-heals
+    and seeds tables from jobs.json."""
+    from app.database import ensure_database_initialized
+    from sqlalchemy import create_engine
+    mem_engine = create_engine("sqlite:///:memory:")
+    diag = ensure_database_initialized(mem_engine, seed_if_empty=True)
+    assert diag["job_listings_exists"] is True
+    assert diag["job_count"] > 0
