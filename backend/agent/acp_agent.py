@@ -52,6 +52,8 @@ class AgentHealthResponse(Model):
     agent_address: str
     protocol: str
     version: str
+    database: str
+    job_count: int
 
 
 def create_agent(
@@ -185,29 +187,42 @@ def create_agent(
     @agent.on_rest_get("/healthz", AgentHealthResponse)
     async def handle_healthz(ctx: Context) -> AgentHealthResponse:
         """Returns 200 OK for Render HTTP health probes and uptime monitoring."""
+        from app.database import ensure_database_initialized, engine
+        diag = ensure_database_initialized(engine)
         return AgentHealthResponse(
             status="healthy",
             agent_name=agent.name,
             agent_address=agent.address,
             protocol=f"Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})",
             version="0.3.0",
+            database=diag.get("sanitized_url", "unknown"),
+            job_count=diag.get("job_count", 0),
         )
 
     @agent.on_rest_get("/", AgentHealthResponse)
     async def handle_root(ctx: Context) -> AgentHealthResponse:
         """Root endpoint returning agent health status for default Render port scans."""
+        from app.database import ensure_database_initialized, engine
+        diag = ensure_database_initialized(engine)
         return AgentHealthResponse(
             status="healthy",
             agent_name=agent.name,
             agent_address=agent.address,
             protocol=f"Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})",
             version="0.3.0",
+            database=diag.get("sanitized_url", "unknown"),
+            job_count=diag.get("job_count", 0),
         )
 
     @agent.on_event("startup")
     async def on_startup(ctx: Context):
         from app.database import ensure_database_initialized, engine
         db_diag = ensure_database_initialized(engine, log=ctx.logger)
+        try:
+            await agent.register()
+            ctx.logger.info("📡 Almanac registration attestation verified and published.")
+        except Exception as e:
+            ctx.logger.warning(f"Almanac registration check notice: {e}")
         ctx.logger.info("=" * 60)
         ctx.logger.info("🚀 Rozgar Radar ASI:One Career Copilot Agent Online!")
         ctx.logger.info(f"• Name:     {agent.name}")
