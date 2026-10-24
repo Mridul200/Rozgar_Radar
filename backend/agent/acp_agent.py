@@ -22,6 +22,14 @@ for p in [_root_dir, _backend_dir]:
     if p not in sys.path:
         sys.path.insert(0, p)
 
+try:
+    from dotenv import load_dotenv
+    for env_file in [os.path.join(_root_dir, ".env"), os.path.join(_backend_dir, ".env")]:
+        if os.path.exists(env_file):
+            load_dotenv(env_file)
+except ImportError:
+    pass
+
 from uagents import Agent, Context, Protocol
 from uagents_core.contrib.protocols.chat import (
     ChatMessage,
@@ -69,15 +77,10 @@ def create_agent(
 
     # Mailbox configuration
     resolved_mailbox_key = mailbox_key or os.getenv("AGENT_MAILBOX_KEY", "").strip()
-    mailbox_setting = None
+    use_mailbox = False
 
-    if resolved_mailbox_key:
-        if "@" in resolved_mailbox_key:
-            mailbox_setting = resolved_mailbox_key
-        else:
-            mailbox_setting = f"{resolved_mailbox_key}@https://agentverse.ai"
-    elif os.getenv("AGENTVERSE_MAILBOX", "").lower() in ("true", "1"):
-        mailbox_setting = True
+    if resolved_mailbox_key or os.getenv("AGENTVERSE_MAILBOX", "").lower() in ("true", "1"):
+        use_mailbox = True
 
     # Endpoints
     raw_endpoint = os.getenv("AGENT_ENDPOINT", "").strip()
@@ -93,10 +96,19 @@ def create_agent(
         "seed": agent_seed,
         "port": agent_port,
         "loop": loop,
+        "enable_agent_inspector": True,
+        "publish_agent_details": True,
+        "description": (
+            "Rozgar Radar ASI:One Agent — Autonomous Career and Job Matching Copilot. "
+            "Searches 1,500+ verified jobs, ranks 6-factor compatibility, "
+            "tailors ATS resumes, and drafts applications with direct links."
+        ),
     }
 
-    if mailbox_setting:
-        agent_kwargs["mailbox"] = mailbox_setting
+    if use_mailbox:
+        agent_kwargs["mailbox"] = True
+        if resolved_mailbox_key and "@" in resolved_mailbox_key:
+            agent_kwargs["agentverse"] = resolved_mailbox_key
     else:
         agent_kwargs["endpoint"] = endpoints
 
@@ -166,10 +178,11 @@ def create_agent(
         ctx.logger.info(f"• Name:    {agent.name}")
         ctx.logger.info(f"• Address: {agent.address}")
         ctx.logger.info(f"• Protocol: Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})")
-        if mailbox_setting:
-            ctx.logger.info(f"• Mailbox: Connected to Agentverse ({mailbox_setting})")
+        if use_mailbox:
+            ctx.logger.info("• Mode:     Agentverse Mailbox (WebSocket)")
+            ctx.logger.info(f"• Inspector: https://agentverse.ai/inspect/?uri=http%3A//127.0.0.1%3A{agent_port}&address={agent.address}")
         else:
-            ctx.logger.info(f"• Mode:    Local HTTP Endpoint ({endpoints[0]})")
+            ctx.logger.info(f"• Mode:     Local HTTP Endpoint ({endpoints[0]})")
         ctx.logger.info("=" * 60)
 
     return agent

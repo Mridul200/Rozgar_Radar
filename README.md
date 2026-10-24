@@ -146,3 +146,70 @@ Quick snippet:
 ```bash
 pytest tests/ -v
 ```
+
+
+---
+
+## 🤖 Fetch.ai Agentverse & ASI:One Integration (Fetch-A-Thon 3.0)
+
+Rozgar Radar features an autonomous AI Agent built with the Fetch.ai `uagents` framework and official **Agent Chat Protocol (ACP v0.3.0)** for the *"ASI:One Agent Challenge – From Intent to Action"*.
+
+- **Agent Name**: `rozgar_radar_copilot`
+- **Agent Address**: `agent1qgq8slegxr8rvl7hdxlsrhkfaraumhx43sw5v0yau9ufs9e2f0gfqx9hwm3`
+- **Protocol**: `AgentChatProtocol:0.3.0` (ACP)
+
+### 1. Run the Agent (Windows PowerShell)
+
+In your project root terminal, run:
+
+```powershell
+# Run the ACP uAgent in Mailbox mode
+$env:AGENTVERSE_MAILBOX="true"
+.\.venv\Scripts\python backend/agent/run_agent.py
+```
+
+Or set `AGENTVERSE_MAILBOX=true` in your `.env` file and simply run:
+
+```powershell
+.\.venv\Scripts\python backend/agent/run_agent.py
+```
+
+Expected startup output:
+```text
+=================================================================
+🇮🇳 Rozgar Radar — ASI:One & Agentverse AI Agent
+Fetch-A-Thon 3.0: 'From Intent to Action'
+=================================================================
+
+[Agent Initialized]
+• Name:    rozgar_radar_copilot
+• Address: agent1qgq8slegxr8rvl7hdxlsrhkfaraumhx43sw5v0yau9ufs9e2f0gfqx9hwm3
+• Network: Fetch.ai Almanac / Agentverse
+
+INFO:     [rozgar_radar_copilot]: Agent inspector available at https://agentverse.ai/inspect/?uri=http%3A//127.0.0.1%3A8001&address=agent1qgq8slegxr8rvl7hdxlsrhkfaraumhx43sw5v0yau9ufs9e2f0gfqx9hwm3
+INFO:     [rozgar_radar_copilot]: Starting server on http://0.0.0.0:8001
+```
+
+### 2. Connect via Agentverse Inspector & Provision Mailbox
+
+1. Start the agent using the command above.
+2. In your browser (logged into [agentverse.ai](https://agentverse.ai)), open the **Inspector URL**:
+   ```
+   https://agentverse.ai/inspect/?uri=http%3A//127.0.0.1%3A8001&address=agent1qgq8slegxr8rvl7hdxlsrhkfaraumhx43sw5v0yau9ufs9e2f0gfqx9hwm3
+   ```
+3. The Agent Inspector will communicate with your local agent via CORS on `http://127.0.0.1:8001`.
+4. Click **"Connect"** or **"Setup Mailbox"** to register your agent address and link the mailbox.
+
+### 3. Verify Discovery in ASI:One (`asi1.ai`)
+
+1. Open **[asi1.ai](https://asi1.ai)** and log in.
+2. In the Search bar, search for your agent by address:
+   ```text
+   agent1qgq8slegxr8rvl7hdxlsrhkfaraumhx43sw5v0yau9ufs9e2f0gfqx9hwm3
+   ```
+   or by name: `rozgar_radar_copilot`.
+3. Start a chat and test career actions:
+   - *"Find remote React developer jobs in Bengaluru and match my profile."*
+   - *"Check my eligibility for the senior backend developer opening."*
+   - *"Tailor my resume and calculate my ATS score."*
+4. Click the **Share** button in the top right corner to obtain your **Public Shared Chat URL** for Fetch-A-Thon submission.
