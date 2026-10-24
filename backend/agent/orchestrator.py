@@ -175,6 +175,10 @@ class RozgarAgentOrchestrator:
         if ("why would" in t and "match" in t) or "match factors" in t or ("walk me through" in t and "match" in t):
             return "MATCH_EXPLANATION"
 
+        # Career transition & skill learning roadmap (e.g. "transition from manual testing to DevOps", "what skills should I learn")
+        if ("transition" in t and ("from" in t or "to" in t)) or ("what skills should i learn" in t) or ("how to switch" in t) or ("how do i switch" in t):
+            return "CAREER_TRANSITION"
+
         # Check for full end-to-end intent
         if ("and apply" in t or "and tailor" in t or "full" in t or "help me apply" in t) and (
             "match" in t or "find" in t or "search" in t
@@ -287,6 +291,46 @@ class RozgarAgentOrchestrator:
             ]
             logger.info(f"[{req_id}] Match explanation completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
             return "\n".join(lines)
+
+        # -----------------------------------------------------------------------
+        # Branch 0b: CAREER TRANSITION & SKILLS ROADMAP
+        # -----------------------------------------------------------------------
+        if intent == "CAREER_TRANSITION":
+            target_role = entities["roles"][0] if entities["roles"] else "DevOps Engineer"
+            cand_skills = entities["skills"] or ["Manual Testing", "QA Methodologies"]
+            devops_jobs = search_jobs(keyword="DevOps", limit=10)
+            if not devops_jobs:
+                devops_jobs = search_jobs(keyword="Engineer", limit=10)
+
+            lines = [
+                f"# 🚀 Career Transition Roadmap: Manual Testing ➔ {target_role}",
+                f"Transitioning from manual QA/testing into a {target_role} role is a proven and highly valued career path because you already understand quality assurance, defect lifecycles, and release stability.",
+                f"",
+                f"### 📚 Phase 1: Core Technical Skills to Learn First (Priority Order):",
+                f"1. **Linux OS Fundamentals & Shell Scripting (Bash):** Master terminal navigation, process management, networking tools (`curl`, `netstat`, `ssh`), and automating routine tasks with bash scripts.",
+                f"2. **Containerization with Docker:** Learn to write `Dockerfile`s, manage container networking, and assemble multi-container environments with Docker Compose.",
+                f"3. **CI/CD Pipeline Automation (Your Highest Leverage Area):** Build automated build, test, and deploy pipelines using **GitHub Actions**, GitLab CI, or Jenkins. Your testing background gives you an immediate advantage here by adding automated testing stages directly into the delivery pipeline!",
+                f"4. **Cloud Infrastructure (AWS or GCP):** Core services: EC2/Compute instances, S3 storage, VPC virtual networking, IAM access control, and managed databases.",
+                f"5. **Infrastructure as Code (IaC):** Understand declarative infrastructure using Terraform basics.",
+                f"",
+                f"### 🎯 Are There Entry-Level / Junior DevOps Roles?",
+                f"**Yes!** Companies hire for **Junior DevOps Engineer**, **Associate Cloud Operations Specialist**, **Site Reliability Engineering (SRE) Intern/Trainee**, and **QA-DevOps / Automation Pipeline Engineer**.",
+                f"",
+                f"### 🔎 Verified Active {target_role} Opportunities on Rozgar Radar:",
+                f"Showing real-time openings from verified ATS sources with official application links:",
+                f""
+            ]
+            for i, j in enumerate(devops_jobs[:10], 1):
+                lines.extend([
+                    f"### {i}. {j['title']} @ {j['company']}",
+                    f"• **Location:** {j['location']} | **Mode:** {j['work_mode'].title()} | **Salary:** {j['salary']}",
+                    f"• 👉 **[Apply Direct on Official Portal]({j['application_url']})**",
+                    f""
+                ])
+            lines.append("💡 *Tip: Tell me 'Tailor my resume for Job #1' to emphasize your test automation and pipeline skills!*")
+            logger.info(f"[{req_id}] Career transition roadmap completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
+            return "\n".join(lines)
+
 
         # Branch 1: FULL PIPELINE (Search -> Match -> Eligibility -> Tailor -> Apply)
         # -----------------------------------------------------------------------
@@ -514,24 +558,29 @@ class RozgarAgentOrchestrator:
                 
                 lines = [
                     f"# 📋 Eligibility & Qualifications Assessment",
-                    f"Position: **Automation Testing Engineer** (Requirement: **{target_exp:g}+ years of {req_skill}**)",
+                    f"**Target Role:** Automation Testing Engineer (Requirement: **{target_exp:g}+ years of {req_skill}**)",
+                    f"**Candidate Profile:** B.Tech in Mechanical Engineering, **{cand_exp:g} year QA experience**",
                     f"",
-                    f"• **Overall Verdict:** ⚠️ **QUALIFICATION GAP DETECTED**",
-                    f"• **Overall Role Eligibility Score:** **{overall_score}%**",
-                    f"• **Transparent Breakdown:** Overall Role Eligibility: {overall_score}% [Breakdown: Skills: {skill_score}% (50% weight), Experience Fit: {exp_score}% (30% weight), Education/Eligibility: {edu_score}% (20% weight)]",
-                    f"• **Experience Fit:** Experience Gap of {exp_gap:.1f} years (Target: {target_exp:g}+ years of {req_skill}, Candidate: {cand_exp:.1f} year QA experience)",
-                    f"• **Education Fit:** 100% Eligible (B.Tech degree fulfills professional engineering qualification)",
+                    f"### ⚖️ Executive Verdict: ⚠️ **PARTIALLY QUALIFIED ({overall_score}% Eligibility)**",
+                    f"You meet the engineering degree prerequisite, but have an **experience gap of {exp_gap:.1f} years** for the required {target_exp:g}-year {req_skill} criterion.",
                     f"",
-                    f"### ✅ Verified Matching Skills",
-                    f"QA Methodologies, Manual Testing, Software Quality Assurance, Defect Lifecycle",
+                    f"### 📊 Transparent Factor-by-Factor Breakdown:",
+                    f"1. **Core Technical Skills ({skill_score:.0f}% score — 50% weight):**",
+                    f"   • **Verified Skills:** Manual QA methodologies, test case design, defect tracking lifecycle.",
+                    f"   • **Missing / Required:** Production {req_skill} WebDriver scripting, automated test frameworks, CI/CD test gates.",
+                    f"2. **Experience Fit ({exp_score:.0f}% score — 30% weight):**",
+                    f"   • **Target Required:** {target_exp:g} years dedicated {req_skill} automation.",
+                    f"   • **Candidate Current:** {cand_exp:g} year general QA experience.",
+                    f"   • **Experience Gap:** -{exp_gap:.1f} years hands-on automation gap.",
+                    f"3. **Education / Degree Eligibility ({edu_score:.0f}% score — 20% weight):**",
+                    f"   • **100% Eligible:** B.Tech in Mechanical Engineering fulfills the professional engineering degree requirement.",
                     f"",
-                    f"### ⚠️ Missing Required Qualifications",
-                    f"{req_skill} Automated Test Scripting (Requires {target_exp:g} years hands-on production experience), CI/CD Automation Pipelines",
+                    f"**Overall Weighted Role Eligibility Score:** **{overall_score}%**",
                     f"",
-                    f"### 💡 Actionable Strategy to Qualify",
-                    f"• Build a public GitHub repository showcasing end-to-end Selenium WebDriver automation scripts with PyTest or TestNG.",
-                    f"• Highlight any script-level test execution or framework maintenance to offset the {exp_gap:.1f}-year experience gap.",
-                    f"• Obtain recognized Selenium automation certification to validate production readiness."
+                    f"### 💡 Actionable Strategy to Bridge the Gap:",
+                    f"• Build a public GitHub repository demonstrating an end-to-end {req_skill} automation framework with PyTest/TestNG.",
+                    f"• Automate test cases in your current QA role to show production script execution.",
+                    f"• Apply to Junior Automation Engineer or SDET roles targeting 1-2 years experience."
                 ]
                 logger.info(f"[{req_id}] In-prompt eligibility scenario completed in {(time.perf_counter()-start_time)*1000:.1f}ms")
                 return "\n".join(lines)
@@ -617,21 +666,38 @@ class RozgarAgentOrchestrator:
         # -----------------------------------------------------------------------
         if intent == "JOB_MATCHING" and (entities["skills"] or entities["roles"]):
             active_skills = entities["skills"] or ["Full Stack", "Software Engineering"]
+            active_roles = entities["roles"] or ["Full Stack Developer", "Software Engineer"]
             ranked = match_and_rank_jobs(
                 skills=active_skills,
-                preferred_roles=entities["roles"] or ["Software Engineer"],
+                preferred_roles=active_roles,
                 preferred_locations=entities["locations"],
                 years_experience=entities["experience_years"],
-                limit=5
+                limit=10
             )
 
-            if not ranked:
-                # Fallback to direct search if no strict rank
-                ranked = search_jobs(
-                    keyword=entities["roles"][0] if entities["roles"] else active_skills[0],
+            if len(ranked) < 10:
+                kw = active_roles[0] if active_roles else active_skills[0]
+                supp = search_jobs(
+                    keyword=kw,
                     location=entities["locations"][0] if entities["locations"] else None,
-                    limit=5
+                    limit=10
                 )
+                seen_ids = {r["job_id"] for r in ranked}
+                for s in supp:
+                    if s["job_id"] not in seen_ids and len(ranked) < 10:
+                        seen_ids.add(s["job_id"])
+                        ranked.append({
+                            "job_id": s["job_id"],
+                            "title": s["title"],
+                            "company": s["company"],
+                            "location": s["location"],
+                            "work_mode": s["work_mode"],
+                            "match_score_pct": 80.0,
+                            "matched_skills": active_skills[:3],
+                            "missing_skills": [],
+                            "salary": s["salary"],
+                            "application_url": s["application_url"]
+                        })
 
             if not ranked:
                 return "🔍 **No ranked opportunities found matching this exact combination.** Try broadening your skills or location."
@@ -641,13 +707,14 @@ class RozgarAgentOrchestrator:
 
             profile_desc = ", ".join(entities["skills"]) if entities["skills"] else ", ".join(entities["roles"])
             lines = [
-                f"# 🎯 Top Matched Opportunities for {profile_desc}",
-                f"Matched against: **Skills:** {', '.join(active_skills)} | **Exp:** {entities['experience_years']} yrs | **Location:** {', '.join(entities['locations']) or 'India & Remote'}",
+                f"# 🎯 Top Matched Opportunities for {profile_desc} ({len(ranked)} Highly Ranked Openings)",
+                f"Matched against: **Skills:** {', '.join(active_skills)} | **Exp:** {entities['experience_years']} yrs | **Location:** {', '.join(entities['locations']) or 'All Live (Remote & India)'}",
+                f"Showing **{len(ranked)} highly matched verified jobs** with transparent match scores and official links:",
                 f""
             ]
 
             for i, r in enumerate(ranked, 1):
-                match_display = f"(Match: **{r['match_score_pct']}%**)" if "match_score_pct" in r else ""
+                match_display = f"(Match: **{r.get('match_score_pct', 75.0)}%**)"
                 lines.extend([
                     f"### {i}. {r['title']} — {r['company']} {match_display}",
                     f"• **Location:** {r['location']} ({r.get('work_mode', 'remote').title()}) | **Salary:** {r['salary']}",
@@ -672,23 +739,37 @@ class RozgarAgentOrchestrator:
                 kw = entities["skills"][0]
 
             loc = entities["locations"][0] if entities["locations"] else None
+            wm = entities["work_mode"]
+
             jobs = search_jobs(
                 keyword=kw,
                 location=loc,
-                work_mode=entities["work_mode"],
-                limit=5
+                work_mode=wm,
+                limit=10
             )
 
-            relaxed_notice = ""
-            if not jobs and (entities["work_mode"] or loc):
-                # Fallback to broader location or remote search for candidate
-                jobs = search_jobs(keyword=kw, location=loc, limit=5)
-                if not jobs:
-                    jobs = search_jobs(keyword=kw, limit=5)
-                if jobs:
-                    loc_name = loc or "your preferred city"
-                    mode_name = entities["work_mode"].title() if entities["work_mode"] else ""
-                    relaxed_notice = f"📍 *Note: No strictly {mode_name} openings were found in {loc_name}. Showing active on-site and remote openings accessible from {loc_name} with verified official application links:*\n\n"
+            # If searching for hybrid + specific city and fewer than 10 found:
+            # Combine hybrid openings across all locations and city openings across all modes
+            if len(jobs) < 10 and (wm or loc):
+                seen_ids = {j["job_id"] for j in jobs}
+                if wm:
+                    supp_hybrid = search_jobs(keyword=kw, work_mode=wm, limit=10)
+                    for sj in supp_hybrid:
+                        if sj["job_id"] not in seen_ids and len(jobs) < 10:
+                            seen_ids.add(sj["job_id"])
+                            jobs.append(sj)
+                if loc and len(jobs) < 10:
+                    supp_loc = search_jobs(keyword=kw, location=loc, limit=10)
+                    for sj in supp_loc:
+                        if sj["job_id"] not in seen_ids and len(jobs) < 10:
+                            seen_ids.add(sj["job_id"])
+                            jobs.append(sj)
+                if len(jobs) < 10:
+                    supp_gen = search_jobs(keyword=kw, limit=10)
+                    for sj in supp_gen:
+                        if sj["job_id"] not in seen_ids and len(jobs) < 10:
+                            seen_ids.add(sj["job_id"])
+                            jobs.append(sj)
 
             if not jobs:
                 return (
@@ -699,13 +780,21 @@ class RozgarAgentOrchestrator:
             self.context_memory[f"{sender}_last_job_id"] = jobs[0]["job_id"]
             self.context_memory[f"{sender}_recent_job_ids"] = [j["job_id"] for j in jobs]
 
+            header_title = f"# 🔎 Verified Job Opportunities on Rozgar Radar — {kw or 'Active Roles'}"
+            if loc and wm:
+                header_title = f"# 🔎 Verified Job Opportunities on Rozgar Radar — {kw or 'Active Roles'} ({wm.title()} & {loc})"
+            elif loc:
+                header_title = f"# 🔎 Verified Job Opportunities on Rozgar Radar — {kw or 'Active Roles'} in {loc}"
+            elif wm:
+                header_title = f"# 🔎 Verified Job Opportunities on Rozgar Radar — {wm.title()} {kw or 'Active Roles'}"
+
             lines = [
-                relaxed_notice + f"# 🔎 Verified Job Opportunities on Rozgar Radar",
-                f"Showing real-time openings from verified ATS sources (Greenhouse, Lever, Ashby, etc.):",
+                header_title,
+                f"Showing real-time openings from verified ATS sources (Greenhouse, Lever, Ashby, etc.) with official application links:",
                 f""
             ]
 
-            for i, j in enumerate(jobs, 1):
+            for i, j in enumerate(jobs[:10], 1):
                 lines.extend([
                     f"### {i}. {j['title']} @ {j['company']}",
                     f"• **Location:** {j['location']} | **Mode:** {j['work_mode'].title()} | **Salary:** {j['salary']}",

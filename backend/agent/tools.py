@@ -238,7 +238,7 @@ def match_and_rank_jobs(
     years_experience: float = 0.0,
     min_salary: Optional[float] = None,
     work_modes: Optional[List[str]] = None,
-    limit: int = 5,
+    limit: int = 10,
     db: Optional[Session] = None
 ) -> List[Dict[str, Any]]:
     """
@@ -278,9 +278,12 @@ def match_and_rank_jobs(
 
         base_query = db.query(JobListing).filter(
             JobListing.is_duplicate == False,
-            JobListing.freshness_status == "active",
-            JobListing.is_india_eligible == True
+            JobListing.freshness_status == "active"
         )
+        if preferred_locations:
+            india_terms = ["india", "bengaluru", "bangalore", "mumbai", "delhi", "hyderabad", "pune", "gurgaon", "noida", "chennai"]
+            if any(it in p.lower() for p in preferred_locations for it in india_terms):
+                base_query = base_query.filter(or_(JobListing.is_india_eligible == True, JobListing.work_mode == "remote"))
 
         # Smart targeted pool: prioritize jobs matching candidate's skills or roles
         targeted_conds = []
@@ -289,20 +292,45 @@ def match_and_rank_jobs(
                 r_clean = r.strip().lower()
                 if r_clean:
                     targeted_conds.append(func.lower(JobListing.title).like(f"%{r_clean}%"))
+                    if "full stack" in r_clean or "fullstack" in r_clean:
+                        targeted_conds.extend([
+                            func.lower(JobListing.title).like("%full%stack%"),
+                            func.lower(JobListing.title).like("%fullstack%"),
+                            func.lower(JobListing.title).like("%software engineer%"),
+                            func.lower(JobListing.title).like("%developer%")
+                        ])
+                    elif "data analyst" in r_clean:
+                        targeted_conds.extend([
+                            func.lower(JobListing.title).like("%data%analyst%"),
+                            func.lower(JobListing.title).like("%analytics%")
+                        ])
+                    elif "devops" in r_clean:
+                        targeted_conds.extend([
+                            func.lower(JobListing.title).like("%devops%"),
+                            func.lower(JobListing.title).like("%cloud%"),
+                            func.lower(JobListing.title).like("%infrastructure%")
+                        ])
         if skills:
-            for s in skills[:3]:
+            for s in skills[:5]:
                 s_clean = s.strip().lower()
                 if s_clean:
                     targeted_conds.append(func.lower(JobListing.title).like(f"%{s_clean}%"))
                     targeted_conds.append(func.lower(JobListing.description_plain).like(f"%{s_clean}%"))
+                    if "full stack" in s_clean or "fullstack" in s_clean:
+                        targeted_conds.extend([
+                            func.lower(JobListing.title).like("%full%stack%"),
+                            func.lower(JobListing.title).like("%fullstack%"),
+                            func.lower(JobListing.description_plain).like("%full%stack%"),
+                            func.lower(JobListing.description_plain).like("%fullstack%")
+                        ])
 
         relevant_jobs = []
         if targeted_conds:
-            relevant_jobs = base_query.filter(or_(*targeted_conds)).limit(25).all()
+            relevant_jobs = base_query.filter(or_(*targeted_conds)).order_by(JobListing.publication_date.desc().nullslast()).limit(60).all()
 
         seen_ids = {j.id for j in relevant_jobs}
-        if len(relevant_jobs) < 15:
-            remaining = 25 - len(relevant_jobs)
+        if len(relevant_jobs) < 30:
+            remaining = 60 - len(relevant_jobs)
             supp = (
                 base_query.filter(~JobListing.id.in_(seen_ids))
                 .order_by(JobListing.publication_date.desc().nullslast())
@@ -343,31 +371,36 @@ def match_and_rank_jobs(
                     bonus=bonus
                 )
 
-                if match_result:
-                    final_score = match_result.get("score", 0.0)
-                    matched_skills = match_result.get("matched_skills", [])
-                    missing_skills = match_result.get("missing_skills", [])
+                # 2. Resilient content & preference matcher
+                ai_res = calculate_job_match(
+                    candidate_skills=skills,
+                    candidate_preferred_roles=preferred_roles or [],
+                    candidate_preferred_locations=preferred_locations or [],
+                    job_title=job.title,
+                    job_description=job.description_plain,
+                    job_location=job.city or job.location_raw,
+                    job_work_mode=job.work_mode,
+                    is_india_eligible=job.is_india_eligible
+                )
+
+                ai_pct = float(ai_res.get("match_percentage", 50.0))
+                db_pct = float((match_result.get("score", 0.0) or 0.0) * 100) if match_result else 0.0
+
+                if match_result and len(match_result.get("matched_skills", [])) > 0:
+                    final_score_pct = max(db_pct, ai_pct)
+                    matched_skills = list(dict.fromkeys(match_result.get("matched_skills", []) + ai_res.get("matched_skills", [])))
+                    missing_skills = [s for s in ai_res.get("missing_skills", []) if s not in matched_skills]
                     reasons = match_result.get("reasons", [])
                     sub_scores = match_result.get("sub_scores", {})
                 else:
-                    # 2. Resilient fallback: Content & preference matcher
-                    ai_res = calculate_job_match(
-                        candidate_skills=skills,
-                        candidate_preferred_roles=preferred_roles or [],
-                        candidate_preferred_locations=preferred_locations or [],
-                        job_title=job.title,
-                        job_description=job.description_plain,
-                        job_location=job.city or job.location_raw,
-                        job_work_mode=job.work_mode,
-                        is_india_eligible=job.is_india_eligible
-                    )
-                    final_score = (ai_res.get("overall_score", 0.0) or 50.0) / 100.0
-                    matched_skills = [s.title() for s in ai_res.get("matched_skills", [])]
-                    missing_skills = [s.title() for s in ai_res.get("missing_skills", [])]
-                    reasons = [f"Direct role & skill alignment: {ai_res.get('recommendation', 'Good fit')}"]
+                    final_score_pct = ai_pct
+                    matched_skills = ai_res.get("matched_skills", [])
+                    missing_skills = ai_res.get("missing_skills", [])
+                    reasons = [f"Direct role & skill alignment ({ai_res.get('match_percentage')}% match)"]
                     sub_scores = {
-                        "skills": round((ai_res.get("skill_score", 50.0) or 50.0) / 100.0, 2),
-                        "role": round((ai_res.get("title_score", 50.0) or 50.0) / 100.0, 2)
+                        "skills": round(ai_res.get("skill_compatibility", 50) / 100.0, 2),
+                        "role": round(ai_res.get("role_compatibility", 50) / 100.0, 2),
+                        "location": round(ai_res.get("location_compatibility", 50) / 100.0, 2)
                     }
 
                 # Build readable salary
@@ -387,7 +420,7 @@ def match_and_rank_jobs(
                     "company": job.company_name,
                     "location": job.city or job.location_raw or "Remote India",
                     "work_mode": job.work_mode,
-                    "match_score_pct": round(final_score * 100, 1),
+                    "match_score_pct": round(final_score_pct, 1),
                     "matched_skills": matched_skills,
                     "missing_skills": missing_skills,
                     "salary": sal,
@@ -407,6 +440,8 @@ def match_and_rank_jobs(
     finally:
         if close_db:
             db.close()
+
+
 # ---------------------------------------------------------------------------
 # Tool 3: Candidate Eligibility and Qualification Gap Analysis
 # ---------------------------------------------------------------------------

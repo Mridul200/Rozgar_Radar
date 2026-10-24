@@ -188,8 +188,9 @@ def create_agent(
             msg_id=uuid.uuid4(),
             content=[TextContent(type="text", text=agent_response)]
         )
-        await ctx.send(sender, response_msg)
-        ctx.logger.info(f"📤 [ACP Delivered to {sender}]: {len(agent_response)} chars")
+        status = await ctx.send(sender, response_msg)
+        status_name = getattr(status, "status", "delivered")
+        ctx.logger.info(f"📤 [ACP Delivered to {sender}]: status={status_name} len={len(agent_response)} chars")
 
     @chat_proto.on_message(ChatAcknowledgement)
     async def handle_chat_acknowledgement(ctx: Context, sender: str, msg: ChatAcknowledgement):
@@ -222,7 +223,7 @@ def create_agent(
             agent_name=agent.name,
             agent_address=agent.address,
             protocol=f"Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})",
-            version="0.3.0",
+            version="0.3.1-match10-fast",
             database=sanitized_url,
             job_count=job_count,
         )
@@ -247,7 +248,7 @@ def create_agent(
             agent_name=agent.name,
             agent_address=agent.address,
             protocol=f"Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})",
-            version="0.3.0",
+            version="0.3.1-match10-fast",
             database=sanitized_url,
             job_count=job_count,
         )
