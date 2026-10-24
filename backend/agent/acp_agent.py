@@ -1,0 +1,178 @@
+"""
+Rozgar Radar ASI:One Agent
+Implements the Agent Chat Protocol (ACP) for Fetch.ai / Agentverse / ASI:One discovery.
+"""
+
+from __future__ import annotations
+
+import os
+import sys
+import uuid
+import time
+import asyncio
+import logging
+from typing import Optional, Dict, Any
+
+# Ensure project root & backend on sys.path
+_agent_dir = os.path.dirname(os.path.abspath(__file__))
+_backend_dir = os.path.abspath(os.path.join(_agent_dir, ".."))
+_root_dir = os.path.abspath(os.path.join(_backend_dir, ".."))
+
+for p in [_root_dir, _backend_dir]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
+from uagents import Agent, Context, Protocol
+from uagents_core.contrib.protocols.chat import (
+    ChatMessage,
+    ChatAcknowledgement,
+    TextContent,
+    chat_protocol_spec,
+)
+
+from backend.agent.orchestrator import RozgarAgentOrchestrator
+
+logger = logging.getLogger("rozgar_radar_agent")
+
+# Global singleton orchestrator
+orchestrator = RozgarAgentOrchestrator()
+
+
+def create_agent(
+    name: Optional[str] = None,
+    seed: Optional[str] = None,
+    port: Optional[int] = None,
+    mailbox_key: Optional[str] = None
+) -> Agent:
+    """
+    Factory function to initialize the Rozgar Radar ACP Agent.
+    Configures network address, cryptographic seed, Agentverse Mailbox, and ACP protocol.
+    """
+    agent_name = name or os.getenv("AGENT_NAME") or "rozgar_radar_copilot"
+    agent_seed = (
+        seed
+        or os.getenv("ROZGAR_RADAR_AGENT_SEED")
+        or os.getenv("AGENT_SEED")
+        or "rozgar_radar_fetchathon_asi_one_seed_2026_india_first_agent_secure"
+    )
+    agent_port = port or int(os.getenv("AGENT_PORT", "8001"))
+
+    # Ensure event loop exists for uAgent
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    # Mailbox configuration
+    resolved_mailbox_key = mailbox_key or os.getenv("AGENT_MAILBOX_KEY", "").strip()
+    mailbox_setting = None
+
+    if resolved_mailbox_key:
+        if "@" in resolved_mailbox_key:
+            mailbox_setting = resolved_mailbox_key
+        else:
+            mailbox_setting = f"{resolved_mailbox_key}@https://agentverse.ai"
+    elif os.getenv("AGENTVERSE_MAILBOX", "").lower() in ("true", "1"):
+        mailbox_setting = True
+
+    # Endpoints
+    agent_endpoint = os.getenv("AGENT_ENDPOINT")
+    endpoints = [agent_endpoint] if agent_endpoint else [f"http://127.0.0.1:{agent_port}/submit"]
+
+    agent_kwargs: Dict[str, Any] = {
+        "name": agent_name,
+        "seed": agent_seed,
+        "port": agent_port,
+        "loop": loop,
+    }
+
+    if mailbox_setting:
+        agent_kwargs["mailbox"] = mailbox_setting
+    else:
+        agent_kwargs["endpoint"] = endpoints
+
+    # Instantiate uAgent
+    agent = Agent(**agent_kwargs)
+
+    # -----------------------------------------------------------------------
+    # Agent Chat Protocol (ACP) Initialization
+    # -----------------------------------------------------------------------
+    chat_proto = Protocol(spec=chat_protocol_spec)
+
+    @chat_proto.on_message(ChatMessage)
+    async def handle_chat_message(ctx: Context, sender: str, msg: ChatMessage):
+        """
+        Receives an incoming ACP ChatMessage from ASI:One or an external agent,
+        acknowledges receipt, invokes the multi-step orchestrator, and sends back the reply.
+        """
+        # 1. Acknowledge receipt of message immediately per ACP spec
+        ack = ChatAcknowledgement(
+            timestamp=int(time.time()),
+            acknowledged_msg_id=msg.msg_id
+        )
+        await ctx.send(sender, ack)
+
+        # 2. Extract plain text content from incoming message blocks
+        user_text = ""
+        for block in msg.content:
+            if isinstance(block, TextContent):
+                user_text += block.text + " "
+            elif hasattr(block, "text"):
+                user_text += str(block.text) + " "
+        user_text = user_text.strip()
+
+        ctx.logger.info(f"📨 [ACP Received from {sender}]: {user_text}")
+
+        # 3. Execute multi-step reasoning & tool execution via orchestrator
+        try:
+            agent_response = await orchestrator.execute(user_text, context={"sender": sender})
+        except Exception as exc:
+            ctx.logger.error(f"Error executing agent orchestrator: {exc}", exc_info=True)
+            agent_response = (
+                f"⚠️ **Rozgar Radar Agent Notice:** Encountered an error processing your request: {str(exc)}\n"
+                f"Please try again or refine your query."
+            )
+
+        # 4. Construct and deliver ACP ChatMessage response
+        response_msg = ChatMessage(
+            timestamp=int(time.time()),
+            msg_id=uuid.uuid4(),
+            content=[TextContent(type="text", text=agent_response)]
+        )
+        await ctx.send(sender, response_msg)
+        ctx.logger.info(f"📤 [ACP Delivered to {sender}]: {len(agent_response)} chars")
+
+    @chat_proto.on_message(ChatAcknowledgement)
+    async def handle_chat_acknowledgement(ctx: Context, sender: str, msg: ChatAcknowledgement):
+        """Logs delivery confirmation received from ASI:One or peer agent."""
+        ctx.logger.info(f"✅ [ACP Acknowledged]: msg_id={msg.acknowledged_msg_id} from {sender}")
+
+    # Attach verified protocol to agent
+    agent.include(chat_proto)
+
+    @agent.on_event("startup")
+    async def on_startup(ctx: Context):
+        ctx.logger.info("=" * 60)
+        ctx.logger.info("🚀 Rozgar Radar ASI:One Career Copilot Agent Online!")
+        ctx.logger.info(f"• Name:    {agent.name}")
+        ctx.logger.info(f"• Address: {agent.address}")
+        ctx.logger.info(f"• Protocol: Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})")
+        if mailbox_setting:
+            ctx.logger.info(f"• Mailbox: Connected to Agentverse ({mailbox_setting})")
+        else:
+            ctx.logger.info(f"• Mode:    Local HTTP Endpoint ({endpoints[0]})")
+        ctx.logger.info("=" * 60)
+
+    return agent
+
+
+# Standalone runner
+if __name__ == "__main__":
+    if sys.platform == "win32":
+        sys.stdout.reconfigure(encoding="utf-8")
+    agent = create_agent()
+    agent.run()

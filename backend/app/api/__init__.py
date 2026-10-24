@@ -8,6 +8,7 @@ from app.api.saved_jobs import router as saved_jobs_router
 from app.api.automation import router as automation_router
 from app.api.resume import router as resume_router
 from app.api.supabase import router as supabase_router
+from app.api.agent_api import router as agent_router
 
 api_router = APIRouter()
 api_router.include_router(jobs_router)
@@ -19,6 +20,6 @@ api_router.include_router(saved_jobs_router)
 api_router.include_router(automation_router)
 api_router.include_router(resume_router)
 api_router.include_router(supabase_router)
+api_router.include_router(agent_router)
 
 __all__ = ["api_router"]
-
