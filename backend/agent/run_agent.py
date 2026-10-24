@@ -46,6 +46,40 @@ def main():
     print(f"• Name:    {agent.name}")
     print(f"• Address: {agent.address}")
     print(f"• Network: Fetch.ai Almanac / Agentverse")
+
+    # -------------------------------------------------------------------
+    # Official Agentverse External Registration
+    # -------------------------------------------------------------------
+    agentverse_key = os.getenv("AGENTVERSE_KEY")
+    agent_seed_phrase = (
+        os.getenv("AGENT_SEED_PHRASE")
+        or os.getenv("ROZGAR_RADAR_AGENT_SEED")
+        or "rozgar_radar_fetchathon_asi_one_seed_2026_india_first_agent_secure"
+    )
+
+    if agentverse_key:
+        try:
+            from uagents_core.utils.registration import (
+                register_chat_agent,
+                RegistrationRequestCredentials,
+            )
+            print("\n[Agentverse External Registration] Registering agent with Agentverse...")
+            reg_ok = register_chat_agent(
+                "ROZAR_RADAR",
+                "https://rozgar-radar-agent.onrender.com",
+                active=True,
+                credentials=RegistrationRequestCredentials(
+                    agentverse_api_key=agentverse_key,
+                    agent_seed_phrase=agent_seed_phrase,
+                ),
+            )
+            if reg_ok:
+                print("✅ Successfully registered ROZAR_RADAR with Agentverse!")
+            else:
+                print("⚠️ Agentverse registration returned false.")
+        except Exception as e:
+            print(f"⚠️ Agentverse registration notice: {e}")
+
     print("\nStarting Agent event loop (Press Ctrl+C to stop)...\n")
     agent.run()
 
