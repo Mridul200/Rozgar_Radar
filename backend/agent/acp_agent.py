@@ -69,6 +69,7 @@ def create_agent(
     agent_name = name or os.getenv("AGENT_NAME") or "rozgar_radar_copilot"
     agent_seed = (
         seed
+        or os.getenv("AGENT_SEED_PHRASE")
         or os.getenv("ROZGAR_RADAR_AGENT_SEED")
         or os.getenv("AGENT_SEED")
         or "rozgar_radar_fetchathon_asi_one_seed_2026_india_first_agent_secure"
@@ -262,6 +263,31 @@ def create_agent(
             ctx.logger.info("📡 Almanac registration attestation verified and published.")
         except Exception as e:
             ctx.logger.warning(f"Almanac registration check notice: {e}")
+
+        # Check if Agentverse API Key is provided for External Agent Registration
+        av_key = os.getenv("AGENTVERSE_KEY") or os.getenv("AGENTVERSE_API_KEY")
+        if av_key:
+            try:
+                from uagents_core.utils.registration import (
+                    register_chat_agent,
+                    RegistrationRequestCredentials,
+                )
+                ext_endpoint = os.getenv("RENDER_EXTERNAL_URL") or os.getenv("AGENT_ENDPOINT") or "https://rozgar-radar-agent.onrender.com"
+                if not ext_endpoint.startswith("http"):
+                    ext_endpoint = f"https://{ext_endpoint}"
+                reg_ok = register_chat_agent(
+                    name=os.getenv("AGENT_REGISTRATION_NAME", "ROZAR_RADAR"),
+                    endpoint=ext_endpoint,
+                    active=True,
+                    credentials=RegistrationRequestCredentials(
+                        agentverse_api_key=av_key,
+                        agent_seed_phrase=agent_seed,
+                    ),
+                )
+                if reg_ok:
+                    ctx.logger.info("✨ Successfully registered external agent with Agentverse!")
+            except Exception as e:
+                ctx.logger.warning(f"Agentverse external registration notice: {e}")
         ctx.logger.info("=" * 60)
         ctx.logger.info("🚀 Rozgar Radar ASI:One Career Copilot Agent Online!")
         ctx.logger.info(f"• Name:     {agent.name}")
