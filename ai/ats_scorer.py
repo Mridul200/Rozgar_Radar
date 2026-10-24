@@ -10,7 +10,8 @@ COMMON_TECH_SKILLS = [
     "nlp", "pytorch", "tensorflow", "pandas", "numpy", "java", "c++", "c#", "go", "rust",
     "microservices", "kafka", "rabbitmq", "unit testing", "jest", "pytest", "terraform",
     "full stack", "fullstack", "frontend", "backend", "web development", "software engineering",
-    "system design", "distributed systems", "api design", "react native", "flutter", "cloud architecture", "cloud computing"
+    "system design", "distributed systems", "api design", "react native", "flutter", "cloud architecture", "cloud computing",
+    "power bi", "excel", "tableau", "selenium", "etl", "etl pipelines", "airflow", "spark", "pyspark", "snowflake", "qa"
 ]
 
 SOFT_SKILLS = [
