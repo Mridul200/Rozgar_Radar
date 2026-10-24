@@ -30,7 +30,7 @@ try:
 except ImportError:
     pass
 
-from uagents import Agent, Context, Protocol
+from uagents import Agent, Context, Protocol, Model
 from uagents_core.contrib.protocols.chat import (
     ChatMessage,
     ChatAcknowledgement,
@@ -44,6 +44,14 @@ logger = logging.getLogger("rozgar_radar_agent")
 
 # Global singleton orchestrator
 orchestrator = RozgarAgentOrchestrator()
+
+
+class AgentHealthResponse(Model):
+    status: str
+    agent_name: str
+    agent_address: str
+    protocol: str
+    version: str
 
 
 def create_agent(
@@ -170,6 +178,31 @@ def create_agent(
 
     # Attach verified protocol to agent
     agent.include(chat_proto)
+
+    # -----------------------------------------------------------------------
+    # Lightweight HTTP Health Check Routes for Render Web Service
+    # -----------------------------------------------------------------------
+    @agent.on_rest_get("/healthz", AgentHealthResponse)
+    async def handle_healthz(ctx: Context) -> AgentHealthResponse:
+        """Returns 200 OK for Render HTTP health probes and uptime monitoring."""
+        return AgentHealthResponse(
+            status="healthy",
+            agent_name=agent.name,
+            agent_address=agent.address,
+            protocol=f"Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})",
+            version="0.3.0",
+        )
+
+    @agent.on_rest_get("/", AgentHealthResponse)
+    async def handle_root(ctx: Context) -> AgentHealthResponse:
+        """Root endpoint returning agent health status for default Render port scans."""
+        return AgentHealthResponse(
+            status="healthy",
+            agent_name=agent.name,
+            agent_address=agent.address,
+            protocol=f"Agent Chat Protocol (ACP v{getattr(chat_protocol_spec, 'version', '0.3.0')})",
+            version="0.3.0",
+        )
 
     @agent.on_event("startup")
     async def on_startup(ctx: Context):

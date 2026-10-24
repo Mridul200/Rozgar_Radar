@@ -42,6 +42,10 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+private_keys.json
+*private_keys*.json
+*.pem
+*.key
 
 # Databases & local logs
 *.db

@@ -378,3 +378,32 @@ def test_orchestrator_eligibility_execution_transparent_breakdown():
     assert "Experience Gap of 3.0 years" in resp
     assert "Aws" in resp
     assert "None! You meet all listed skill requirements." not in resp
+
+
+# ---------------------------------------------------------------------------
+# 7. Render Cloud Deployment Probes & URL Compatibility Regression Tests
+# ---------------------------------------------------------------------------
+
+def test_agent_healthz_rest_endpoint_registered():
+    """Verifies that create_agent registers the /healthz and / REST endpoints
+    and returns healthy status with agent metadata for Render health checks."""
+    from backend.agent.acp_agent import create_agent
+
+    agent = create_agent(port=8099)
+    assert ("GET", "/healthz") in agent._rest_handlers
+    assert ("GET", "/") in agent._rest_handlers
+
+
+def test_render_postgres_database_url_normalization():
+    """Verifies that Render's postgres:// URLs are converted to postgresql://
+    compatible with SQLAlchemy 2.0 and that credentials are safe in diagnostics."""
+    from app.database import normalize_database_url, get_sanitized_database_url
+
+    render_url = "postgres://renderuser:renderpass123@dpg-c12345.oregon-postgres.render.com:5432/jobs_prod"
+    normalized = normalize_database_url(render_url)
+    assert normalized.startswith("postgresql://")
+    assert "postgresql://renderuser:renderpass123@dpg-c12345" in normalized
+
+    sanitized = get_sanitized_database_url(normalized)
+    assert "renderpass123" not in sanitized
+    assert "renderuser:***@" in sanitized

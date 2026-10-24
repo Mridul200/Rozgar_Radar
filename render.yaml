@@ -80,6 +80,7 @@ services:
     runtime: python
     region: oregon
     plan: free
+    healthCheckPath: /healthz
     buildCommand: |
       pip install --upgrade pip && pip install -r backend/requirements.txt
     startCommand: |
@@ -96,10 +97,12 @@ services:
       - key: ROZGAR_RADAR_AGENT_SEED
         value: rozgar_radar_fetchathon_asi_one_seed_2026_india_first_agent_secure
       # For Mailbox mode (Recommended):
-      - key: AGENT_MAILBOX_KEY
-        sync: false
+      # Note: uagents 0.26+ connects via cryptographic attestation when AGENTVERSE_MAILBOX=true.
+      # AGENT_MAILBOX_KEY is only required if using a custom/legacy Agentverse endpoint.
       - key: AGENTVERSE_MAILBOX
         value: "true"
+      - key: AGENT_MAILBOX_KEY
+        sync: false
       # For HTTP Endpoint mode (Alternative):
       # Set AGENT_ENDPOINT to https://<service-name>.onrender.com/submit
       - key: AGENT_ENDPOINT
