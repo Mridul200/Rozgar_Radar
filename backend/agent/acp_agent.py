@@ -55,7 +55,7 @@ def create_agent(
         or os.getenv("AGENT_SEED")
         or "rozgar_radar_fetchathon_asi_one_seed_2026_india_first_agent_secure"
     )
-    agent_port = port or int(os.getenv("AGENT_PORT", "8001"))
+    agent_port = port or int(os.getenv("PORT") or os.getenv("AGENT_PORT") or "8001")
 
     # Ensure event loop exists for uAgent
     try:
@@ -80,8 +80,13 @@ def create_agent(
         mailbox_setting = True
 
     # Endpoints
-    agent_endpoint = os.getenv("AGENT_ENDPOINT")
-    endpoints = [agent_endpoint] if agent_endpoint else [f"http://127.0.0.1:{agent_port}/submit"]
+    raw_endpoint = os.getenv("AGENT_ENDPOINT", "").strip()
+    if raw_endpoint:
+        if not raw_endpoint.endswith("/submit"):
+            raw_endpoint = f"{raw_endpoint.rstrip('/')}/submit"
+        endpoints = [raw_endpoint]
+    else:
+        endpoints = [f"http://127.0.0.1:{agent_port}/submit"]
 
     agent_kwargs: Dict[str, Any] = {
         "name": agent_name,

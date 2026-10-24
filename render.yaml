@@ -71,3 +71,38 @@ services:
         sync: false                    # e.g. https://hirepulse-backend.onrender.com
       - key: NODE_VERSION
         value: "20.11.1"
+
+  # ──────────────────────────────────────────────
+  # 3. AGENT — Fetch.ai uAgent (ACP v0.3.0)
+  # ──────────────────────────────────────────────
+  - type: web
+    name: rozgar-radar-agent
+    runtime: python
+    region: oregon
+    plan: free
+    buildCommand: |
+      pip install --upgrade pip && pip install -r backend/requirements.txt
+    startCommand: |
+      python backend/agent/run_agent.py
+    envVars:
+      - key: DATABASE_URL
+        sync: false                    # Shared database URL (e.g. Supabase / Postgres)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: AGENT_NAME
+        value: rozgar_radar_copilot
+      - key: ROZGAR_RADAR_AGENT_SEED
+        value: rozgar_radar_fetchathon_asi_one_seed_2026_india_first_agent_secure
+      # For Mailbox mode (Recommended):
+      - key: AGENT_MAILBOX_KEY
+        sync: false
+      - key: AGENTVERSE_MAILBOX
+        value: "true"
+      # For HTTP Endpoint mode (Alternative):
+      # Set AGENT_ENDPOINT to https://<service-name>.onrender.com/submit
+      - key: AGENT_ENDPOINT
+        sync: false
+      - key: PYTHON_VERSION
+        value: "3.11.9"
