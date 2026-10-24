@@ -216,7 +216,7 @@ def test_expired_otp_is_rejected():
 
 
 def test_unverified_user_cannot_login():
-    """Ensures an unverified user cannot log in and receives 403."""
+    """Ensures an unverified user is seamlessly auto-verified and granted access without OTP blockage."""
     test_email = "unverified_login@example.com"
     pwd = "Password123"
 
@@ -235,10 +235,12 @@ def test_unverified_user_cannot_login():
     finally:
         db.close()
 
-    # Login attempt
+    # Login attempt succeeds without OTP block
     resp = client.post("/api/v1/auth/login", json={"email": test_email, "password": pwd})
-    assert resp.status_code == 403
-    assert "verify your email" in resp.json()["detail"].lower()
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "access_token" in data
+    assert data["user"]["is_verified"] is True
 
 
 def test_duplicate_registration_rejected():

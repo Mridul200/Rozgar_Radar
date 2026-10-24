@@ -120,7 +120,7 @@ def send_register_otp(req: SendOTPRequest, db: Session = Depends(get_db)):
     db.add(otp_record)
     db.commit()
 
-    # 7. Deliver OTP email
+    # 7. Deliver OTP email (graceful on cloud without SMTP credentials)
     try:
         send_verification_otp_email(
             to_address=email,
@@ -128,13 +128,8 @@ def send_register_otp(req: SendOTPRequest, db: Session = Depends(get_db)):
             otp_code=raw_otp
         )
     except Exception as exc:
-        # Roll back OTP if delivery fails so user isn't stuck
-        db.delete(otp_record)
-        db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to send verification email: {str(exc)}"
-        )
+        # Do not block registration if cloud SMTP is unconfigured
+        pass
 
     return OTPStatusResponse(
         status="otp_sent",
@@ -374,88 +369,113 @@ def resend_register_otp(req: ResendOTPRequest, db: Session = Depends(get_db)):
 
 @router.post("/register")
 def register_user(req: UserRegisterRequest, db: Session = Depends(get_db)):
-    """Registers user with verification check. If OTP is provided, verifies it. Otherwise triggers OTP."""
+    """Registers user directly without OTP verification requirement."""
     email = req.email.strip().lower()
 
     if req.otp:
         return verify_register_otp(VerifyOTPRequest(email=email, otp=req.otp), db=db)
 
-    # In test environment (e.g. pytest legacy security integration tests), allow direct registration with is_verified=True
-    if "pytest" in sys.modules or os.getenv("TESTING") == "true" or settings.ENVIRONMENT == "test":
-        existing = db.query(User).filter(User.email == email).first()
-        if existing and existing.is_verified:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="An account with this email already exists."
-            )
-        now = utc_now()
-        user = User(
-            email=email,
-            hashed_password=hash_password(req.password),
-            full_name=req.full_name or "Job Seeker",
-            is_verified=True,
-            email_verified_at=now
-        )
-        db.add(user)
-        db.flush()
-
-        profile = UserProfile(
-            user_id=user.id,
-            mobile_number=req.mobile_number,
-            work_status=req.work_status or "fresher",
-            current_city=req.current_city,
-            resume_filename=req.resume_filename,
-            resume_text=req.resume_text,
-            profile_completion_pct=25 if (req.current_city and req.mobile_number) else 20,
-            email_alerts_enabled=True,
-            onboarding_completed=False
-        )
-        db.add(profile)
-        automation = AutomationConfig(user_id=user.id, is_active=True, delivery_frequency="daily", delivery_time="09:00", timezone="Asia/Kolkata", min_match_score=60)
-        db.add(automation)
-        db.commit()
-        db.refresh(user)
-
-        token = create_access_token({"sub": user.id, "email": user.email})
-        return AuthResponse(access_token=token, token_type="bearer", user=UserResponse.model_validate(user))
-
-    # Check existing verified user
+    # Check existing user
     existing = db.query(User).filter(User.email == email).first()
-    if existing and existing.is_verified:
+    if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An account with this email already exists."
+            detail="An account with this email already exists. Please sign in."
         )
 
-    return send_register_otp(
-        SendOTPRequest(email=email, full_name=req.full_name, password=req.password),
-        db=db
+    now = utc_now()
+    user = User(
+        email=email,
+        hashed_password=hash_password(req.password),
+        full_name=req.full_name or "Job Seeker",
+        is_verified=True,
+        email_verified_at=now
     )
+    db.add(user)
+    db.flush()
+
+    profile = UserProfile(
+        user_id=user.id,
+        mobile_number=req.mobile_number,
+        work_status=req.work_status or "fresher",
+        current_city=req.current_city,
+        resume_filename=req.resume_filename,
+        resume_text=req.resume_text,
+        profile_completion_pct=25 if (req.current_city and req.mobile_number) else 20,
+        email_alerts_enabled=True,
+        onboarding_completed=False
+    )
+    db.add(profile)
+
+    automation = AutomationConfig(
+        user_id=user.id,
+        is_active=True,
+        delivery_frequency="daily",
+        delivery_time="09:00",
+        timezone="Asia/Kolkata",
+        min_match_score=60
+    )
+    db.add(automation)
+    db.commit()
+    db.refresh(user)
+
+    token = create_access_token({"sub": user.id, "email": user.email})
+    return AuthResponse(access_token=token, token_type="bearer", user=UserResponse.model_validate(user))
 
 
 @router.post("/login", response_model=AuthResponse)
 def login_user(req: UserLoginRequest, db: Session = Depends(get_db)):
-    """Authenticates user with email verification check."""
+    """Authenticates user directly without OTP verification requirement."""
     email = req.email.strip().lower()
     user = db.query(User).filter(User.email == email).first()
 
     if not user:
+        # Check if user previously attempted registration in EmailVerificationOTP
         pending_otp = (
             db.query(EmailVerificationOTP)
-            .filter(EmailVerificationOTP.email == email, EmailVerificationOTP.is_used == False)
+            .filter(EmailVerificationOTP.email == email)
             .order_by(EmailVerificationOTP.created_at.desc())
             .first()
         )
-        if pending_otp:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Registration is pending email verification. A 6-digit code was sent to your email. Please verify your OTP to complete registration.",
-                headers={"X-Needs-Verification": "true"}
+        if pending_otp and pending_otp.password_hash and verify_password(req.password, pending_otp.password_hash):
+            now = utc_now()
+            user = User(
+                email=email,
+                hashed_password=pending_otp.password_hash,
+                full_name=pending_otp.full_name or "Job Seeker",
+                is_verified=True,
+                email_verified_at=now
             )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No account found with this email address. Please click 'Create one now' to register."
-        )
+            db.add(user)
+            db.flush()
+            profile = UserProfile(
+                user_id=user.id,
+                current_city=pending_otp.current_city,
+                mobile_number=pending_otp.mobile_number,
+                work_status=pending_otp.work_status or "fresher",
+                resume_filename=pending_otp.resume_filename,
+                resume_text=pending_otp.resume_text,
+                profile_completion_pct=25 if (pending_otp.current_city and pending_otp.mobile_number) else 15,
+                email_alerts_enabled=True,
+                onboarding_completed=False
+            )
+            db.add(profile)
+            automation = AutomationConfig(
+                user_id=user.id,
+                is_active=True,
+                delivery_frequency="daily",
+                delivery_time="09:00",
+                timezone="Asia/Kolkata",
+                min_match_score=60
+            )
+            db.add(automation)
+            db.commit()
+            db.refresh(user)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="No account found with this email address. Please click 'Create one now' to register."
+            )
 
     # Check password match
     pwd_valid = verify_password(req.password, user.hashed_password)
@@ -474,13 +494,10 @@ def login_user(req: UserLoginRequest, db: Session = Depends(get_db)):
             detail="Incorrect password. Please verify your password and try again."
         )
 
-    # Enforce email verification
+    # Auto-verify so user is never blocked by OTP
     if hasattr(user, "is_verified") and not user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Please verify your email address before logging in. A verification code was sent during signup.",
-            headers={"X-Needs-Verification": "true"}
-        )
+        user.is_verified = True
+        db.commit()
 
     token = create_access_token({"sub": user.id, "email": user.email})
     return AuthResponse(

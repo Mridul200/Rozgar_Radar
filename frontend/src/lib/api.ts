@@ -206,7 +206,16 @@ export async function resendRegisterOTP(data: {
   return res.json();
 }
 
-export async function registerUser(data: { email: string; password: string; full_name: string }): Promise<{ access_token: string; user: User }> {
+export async function registerUser(data: {
+  email: string;
+  password: string;
+  full_name: string;
+  mobile_number?: string;
+  work_status?: string;
+  current_city?: string;
+  resume_filename?: string;
+  resume_text?: string;
+}): Promise<{ access_token: string; user: User }> {
   const res = await fetch(`${API_BASE}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

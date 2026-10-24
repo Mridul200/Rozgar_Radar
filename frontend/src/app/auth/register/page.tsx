@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { sendRegisterOTP, verifyRegisterOTP, resendRegisterOTP } from "@/lib/api";
+import { sendRegisterOTP, verifyRegisterOTP, resendRegisterOTP, registerUser } from "@/lib/api";
 import {
   isValidEmail,
   EMAIL_ERROR_MESSAGE,
@@ -234,23 +234,20 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      await sendRegisterOTP({
+      const res = await registerUser({
         full_name: fullName.trim(),
         email: email.trim().toLowerCase(),
         password,
-        mobile_number: normalizeIndianMobile(mobileNumber),
+        mobile_number: normalizeIndianMobile(mobileNumber) || undefined,
         work_status: workStatus,
         current_city: currentCity.trim(),
         resume_filename: resumeFile?.name,
       });
 
-      setStep("otp");
-      setResendCooldown(60);
-      setExpirySeconds(300);
-      setOtpDigits(["", "", "", "", "", ""]);
-      setOtpError(null);
+      login(res.access_token, res.user);
+      router.push(redirectTarget || "/dashboard");
     } catch (err: any) {
-      setGeneralError(err.message || "Failed to initiate registration. Please verify your details.");
+      setGeneralError(err.message || "Failed to create account. Please verify your details.");
     } finally {
       setLoading(false);
     }
@@ -693,10 +690,10 @@ function RegisterForm() {
                 {loading ? (
                   <span className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Processing Registration...
+                    Creating Account...
                   </span>
                 ) : (
-                  "Continue to Email Verification"
+                  "Create Account"
                 )}
               </Button>
 
